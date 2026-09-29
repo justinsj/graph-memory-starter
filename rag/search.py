@@ -38,15 +38,21 @@ def keyword_leg(db, query):
 
 
 def meaning_leg(db, query):
-    try:
-        from fastembed import TextEmbedding
-    except ImportError:
-        return None
     rows = db.execute("SELECT id, vec FROM vectors").fetchall()
     if not rows:
         return None
-    model = TextEmbedding()
-    q = list(model.embed([QUERY_PREFIX + query]))[0]
+    # A warm model (embedder.py) answers in milliseconds; loading one takes a second.
+    from embedder import embed
+
+    warm = embed([QUERY_PREFIX + query])
+    if warm:
+        q = warm[0]
+    else:
+        try:
+            from fastembed import TextEmbedding
+        except ImportError:
+            return None
+        q = list(TextEmbedding().embed([QUERY_PREFIX + query]))[0]
     qnorm = sum(x * x for x in q) ** 0.5 or 1.0
     q = [x / qnorm for x in q]
     scored = []
@@ -63,7 +69,10 @@ def fuse(legs):
         for rank, rowid in enumerate(ids):
             scores[rowid] = scores.get(rowid, 0.0) + 1.0 / (K + rank)
             found_by.setdefault(rowid, []).append(name)
-    ranked = sorted(scores, key=scores.get, reverse=True)
+    # Equal scores go to the meaning leg's order: it is the stronger signal, and
+    # otherwise a keyword hit wins every tie just by being counted first.
+    meaning = {rowid: rank for rank, rowid in enumerate(legs.get("meaning") or [])}
+    ranked = sorted(scores, key=lambda r: (-scores[r], meaning.get(r, len(meaning))))
     return ranked, found_by
 
 

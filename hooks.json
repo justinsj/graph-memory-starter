@@ -5,7 +5,39 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python src/recall_hook.py",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/src/recall_hook.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/src/recall_hook.py\" --forget",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/src/recall_hook.py\" --forget",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/rag/embedder.py\" --start",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/projects/review.py\" --notice",
             "timeout": 10
           }
         ]

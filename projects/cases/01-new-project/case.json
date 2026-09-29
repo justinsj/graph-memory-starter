@@ -1,0 +1,29 @@
+{
+ "title": "A kickoff meeting creates a project",
+ "tests": "Creating a project from a transcript: status, who asked, dependencies on things the graph knows, deliverables, and questions for what the meeting left open. No invented dates: 'before the January peak' is a due in words and a question, not a date.",
+ "state": "No projects yet.",
+ "input": "inputs/2026-09-14-support-tooling-review.md",
+ "kind": "transcript",
+ "on": "2026-09-14",
+ "expect": {
+  "created": 1,
+  "projects": {
+   "new#1": {
+    "status": "planning",
+    "requested_by": "Priya Patel",
+    "owner": null,
+    "due_date": null,
+    "deps": [
+     "needs Tooling inventory",
+     [
+      "subject_to Supplier payments",
+      "needs Founder",
+      "needs Alex Doyle"
+     ]
+    ],
+    "deliverables": 3,
+    "questions_min": 1
+   }
+  }
+ }
+}

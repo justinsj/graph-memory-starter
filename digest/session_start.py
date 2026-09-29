@@ -45,7 +45,12 @@ def main():
         f"2. Delete the staged file {first}.",
     ]
     if cfg["distil"]:
-        steps.append(f'3. Run: python "{DISTIL}" "{notes}"')
+        steps.append(f'{len(steps) + 1}. Run: python "{DISTIL}" "{notes}"')
+    if cfg.get("projects"):
+        entry = common.SESSIONS / f"{datetime.now():%Y-%m-%d-%H%M}.md"
+        steps.append(f"{len(steps) + 1}. Save the entry on its own, as written, to {entry}, and run: "
+                     f'python "{common.INGEST}" "{entry}" --kind session. It only proposes project '
+                     "changes for me to review; apply nothing.")
 
     body = (
         "A session closed and left its text to be written up.\n\n"

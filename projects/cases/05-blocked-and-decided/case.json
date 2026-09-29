@@ -1,0 +1,21 @@
+{
+ "title": "A busy meeting: step done, project blocked, question settled",
+ "tests": "Several kinds of change from one meeting: a step done, the project moving active → blocked (an allowed move that needs no confirmation), and an open question answered, which closes it and records the decision.",
+ "state": "As after case 02; question Q1 (the old helpdesk) still open.",
+ "input": "inputs/2026-09-26-ops-sync.md",
+ "kind": "transcript",
+ "on": "2026-09-26",
+ "expect": {
+  "created": 0,
+  "projects": {
+   "helpdesk-migration": {
+    "status": "blocked",
+    "steps": {
+     "2": "done"
+    },
+    "open_questions": 0,
+    "decisions": 1
+   }
+  }
+ }
+}

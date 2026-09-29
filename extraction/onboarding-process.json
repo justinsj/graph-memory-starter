@@ -1,8 +1,14 @@
 {
   "source_doc": "onboarding-process.md",
   "nodes": [
-    {"name": "Onboarding process", "type": "PROCESS",
-     "description": "First-week onboarding owned by the Ops Manager; day one is accounts and access; ends with a support shadowing shift"}
+    {"name": "Onboarding process", "type": "PROCESS", "claims": [
+      {"kind": "responsibility", "text": "New starters are onboarded over their first week, owned by the Ops Manager",
+       "quote": "New starters are onboarded over their first week, owned by the Ops Manager."},
+      {"kind": "rule", "text": "Day one covers accounts and access, using the tooling inventory as the checklist",
+       "quote": "Day one covers accounts and access, using the tooling inventory as the checklist."},
+      {"kind": "rule", "text": "Week one ends with a shadowing shift alongside the support team",
+       "quote": "Week one ends with a shadowing shift alongside the support team."}
+    ]}
   ],
   "edges": [
     {"source": "Onboarding process", "predicate": "references", "target": "Ops Manager"},

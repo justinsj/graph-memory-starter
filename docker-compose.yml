@@ -1,0 +1,24 @@
+# Postgres and the service. Untested here (no Docker daemon on the machine it was written on).
+# The schema is created by the owner role on first start; for row-level security to bind the
+# service, run it as a separate, non-superuser role (see kl/README.md).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: kl
+      POSTGRES_PASSWORD: kl
+      POSTGRES_DB: kl
+    volumes: [pgdata:/var/lib/postgresql/data]
+  kl:
+    build: .
+    depends_on: [db]
+    ports: ["8080:8080"]
+    environment:
+      KL_DATABASE_URL: postgresql+psycopg://kl:kl@db/kl
+      KL_PUBLIC_URL: http://localhost:8080
+      KL_ROOT_KEY: change-me
+      KL_EXTRACTOR: none
+    volumes: [kldata:/data]
+volumes:
+  pgdata:
+  kldata:

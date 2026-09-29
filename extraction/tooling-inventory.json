@@ -1,8 +1,14 @@
 {
   "source_doc": "tooling-inventory.md",
   "nodes": [
-    {"name": "Tooling inventory", "type": "DOCUMENT",
-     "description": "The systems the company runs on, with owner, billing cycle and admin access per entry; the onboarding day-one checklist"}
+    {"name": "Tooling inventory", "type": "DOCUMENT", "claims": [
+      {"kind": "note", "text": "The systems the company runs on: helpdesk, payments, accounting and the shared drive",
+       "quote": "The systems the company runs on: helpdesk, payments, accounting, and the shared drive."},
+      {"kind": "note", "text": "Each entry lists the owner, the billing cycle and who holds admin access",
+       "quote": "Each entry lists the owner, the billing cycle, and who holds admin access."},
+      {"kind": "rule", "text": "The onboarding process uses it as its day-one checklist",
+       "quote": "The onboarding process uses this document as its day-one checklist."}
+    ]}
   ],
   "edges": [],
   "aliases": [

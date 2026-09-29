@@ -1,0 +1,40 @@
+{
+ "input": "inputs/2026-09-26-ops-sync.md",
+ "kind": "transcript",
+ "on": "2026-09-26",
+ "changes": [
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 2,
+   "status": "done",
+   "quote": "Integration check is done."
+  },
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 3,
+   "status": "blocked",
+   "quote": "Alex is away until 12 October, so nobody can sign the contract before then."
+  },
+  {
+   "op": "set_status",
+   "project": "helpdesk-migration",
+   "value": "blocked",
+   "from": "2026-09-26",
+   "quote": "Then the helpdesk migration is blocked until he's back."
+  },
+  {
+   "op": "close_question",
+   "project": "helpdesk-migration",
+   "key": "Q1",
+   "quote": "On the old helpdesk: keep it read-only for 90 days after go-live, then close it."
+  },
+  {
+   "op": "add_decision",
+   "project": "helpdesk-migration",
+   "text": "Keep the old helpdesk read-only for 90 days after go-live, then close it",
+   "quote": "On the old helpdesk: keep it read-only for 90 days after go-live, then close it."
+  }
+ ]
+}

@@ -1,12 +1,20 @@
 {
   "source_doc": "delegation-memo.md",
   "nodes": [
-    {"name": "Sarah Chen", "type": "PERSON", "description": "On leave 1-31 March"},
-    {"name": "Marcus Webb", "type": "PERSON",
-     "description": "Covers Sarah Chen's sign-offs and approvals during her March leave; full operational authority"}
+    {"name": "Sarah Chen", "type": "PERSON", "claims": [
+      {"kind": "availability", "text": "On leave 1-31 March 2026",
+       "valid_from": "2026-03-01", "valid_to": "2026-04-01",
+       "quote": "Sarah Chen is on leave from 1 to 31 March 2026."}
+    ]},
+    {"name": "Marcus Webb", "type": "PERSON", "claims": [
+      {"kind": "responsibility", "text": "Covers Sarah Chen's sign-offs and approvals during her leave, with full operational authority",
+       "valid_from": "2026-03-01", "valid_to": "2026-04-01",
+       "quote": "During this period all of her sign-offs and approvals are delegated to Marcus Webb."}
+    ]}
   ],
   "edges": [
-    {"source": "Sarah Chen", "predicate": "delegates_to", "target": "Marcus Webb"}
+    {"source": "Sarah Chen", "predicate": "delegates_to", "target": "Marcus Webb",
+     "valid_from": "2026-03-01", "valid_to": "2026-04-01"}
   ],
   "aliases": [
     {"entity": "Marcus Webb", "alias": "Marcus"}

@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How OpenSpec Is Used</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6; --accent-bg: #eaf2fc;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee; --accent-bg: #142232;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee; --accent-bg: #142232;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 960px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+pre.code b { color: var(--ink); font-weight: 600; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+table.cmds td:first-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .lane { fill: var(--ink-2); font-weight: 600; font-size: 13px; }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .file { fill: var(--ink); font: 600 13px var(--mono); }
+svg .cell { font-size: 12.5px; }
+svg .mut { fill: var(--muted); }
+svg .big { fill: var(--muted); font-size: 24px; }
+svg .tag { font: 600 10.5px var(--mono); letter-spacing: .04em; }
+svg .tag-good { fill: var(--good); }
+svg .tag-you { fill: var(--accent); }
+svg .tag-warn { fill: var(--warn); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+svg .box-good { fill: var(--good-bg); stroke: var(--good); stroke-width: 1.5; }
+svg .box-you { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.5; }
+svg .dash { stroke-dasharray: 4 3; }
+svg .rule { stroke: var(--hair); stroke-width: 1; }
+svg .life { stroke: var(--base); stroke-width: 1; stroke-dasharray: 3 4; }
+svg .frame { fill: none; stroke: var(--base); stroke-width: 1; stroke-dasharray: 5 4; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } figure { padding: 12px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">OpenSpec 1.13.2 with Claude Code · explainer, 28 September 2026</div>
+<h1>How OpenSpec is used</h1>
+<p class="lede">OpenSpec makes an AI coding assistant write a plan you can review before it writes any code. As each change lands, it keeps a written spec of what the system does up to date. This page shows the moving parts, taken from a real run of version 1.13.2 set up for Claude Code.</p>
+
+<div class="answer">
+<p><strong>Two folders and a handful of slash commands.</strong> <code>openspec/specs/</code> describes what the system does now. Each change gets its own folder in <code>openspec/changes/</code>, holding a proposal, spec deltas, an optional design and a task list.</p>
+<p><strong>The loop:</strong> <code>/opsx:propose</code> writes the plan, you review it, <code>/opsx:apply</code> writes the code, and <code>/opsx:archive</code> merges the change's deltas into <code>openspec/specs/</code>. The next change is then planned against an accurate picture of the system.</p>
+</div>
+
+<h2>Set it up</h2>
+<pre class="code"><b>npm install -g @fission-ai/openspec@latest</b>     # needs Node 20.19 or later
+cd your-project
+<b>openspec init --tools claude</b>                   # --tools claude skips the tool picker</pre>
+<p>In the test run, <code>init</code> reported “6 skills and 6 commands in .claude/” and created:</p>
+<pre class="code">.claude/commands/opsx/     propose  explore  apply  archive  sync  update    the /opsx:* slash commands
+.claude/skills/            openspec-propose, openspec-apply-change, …       the same workflows as skills
+openspec/config.yaml       schema: spec-driven, plus your context and rules
+openspec/specs/            empty until the first archive
+openspec/changes/archive/  finished changes land here</pre>
+<ul>
+<li>Start a new Claude Code session in the project so it loads the commands.</li>
+<li>Commit <code>.claude/</code> and <code>openspec/</code> so teammates get the same workflow.</li>
+<li>Put your stack and conventions in the <code>context:</code> field of <code>config.yaml</code>; every planning file is written with it. Per-file <code>rules:</code> hold house requirements, such as “every task names its test”.</li>
+<li>OpenSpec does not create or edit <code>CLAUDE.md</code>.</li>
+</ul>
+
+<h2>The loop, and what each step touches</h2>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 360" role="img" aria-label="Five steps across the top: explore, propose, you review, apply, archive. Three rows below: your code, the change folder, and the specs. Explore and propose only read the code and the specs. Propose creates the change folder, you edit it, apply reads it, ticks tasks and is the only step that edits code. Archive merges the deltas into the specs and moves the change folder to the archive. An arrow from archive back to propose shows the next change is planned against the updated specs.">
+  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+
+  <text class="lane" x="0" y="40">Step</text>
+  <text class="edge" x="0" y="58">and the files it touches</text>
+
+  <rect class="box dash" x="188" y="8" width="132" height="72" rx="8"/>
+  <text x="254" y="32" text-anchor="middle">Explore</text>
+  <text class="sub" x="254" y="51" text-anchor="middle">/opsx:explore</text>
+  <text class="edge" x="254" y="69" text-anchor="middle">optional</text>
+
+  <rect class="box" x="336" y="8" width="132" height="72" rx="8"/>
+  <text x="402" y="32" text-anchor="middle">Propose</text>
+  <text class="sub" x="402" y="51" text-anchor="middle">/opsx:propose</text>
+  <text class="edge" x="402" y="69" text-anchor="middle">writes the plan</text>
+
+  <rect class="box-you" x="484" y="8" width="132" height="72" rx="8"/>
+  <text x="550" y="32" text-anchor="middle">You review</text>
+  <text class="sub" x="550" y="51" text-anchor="middle">/opsx:update</text>
+  <text class="edge" x="550" y="69" text-anchor="middle">to revise the plan</text>
+
+  <rect class="box" x="632" y="8" width="132" height="72" rx="8"/>
+  <text x="698" y="32" text-anchor="middle">Apply</text>
+  <text class="sub" x="698" y="51" text-anchor="middle">/opsx:apply</text>
+  <text class="edge" x="698" y="69" text-anchor="middle">works through tasks</text>
+
+  <rect class="box" x="780" y="8" width="132" height="72" rx="8"/>
+  <text x="846" y="32" text-anchor="middle">Archive</text>
+  <text class="sub" x="846" y="51" text-anchor="middle">/opsx:archive</text>
+  <text class="edge" x="846" y="69" text-anchor="middle">once tasks are done</text>
+
+  <path class="line" d="M322 44 H333" marker-end="url(#a1)"/>
+  <path class="line" d="M470 44 H481" marker-end="url(#a1)"/>
+  <path class="line" d="M618 44 H629" marker-end="url(#a1)"/>
+  <path class="line" d="M766 44 H777" marker-end="url(#a1)"/>
+
+  <line class="rule" x1="0" y1="96" x2="920" y2="96"/>
+  <line class="rule" x1="0" y1="166" x2="920" y2="166"/>
+  <line class="rule" x1="0" y1="236" x2="920" y2="236"/>
+  <line class="rule" x1="0" y1="306" x2="920" y2="306"/>
+
+  <text x="0" y="128">Your code</text>
+  <text class="sub" x="0" y="146">src/, tests/ …</text>
+  <text x="0" y="198">Change folder</text>
+  <text class="sub" x="0" y="216">changes/&lt;name&gt;/</text>
+  <text x="0" y="268">Specs</text>
+  <text class="sub" x="0" y="286">openspec/specs/</text>
+
+  <!-- your code -->
+  <text class="cell mut" x="254" y="135" text-anchor="middle">reads</text>
+  <text class="cell mut" x="402" y="135" text-anchor="middle">reads</text>
+  <text class="cell mut" x="550" y="135" text-anchor="middle">–</text>
+  <rect class="box-good" x="636" y="117" width="124" height="28" rx="14"/>
+  <text class="cell" x="698" y="135.5" text-anchor="middle">edits code</text>
+  <text class="cell mut" x="846" y="135" text-anchor="middle">–</text>
+
+  <!-- change folder -->
+  <text class="cell mut" x="254" y="205" text-anchor="middle">only if you ask</text>
+  <rect class="box-good" x="340" y="187" width="124" height="28" rx="14"/>
+  <text class="cell" x="402" y="205.5" text-anchor="middle">creates files</text>
+  <rect class="box-you" x="488" y="187" width="124" height="28" rx="14"/>
+  <text class="cell" x="550" y="205.5" text-anchor="middle">edits the plan</text>
+  <rect class="box-good" x="636" y="187" width="124" height="28" rx="14"/>
+  <text class="cell" x="698" y="205.5" text-anchor="middle">reads, ticks tasks</text>
+  <rect class="box-good" x="784" y="187" width="124" height="28" rx="14"/>
+  <text class="cell" x="846" y="205.5" text-anchor="middle">moves to archive/</text>
+
+  <!-- specs -->
+  <text class="cell mut" x="254" y="275" text-anchor="middle">reads</text>
+  <text class="cell mut" x="402" y="275" text-anchor="middle">reads</text>
+  <text class="cell mut" x="550" y="275" text-anchor="middle">–</text>
+  <text class="cell mut" x="698" y="275" text-anchor="middle">–</text>
+  <rect class="box-good" x="784" y="257" width="124" height="28" rx="14"/>
+  <text class="cell" x="846" y="275.5" text-anchor="middle">merges deltas</text>
+
+  <path class="line" d="M846 288 V328 H402 V289" marker-end="url(#a1)"/>
+  <text class="edge" x="624" y="348" text-anchor="middle">the next change is planned against the updated specs</text>
+</svg>
+</div>
+<figcaption>Green marks a write by the assistant, blue a write by you. The code changes only during apply, and <code>openspec/specs/</code> changes only at archive (or earlier with <code>/opsx:sync</code>). Until then the plan lives in the change folder, where you can read and edit it. Explore writes change files only after you confirm what it will create.</figcaption>
+</figure>
+
+<h2>Inside a change folder</h2>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 250" role="img" aria-label="proposal.md is read to write the spec deltas and design.md; both are read to write tasks.md; tasks.md is what /opsx:apply needs. design.md is optional.">
+  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+
+  <path class="line" d="M0 14 H26" marker-end="url(#a2)"/>
+  <text class="edge" x="34" y="18">read when writing the next file</text>
+
+  <rect class="box" x="0" y="85" width="180" height="80" rx="8"/>
+  <text class="file" x="16" y="112">proposal.md</text>
+  <text class="edge" x="16" y="133">why, what changes,</text>
+  <text class="edge" x="16" y="150">capabilities, impact</text>
+
+  <rect class="box" x="280" y="10" width="230" height="80" rx="8"/>
+  <text class="file" x="296" y="37">specs/&lt;cap&gt;/spec.md</text>
+  <text class="edge" x="296" y="58">requirements and scenarios,</text>
+  <text class="edge" x="296" y="75">written as a delta on specs/</text>
+
+  <rect class="box dash" x="280" y="160" width="230" height="80" rx="8"/>
+  <text class="file" x="296" y="187">design.md</text>
+  <text class="edge" x="296" y="208">decisions, risks, migration</text>
+  <text class="edge" x="296" y="225">optional</text>
+
+  <rect class="box" x="600" y="85" width="170" height="80" rx="8"/>
+  <text class="file" x="616" y="112">tasks.md</text>
+  <text class="edge" x="616" y="133">numbered checkboxes,</text>
+  <text class="edge" x="616" y="150">each with its own check</text>
+
+  <rect class="box-good" x="820" y="95" width="100" height="60" rx="8"/>
+  <text class="edge" x="870" y="119" text-anchor="middle">ready for</text>
+  <text class="sub" x="870" y="138" text-anchor="middle">/opsx:apply</text>
+
+  <path class="line" d="M180 112 L276 58" marker-end="url(#a2)"/>
+  <path class="line" d="M180 138 L276 192" marker-end="url(#a2)"/>
+  <path class="line" d="M510 58 L596 112" marker-end="url(#a2)"/>
+  <path class="line" d="M510 192 L596 138" marker-end="url(#a2)"/>
+  <path class="line" d="M770 125 H816" marker-end="url(#a2)"/>
+</svg>
+</div>
+<figcaption><code>/opsx:propose</code> writes the files in this order, and <code>/opsx:apply</code> needs <code>tasks.md</code>. The instructions say to write <code>design.md</code> only for cross-cutting, risky or ambiguous changes. The demo change below was archived without one.</figcaption>
+</figure>
+<p>Before anything is written, <code>openspec status</code> prints the same graph:</p>
+<pre class="code">$ openspec status --change add-dark-mode
+Progress: 0/4 artifacts complete
+
+[ ] proposal
+[-] specs (blocked by: proposal)
+[-] design (blocked by: proposal)
+[-] tasks (blocked by: specs, design)
+
+Next: openspec instructions proposal --change "add-dark-mode" --json</pre>
+
+<h2>What a delta looks like</h2>
+<p>A change never edits <code>openspec/specs/</code> directly. It says what to add, replace or remove, in a delta file per capability. This one is from the demo change <code>add-2fa</code>, at <code>openspec/changes/add-2fa/specs/user-auth/spec.md</code>:</p>
+<pre class="code"># Spec Delta
+
+<b>## ADDED Requirements</b>
+
+### Requirement: Two-factor login
+The system SHALL ask for a one-time code after a correct password.
+
+#### Scenario: Code required
+- **WHEN** a user submits a correct email and password
+- **THEN** the system asks for a one-time code before starting a session
+
+<b>## MODIFIED Requirements</b>
+
+### Requirement: Session timeout
+The system SHALL end a session after 15 minutes of inactivity.
+
+#### Scenario: Idle session
+- **WHEN** 15 minutes pass with no activity
+- **THEN** the session ends and the user must sign in again
+
+<b>## REMOVED Requirements</b>
+
+### Requirement: Remember-me cookie
+**Reason**: Conflicts with two-factor login
+**Migration**: Users sign in with password and code each time</pre>
+<ul>
+<li>Every requirement uses SHALL or MUST and has at least one <code>#### Scenario:</code> (exactly four <code>#</code>) with WHEN and THEN lines.</li>
+<li>A MODIFIED requirement repeats the whole requirement, because it replaces the old one. Its heading must match the existing one.</li>
+<li>A REMOVED requirement needs a <strong>Reason</strong> and a <strong>Migration</strong>. There is also <code>## RENAMED Requirements</code>, written as FROM: and TO: lines.</li>
+<li>A delta for a brand-new capability starts with <code>## Purpose</code>, which becomes the purpose of the new spec.</li>
+<li><code>openspec validate &lt;change&gt; --strict</code> checks all of this before you apply or archive.</li>
+</ul>
+
+<h2>What archive does to the spec</h2>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 226" role="img" aria-label="The spec before has password login, a 30 minute session timeout and a remember-me cookie. The delta adds two-factor login, modifies the timeout to 15 minutes and removes the remember-me cookie. After archive the spec has password login, the 15 minute timeout replaced in place, two-factor login appended at the end, and no remember-me cookie.">
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+
+  <text class="lane" x="0" y="16">Before</text>
+  <text class="sub" x="0" y="34">openspec/specs/user-auth/spec.md</text>
+  <rect class="box" x="0" y="52" width="270" height="34" rx="6"/>
+  <text x="12" y="74">Password login</text>
+  <rect class="box" x="0" y="96" width="270" height="34" rx="6"/>
+  <text x="12" y="118">Session timeout · 30 min</text>
+  <rect class="box" x="0" y="140" width="270" height="34" rx="6"/>
+  <text x="12" y="162">Remember-me cookie</text>
+
+  <text class="big" x="297" y="122" text-anchor="middle">+</text>
+
+  <text class="lane" x="325" y="16">Delta in the change</text>
+  <text class="sub" x="325" y="34">add-2fa/specs/user-auth/spec.md</text>
+  <rect class="box-good" x="325" y="52" width="270" height="34" rx="6"/>
+  <text x="337" y="74">Two-factor login</text>
+  <text class="tag tag-good" x="583" y="74" text-anchor="end">ADDED</text>
+  <rect class="box-you" x="325" y="96" width="270" height="34" rx="6"/>
+  <text x="337" y="118">Session timeout · 15 min</text>
+  <text class="tag tag-you" x="583" y="118" text-anchor="end">MODIFIED</text>
+  <rect class="box-warn" x="325" y="140" width="270" height="34" rx="6"/>
+  <text x="337" y="162">Remember-me cookie</text>
+  <text class="tag tag-warn" x="583" y="162" text-anchor="end">REMOVED</text>
+
+  <path class="line" d="M601 113 H646" marker-end="url(#a3)"/>
+  <text class="edge" x="623" y="104" text-anchor="middle">archive</text>
+
+  <text class="lane" x="650" y="16">After archive</text>
+  <text class="sub" x="650" y="34">openspec/specs/user-auth/spec.md</text>
+  <rect class="box" x="650" y="52" width="270" height="34" rx="6"/>
+  <text x="662" y="74">Password login</text>
+  <rect class="box-you" x="650" y="96" width="270" height="34" rx="6"/>
+  <text x="662" y="118">Session timeout · 15 min</text>
+  <text class="tag tag-you" x="908" y="118" text-anchor="end">REPLACED</text>
+  <rect class="box-good" x="650" y="140" width="270" height="34" rx="6"/>
+  <text x="662" y="162">Two-factor login</text>
+  <text class="tag tag-good" x="908" y="162" text-anchor="end">APPENDED</text>
+  <rect class="box dash" x="650" y="184" width="270" height="34" rx="6"/>
+  <text class="mut" x="662" y="206">Remember-me cookie</text>
+  <text class="tag tag-warn" x="908" y="206" text-anchor="end">DELETED</text>
+</svg>
+</div>
+<figcaption>MODIFIED replaces the requirement where it stands, ADDED goes at the end, and REMOVED deletes it. This is the real result of archiving the demo change; the dashed row shows what is no longer in the file.</figcaption>
+</figure>
+<pre class="code">$ openspec archive add-2fa --yes
+Task status: ✓ Complete
+
+Specs to update:
+  user-auth: update
+Applying changes to openspec/specs/user-auth/spec.md:
+  + 1 added
+  ~ 1 modified
+  - 1 removed
+Totals: + 1, ~ 1, - 1, → 0
+Specs updated successfully.
+Change 'add-2fa' archived as '2026-09-28-add-2fa'.</pre>
+<p>The change folder now sits at <code>openspec/changes/archive/2026-09-28-add-2fa/</code> with its proposal, delta and tasks intact, as a record of why the spec changed.</p>
+
+<h2>What Claude Code does when you type /opsx:propose</h2>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 452" role="img" aria-label="Sequence: you type /opsx:propose. Claude Code reads the propose prompt, which allows planning only. It runs openspec new change, which creates the change folder. Then, in a loop, it asks openspec status which file is ready next, asks openspec instructions for that file's template, output path and your rules, reads related code and writes the file. When all files exist it stops and tells you to review, then run /opsx:apply.">
+  <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+
+  <rect class="box-you" x="0" y="0" width="140" height="40" rx="8"/>
+  <text x="70" y="25" text-anchor="middle">You</text>
+  <rect class="box" x="230" y="0" width="140" height="40" rx="8"/>
+  <text x="300" y="25" text-anchor="middle">Claude Code</text>
+  <rect class="box" x="490" y="0" width="140" height="40" rx="8"/>
+  <text x="560" y="25" text-anchor="middle">openspec CLI</text>
+  <rect class="box" x="740" y="0" width="140" height="40" rx="8"/>
+  <text x="810" y="25" text-anchor="middle">Files on disk</text>
+
+  <line class="life" x1="70" y1="40" x2="70" y2="446"/>
+  <line class="life" x1="300" y1="40" x2="300" y2="446"/>
+  <line class="life" x1="560" y1="40" x2="560" y2="446"/>
+  <line class="life" x1="810" y1="40" x2="810" y2="446"/>
+
+  <path class="line" d="M70 80 H296" marker-end="url(#a4)"/>
+  <text class="sub" x="185" y="72" text-anchor="middle">/opsx:propose add 2FA</text>
+
+  <path class="line" d="M300 104 H330 V124 H304" marker-end="url(#a4)"/>
+  <text class="edge" x="338" y="118">reads propose.md: plan only</text>
+
+  <path class="line" d="M300 160 H556" marker-end="url(#a4)"/>
+  <text class="sub" x="430" y="152" text-anchor="middle">openspec new change add-2fa</text>
+  <path class="line" d="M560 188 H806" marker-end="url(#a4)"/>
+  <text class="edge" x="685" y="180" text-anchor="middle">creates changes/add-2fa/</text>
+
+  <rect class="frame" x="232" y="206" width="682" height="192" rx="6"/>
+  <text class="sub" x="574" y="224">repeat for each planning file</text>
+
+  <path class="line" d="M300 256 H556" marker-end="url(#a4)"/>
+  <text class="sub" x="430" y="248" text-anchor="middle">openspec status --json</text>
+  <path class="line dash" d="M560 284 H304" marker-end="url(#a4)"/>
+  <text class="edge" x="430" y="276" text-anchor="middle">which file is ready next</text>
+
+  <path class="line" d="M300 318 H556" marker-end="url(#a4)"/>
+  <text class="sub" x="430" y="310" text-anchor="middle">openspec instructions &lt;id&gt; --json</text>
+  <path class="line dash" d="M560 346 H304" marker-end="url(#a4)"/>
+  <text class="edge" x="430" y="338" text-anchor="middle">template, output path, your rules</text>
+
+  <path class="line" d="M300 380 H806" marker-end="url(#a4)"/>
+  <text class="edge" x="685" y="372" text-anchor="middle">reads related code, writes the file</text>
+
+  <path class="line" d="M300 432 H74" marker-end="url(#a4)"/>
+  <text class="edge" x="185" y="424" text-anchor="middle">stops: “review, then /opsx:apply”</text>
+</svg>
+</div>
+<figcaption>The slash command is a prompt file, and the CLI supplies the order, the templates and your <code>config.yaml</code> rules as JSON. <code>/opsx:apply</code> works the same way through <code>openspec instructions apply</code>, then edits code and ticks <code>tasks.md</code>.</figcaption>
+</figure>
+<ul>
+<li><strong>Propose only plans.</strong> Its prompt says the request “authorizes planning only, even if it asks to build or fix something”. It stops after the planning files and waits for you to run <code>/opsx:apply</code>.</li>
+<li><strong>The skills run only <code>openspec</code> without asking.</strong> Each one declares <code>allowed-tools: Bash(openspec:*)</code>. Reading code and writing files go through Claude Code's normal permissions.</li>
+<li><strong>The files are the memory.</strong> Every step re-reads the change folder from disk. You can edit the markdown yourself, <code>/clear</code>, or come back another day and run <code>/opsx:apply add-2fa</code>.</li>
+<li><strong>You don't have to type the command.</strong> The skills also respond to plain requests such as “openspec propose …” or “opsx apply”.</li>
+</ul>
+
+<h2>Commands</h2>
+<h3>Slash commands installed by default</h3>
+<div class="scroll">
+<table class="cmds">
+<thead><tr><th>Command</th><th>What it does</th><th style="white-space:nowrap">Edits code</th></tr></thead>
+<tbody>
+<tr><td>/opsx:explore</td><td>Think through options with the assistant. Reads specs and code; creates change files only after you confirm.</td><td>No</td></tr>
+<tr><td>/opsx:propose &lt;idea&gt;</td><td>Creates the change folder and every planning file, then stops for your review.</td><td>No</td></tr>
+<tr><td>/opsx:update &lt;change&gt;</td><td>Revises the plan and brings the other files in line with the edit.</td><td>No</td></tr>
+<tr><td>/opsx:apply &lt;change&gt;</td><td>Implements <code>tasks.md</code> in order, ticking each box. Run it again to resume.</td><td class="good">Yes</td></tr>
+<tr><td>/opsx:sync &lt;change&gt;</td><td>Merges the deltas into <code>openspec/specs/</code> without archiving.</td><td>No</td></tr>
+<tr><td>/opsx:archive &lt;change&gt;</td><td>Checks the tasks, merges the deltas, and moves the folder to <code>changes/archive/YYYY-MM-DD-name/</code>.</td><td>No</td></tr>
+</tbody>
+</table>
+</div>
+<h3>Extended profile</h3>
+<p>Turn these on with <code>openspec config profile</code>, then <code>openspec update</code>.</p>
+<div class="scroll">
+<table class="cmds">
+<thead><tr><th>Command</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td>/opsx:new, /opsx:continue</td><td>Create an empty change, then write one planning file per call, reviewing between steps.</td></tr>
+<tr><td>/opsx:ff</td><td>Write all the planning files at once.</td></tr>
+<tr><td>/opsx:verify</td><td>Check the code against the plan for completeness, correctness and coherence.</td></tr>
+<tr><td>/opsx:bulk-archive</td><td>Archive several finished changes, resolving spec conflicts between them.</td></tr>
+<tr><td>/opsx:onboard</td><td>A guided tutorial that runs one full cycle on your own codebase.</td></tr>
+</tbody>
+</table>
+</div>
+<h3>CLI, for you or for scripts</h3>
+<div class="scroll">
+<table class="cmds">
+<thead><tr><th>Command</th><th>Use</th></tr></thead>
+<tbody>
+<tr><td>openspec list</td><td>Changes in progress, with task progress. Add <code>--specs</code> for the specs.</td></tr>
+<tr><td>openspec view</td><td>Interactive dashboard of specs and changes.</td></tr>
+<tr><td>openspec show &lt;item&gt;</td><td>Print one change or spec.</td></tr>
+<tr><td>openspec status --change &lt;name&gt;</td><td>Which planning files exist and which are blocked.</td></tr>
+<tr><td>openspec validate &lt;item&gt; --strict</td><td>Check the structure of a change or spec.</td></tr>
+<tr><td>openspec archive &lt;change&gt; --yes</td><td>Archive without the slash command.</td></tr>
+<tr><td>openspec update</td><td>Regenerate the files in <code>.claude/</code> after upgrading the CLI.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Habits that make it work</h2>
+<ul>
+<li><strong>Review before apply.</strong> Most of the value is in reading <code>proposal.md</code> and <code>tasks.md</code> while changing them is still cheap.</li>
+<li><strong>One change per feature or fix,</strong> named like <code>add-2fa</code>, <code>fix-refund-rounding</code> or <code>refactor-auth</code>. A change with no behaviour change sets <code>skip_specs: true</code> instead of inventing requirements.</li>
+<li><strong>No need to spec an existing codebase first.</strong> <code>openspec/specs/</code> starts empty and fills up as changes are archived.</li>
+<li><strong>Archive promptly,</strong> so the next proposal is planned against specs that match the code.</li>
+</ul>
+
+<h2>How this was checked</h2>
+<ul class="method">
+<li>OpenSpec 1.13.2 was run through <code>npx</code> in a scratch folder on 28 September 2026 with <code>openspec init --tools claude</code>, on Node 20.11.1. It worked, with engine warnings; the docs ask for Node 20.19 or later.</li>
+<li>The generated command and skill files, the <code>status</code> output and the planning-file instructions quoted here come from that folder.</li>
+<li>The <code>add-2fa</code> change was written by hand, not by Claude. It passed <code>openspec validate add-2fa --strict</code> and was archived with <code>openspec archive add-2fa --yes</code>; figure 3 and the output under it are the real result.</li>
+<li>The extended-profile commands were not run. Their descriptions come from the OpenSpec docs (<code>docs/workflows.md</code> and <code>docs/commands.md</code> in the <a href="https://github.com/Fission-AI/OpenSpec">Fission-AI/OpenSpec</a> repository).</li>
+</ul>
+</main>
+</body>
+</html>

@@ -11,6 +11,8 @@ PROMPT = HERE / "digest-prompt.md"
 PENDING = HERE / "pending"
 LOG = HERE / "log"
 RAG_DB = HERE.parent / "rag" / "rag.db"
+INGEST = HERE.parent / "projects" / "ingest.py"
+SESSIONS = HERE.parent / "inputs" / "sessions"  # each entry, kept for projects/ingest.py
 
 DEFAULTS = {
     "mode": "session",
@@ -20,6 +22,7 @@ DEFAULTS = {
     "model": "sonnet",
     "log_dir": "daily",
     "distil": True,
+    "projects": True,  # offer each entry to projects/ingest.py: it proposes, you review
 }
 
 
@@ -49,6 +52,16 @@ def corpus():
         return None
     path = Path(row[0])
     return path if path.is_dir() else None
+
+
+def session_input(entry, when=None):
+    """The entry on its own, inputs/sessions/<date>-<time>.md, for projects/ingest.py.
+    The daily log gathers every session; ingest must read only the new one."""
+    when = when or datetime.now()
+    SESSIONS.mkdir(parents=True, exist_ok=True)
+    path = SESSIONS / f"{when:%Y-%m-%d-%H%M}.md"
+    path.write_text(f"# Session, {when:%Y-%m-%d %H:%M}\n\n{entry.strip()}\n", encoding="utf-8")
+    return path
 
 
 def today_log(notes, cfg, when=None):

@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Knowledge Layer Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } }
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+td code, td .m { white-space: nowrap; }
+.m { font: 12.5px var(--mono); }
+.verb { font: 600 11.5px var(--mono); padding: 1px 6px; border-radius: 4px; background: var(--bg); border: 1px solid var(--hair); }
+.stack { display: grid; gap: 8px; margin: 10px 0 18px; }
+.layer { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: stretch; }
+.layer > b { font: 600 12px/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-top: 10px; }
+.boxes { display: flex; flex-wrap: wrap; gap: 8px; }
+.box { flex: 1 1 8em; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+.box small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 2px; }
+.box.keep { border-color: var(--good); background: var(--good-bg); }
+.box.new { border-color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin: 0 0 6px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--hair); background: var(--surface); }
+.legend .k::before { border-color: var(--good); background: var(--good-bg); }
+.legend .n::before { border-color: var(--accent); }
+@media (max-width: 620px) { .layer { grid-template-columns: 1fr; gap: 4px; } .layer > b { padding-top: 0; } }
+
+.note { font-size: 14px; color: var(--ink-2); }
+.big { display: flex; flex-wrap: wrap; gap: 14px 28px; margin: 6px 0 4px; }
+.big div { font-size: 14px; color: var(--ink-2); max-width: 15em; }
+.big b { display: block; font: 700 26px/1.2 var(--mono); color: var(--ink); }
+pre.code { white-space: pre-wrap; word-break: break-word; }
+td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+details { margin: 0 0 14px; } summary { cursor: pointer; color: var(--accent); margin-bottom: 8px; }
+</style>
+
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · results, 28 September 2026</div>
+<h1>The knowledge layer, built and tested</h1>
+<p class="lede">The API proposal (<a href="api-proposal.html">api-proposal.html</a>), implemented as a service in
+<code>kl/</code>: hosted, shared by teams in separate workspaces, with projects first, a person approving every edit,
+and a run protocol any agent can use. What was built, what the tests show, what real agents did with it, and where
+it differs from the proposal.</p>
+
+<div class="answer">
+<p><strong>All 307 tests pass</strong>: the 215 that existed, unchanged, and 92 new ones for the service.
+Run in parallel they take <b>43 s</b> of wall time; one after another, 259 s.</p>
+<p><strong>The answers are the hook's.</strong> A workspace's context is identical to in-process recall for 8 document
+questions and all 16 code questions. That holds on SQLite and on a real Postgres 16, where row-level security keeps
+workspaces apart under a role that is not a superuser.</p>
+<p><strong>Real agents used it.</strong> Three Claude (Haiku 4.5) agents, on two local “machines”, carried out a plan
+through the MCP tools alone in 42 s, given nothing but the injected run token. They found the right
+facts. The final note drew a wrong conclusion from them, which is what the person accepting the deliverable is there
+to catch.</p>
+<p><strong>Client documentation:</strong> the <a href="api-guide.html">guide</a> (every example a recorded request and
+answer), the <a href="api-reference.html">reference</a> (65 operations), and <code>docs/openapi.json</code>.</p>
+</div>
+
+<div class="big">
+<div><b>307</b>tests passing, 92 of them new</div>
+<div><b>43 s</b>the whole suite, in parallel (was 259 s)</div>
+<div><b>65</b>API operations, all described in OpenAPI</div>
+<div><b>87</b>scenarios in the service's OpenSpec, each with its test</div>
+</div>
+
+<h2>What was built, phase by phase</h2>
+<div class="scroll"><table class=""><thead><tr><th>Phase</th><th>Built</th><th>Done when (from the proposal)</th><th>Result</th></tr></thead><tbody><tr><td><b>1. Core and storage interface</b></td><td>One service over SQLAlchemy Core; the same schema on SQLite and Postgres.</td><td>All earlier tests pass; the answers are the same on both backends.</td><td>215 earlier tests pass unchanged; test_kl_store compares the backends.</td></tr><tr><td><b>2. Log and projection</b></td><td>Documents, versions, extractions, records and events in the log; each workspace&#x27;s graph projected from it; content ids; retraction; workspace scoping with row-level security.</td><td>Any sequence of changes gives the graph a full build gives; stable ids; no workspace sees another.</td><td>Met: the 24-step property test, stable ids, isolation on both backends.</td></tr><tr><td><b>3. Review</b></td><td>Change requests for every edit: checked when opened and approved, whole, per operation or edited; people only; stale detection; If-Match; soft delete.</td><td>Nothing applies without approval; stale requests caught; decisions recorded; the project cases pass as change requests.</td><td>Met: test_kl_review, including all seven cases.</td></tr><tr><td><b>4. Projects, plans, context</b></td><td>The project API, plans per deliverable (general or OpenSpec), the context API, MCP.</td><td>An OpenSpec change imports into the right task graph; context matches in-process recall.</td><td>Met: test_kl_runs (plans), test_kl_projection (answers identical).</td></tr><tr><td><b>5. Execution</b></td><td>Executions, leases, run tokens with server-side expiry, the run protocol, a reference orchestrator and worker.</td><td>A fake agent drives every path; two real agents on two machines carry out a plan.</td><td>Met: test_kl_runs and the live run below (real Claude agents over MCP, 42 s).</td></tr><tr><td><b>6. Ingestion</b></td><td>Uploads, batches, manifests, deduplication, extraction jobs, the OpenSpec parser, test and scenario links.</td><td>The dedup suite passes; every quote is checked; specs arrive dated; requirements link to code.</td><td>Met: test_kl_ingest, test_kl_openspec.</td></tr><tr><td><b>7. Hosting</b></td><td>OIDC sign-in, row-level security, quotas, a Dockerfile and compose file.</td><td>Isolation as two tenants; load tested; restore rehearsed.</td><td>Partly: isolation and OIDC are tested; the container files are written but not run (no Docker daemon here); no load test or backup rehearsal yet.</td></tr></tbody></table></div>
+
+<h2>How long the tests take, and how they were sped up</h2>
+<p>You asked mid-way. The service's suites first took minutes, and one hung. Three changes brought them down:</p>
+<ol>
+<li><strong>Trial checks instead of trial builds.</strong> Before a file becomes current, the service used to build a
+whole trial graph. The build refuses for four reasons only: a name with two types, an extraction problem, a code index
+that does not match, a record problem. A trial now runs just those checks. Ingesting the corpus fell from about 2.4 s
+to 0.44 s.</li>
+<li><strong>A seeded workspace.</strong> Suites that need a fresh workspace for each test copy one that was seeded once
+per process, instead of ingesting the corpus again. The ingestion suite went from 45–136 s to about 5 s.</li>
+<li><strong>Modules in parallel.</strong> <code>tests/run_parallel.py</code> runs each test module in its own process,
+one per core. The modules share nothing (temporary folders, their own databases, their own Postgres database), so the
+wall time is about the slowest module's.</li>
+</ol>
+<p>The hang was a test waiting on an event stream the server never closed. The stream now takes
+<code>max_events</code>. The slowest module left, the projection suite, spends its time on the 24-step property test, two
+full builds per step.</p>
+<div class="scroll"><table class=""><thead><tr><th>Service suite</th><th>Tests</th><th>Time</th><th></th><th>What it checks</th></tr></thead><tbody><tr><td><code>test_kl_auth_events</code></td><td><span class="n">11</span></td><td><span style="white-space:nowrap">9.0 s</span></td><td><span class="good">✓</span></td><td>OIDC sign-in with a local key set (wrong audience, expired, forged, other issuer), roles, root key, revocation, problem+json; events by cursor, long poll, stream, signed webhooks retried in order.</td></tr><tr><td><code>test_kl_ingest</code></td><td><span class="n">16</span></td><td><span style="white-space:nowrap">13.7 s</span></td><td><span class="good">✓</span></td><td>The deduplication levels, extraction checked against the text, files that disagree held for a person, manifests, retraction, limits, a transcript becoming a change request.</td></tr><tr><td><code>test_kl_live_server</code></td><td><span class="n">4</span></td><td><span style="white-space:nowrap">34.8 s</span></td><td><span class="good">✓</span></td><td>A real port: an MCP client works a task through the tools; the hook asks the service and falls back; the orchestrator runs a plan on processes that start slower than a lease, and the platform&#x27;s secret is stored nowhere.</td></tr><tr><td><code>test_kl_openspec</code></td><td><span class="n">8</span></td><td><span style="white-space:nowrap">3.0 s</span></td><td><span class="good">✓</span></td><td>Specs dated by archived changes, answers as of a date, open changes not facts, tests linked to scenarios, requirements at stake in code impact.</td></tr><tr><td><code>test_kl_projection</code></td><td><span class="n">7</span></td><td><span style="white-space:nowrap">36.3 s</span></td><td><span class="good">✓</span></td><td>Answers identical to in-process recall (8 document and 16 code questions); a random 24-step sequence of adds, versions, retractions and restores equals a full build at every step; only changed files rewritten; stable claim ids; no graph replaced under a reader.</td></tr><tr><td><code>test_kl_review</code></td><td><span class="n">15</span></td><td><span style="white-space:nowrap">35.8 s</span></td><td><span class="good">✓</span></td><td>People approve every edit: self-approval, one approval, service accounts and runs never approve, per-operation and edited approvals, stale requests, If-Match, soft delete, history, and all seven project cases applied as change requests.</td></tr><tr><td><code>test_kl_runs</code></td><td><span class="n">19</span></td><td><span style="white-space:nowrap">31.8 s</span></td><td><span class="good">✓</span></td><td>Plans (validation, OpenSpec import, mirroring) and every run path with a fake agent: success, retries, lost leases, provisioning renewals, questions, proposals, gates, held tasks and migration, limits, idempotency, token scope and redaction, OpenSpec acceptance.</td></tr><tr><td><code>test_kl_specs</code></td><td><span class="n">2</span></td><td><span style="white-space:nowrap">0.9 s</span></td><td><span class="good">✓</span></td><td>The service&#x27;s own OpenSpec: in the format, and every one of its 87 scenarios verified by the test of the same name.</td></tr><tr><td><code>test_kl_store</code></td><td><span class="n">10</span></td><td><span style="white-space:nowrap">27.2 s</span></td><td><span class="good">✓</span></td><td>Both backends: the same answers from SQLite and Postgres; workspaces apart; row-level security checked directly on a real Postgres 16 under a role that is not a superuser.</td></tr></tbody></table></div>
+<details><summary>The earlier suites (215 tests), unchanged</summary>
+<div class="scroll"><table class=""><thead><tr><th>Suite</th><th>Tests</th><th>Time</th><th></th></tr></thead><tbody><tr><td><code>test_project_cases</code></td><td>45</td><td>0.2 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_projects</code></td><td>44</td><td>9.6 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_code</code></td><td>38</td><td>6.3 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_excerpts</code></td><td>18</td><td>6.7 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_dates</code></td><td>16</td><td>1.2 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_build</code></td><td>14</td><td>6.2 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_graph</code></td><td>13</td><td>1.2 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_growth</code></td><td>7</td><td>13.1 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_rag</code></td><td>7</td><td>4.1 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_hooks</code></td><td>5</td><td>4.5 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_fallback</code></td><td>4</td><td>8.6 s</td><td><span class="good">✓</span></td></tr><tr><td><code>test_embedder</code></td><td>4</td><td>4.3 s</td><td><span class="good">✓</span></td></tr></tbody></table></div>
+</details>
+<p class="note">Times are each module's own, measured while all of them ran at once on one machine.</p>
+
+<h2>Real agents, through MCP only</h2>
+<p><code>LocalOrchestrator</code> ran a three-task plan: find the refund policy, find the code that decides approval,
+then write a note comparing them. The first two ran side by side. Each machine ran <code>kl/worker.py --agent
+claude</code>: Claude Code with Haiku 4.5, a one-paragraph prompt, and an MCP configuration holding the injected run
+token. Nothing else about the service was given.</p>
+<div class="scroll"><table class=""><thead><tr><th>Task</th><th>Run</th><th>Events</th><th>Output summary</th><th>Handed in</th></tr></thead><tbody><tr><td><code>policy</code></td><td>succeeded</td><td>7 events</td><td>Refund approval policy note created</td><td>1 artifact(s)</td></tr><tr><td><code>code</code></td><td>succeeded</td><td>7 events</td><td>{&quot;function&quot;: &quot;shop.refunds.rules.needs_approval()&quot;, &quot;config_value&quot;: &quot;shop.config.APPROVAL_THRESHOLD_GBP&quot;, &quot;code_threshol</td><td>1 artifact(s)</td></tr><tr><td><code>note</code></td><td>succeeded</td><td>7 events</td><td>Note comparing policy (£500) to code threshold (£250), confirming mismatch and compliance gap</td><td>1 artifact(s)</td></tr></tbody></table></div>
+<details><summary>policy: Refund Approval Policy Summary</summary><pre class="code"># Refund Approval Policy
+
+## Current Policy (Effective 2026-01-01)
+
+**Approval threshold:** £500
+
+- **Refunds over £500:** Require approval by the Ops Manager (currently Sarah Chen) before payment is released
+- **Refunds under £500:** Processed directly by any support agent within 48 hours
+- **Payment method:** All approved refunds are paid back to the original payment method only
+
+## 2024 Policy
+
+The previous refund approvals policy was in place before 1 January 2026, when it was superseded by the current policy. Specific details of the 2024 thresholds and approval processes are documented in refund-policy-2024.md.
+
+## Summary
+
+The current refund approval process uses a £500 threshold, with the Ops Manager responsible for approvals above that amount since 1 January 2026.</pre></details><details><summary>code: Refund Threshold Analysis</summary><pre class="code"># Refund Approval Threshold Analysis
+
+## Decision Functions
+
+The refund approval logic is centralized in **`shop.refunds.rules.needs_approval()`**, defined in `shop/backend/refunds/rules.py`.
+
+This function determines whether a refund requires approval. It is called by:
+- `shop.refunds.views.create_refund()` – when creating refunds via the API
+- `shop.orders.service.process_refund()` – when processing refund requests
+- `shop.reports.count_large()` – to count refunds needing approval
+
+## Code Threshold
+
+The function reads **`shop.config.APPROVAL_THRESHOLD_GBP = 250`**.
+
+The code treats any refund over £250 as requiring approval.
+
+## Policy vs. Code Mismatch
+
+**Current Policy** (from refund-policy.md, effective 2026-01-01):
+- &quot;Refunds over £500 require approval by the Ops Manager before payment is released&quot;
+- &quot;Standard refunds under £500 are processed by any support agent within 48 hours&quot;
+
+**Code Implementation**:
+- Threshold is set to £250, not £500
+
+**Finding**: The code&#x27;s approval threshold (£250) does **not** match the current refund policy (£500). The code is more conservative—requiring approvals for refunds between £250–£500 that the policy allows support agents to process independently.
+</pre></details><details><summary>note: Threshold Comparison Note</summary><pre class="code">## Refund Threshold Mismatch
+
+The code&#x27;s refund approval threshold **does not match** the current policy.
+
+**Policy requirement:** £500 (effective 2026-01-01)  
+**Code value:** £250 (`shop.config.APPROVAL_THRESHOLD_GBP`)
+
+The code threshold is **£250 lower** than the policy mandates. This means refunds that should require Ops Manager approval (£500–£750) are currently being auto-approved by agents. This creates a compliance gap that needs correction.</pre></details>
+<ul>
+<li><strong>Right:</strong> the current policy (£500, approved by the Ops Manager, since 1 January 2026); the code
+(<code>needs_approval</code> reads <code>APPROVAL_THRESHOLD_GBP</code> = 250, called from three places); the
+mismatch.</li>
+<li><strong>Incomplete:</strong> the policy note did not give the 2024 policy's figure, although the graph holds it.</li>
+<li><strong>Wrong:</strong> the final note says refunds of £500 to £750 are auto-approved. A £250 threshold means the
+opposite: the code asks for approval more often than the policy requires, as the code task itself said. The deliverable
+waits for a person's acceptance, and this is the kind of error that step is for.</li>
+<li><strong>Protocol:</strong> each task went from lease to done without a lost lease. The note task read both earlier
+tasks' outputs from its brief. Completing the last task opened the acceptance request.</li>
+</ul>
+
+<h2>What the tests and runs found, and the fixes</h2>
+<div class="scroll"><table class=""><thead><tr><th>Found by</th><th>What was wrong</th><th>The fix</th></tr></thead><tbody><tr><td>Smoke run</td><td>A retried complete with the same key failed with 401: the token stopped working the moment the run ended.</td><td>An ended run keeps a narrow token for one lease period: it can read the run and replay complete or fail, nothing else.</td></tr><tr><td>Smoke run</td><td>Dates on records used the UTC date (already the next day) while recall used the pinned date.</td><td>One clock for both: the service&#x27;s time zone (KL_TIMEZONE), or GRAPH_MEMORY_TODAY when set.</td></tr><tr><td>Transcript test</td><td>A transcript&#x27;s changes were checked with today&#x27;s date instead of the transcript&#x27;s, so its stated dates did not count.</td><td>The input&#x27;s own date is stored on the change request and used at every check.</td></tr><tr><td>Dedup suite</td><td>The same threshold stated by two documents was refused as two thresholds at once.</td><td>The build treats claims with the same text as one fact, stated twice.</td></tr><tr><td>Dedup suite</td><td>A failed extraction&#x27;s reasons were overwritten by a generic message.</td><td>The job keeps the reasons the check gave.</td></tr><tr><td>Review suite</td><td>Session notes (kind session), which the project cases use, were refused.</td><td>Accepted, and routed like transcripts.</td></tr><tr><td>OpenSpec suite</td><td>A requirement with two dated versions listed each verifying test twice.</td><td>Deduplicated.</td></tr><tr><td>Auth and events suite</td><td>The event stream test hung: the server never learned the client had left.</td><td>The stream takes max_events and closes after that many.</td></tr><tr><td>Parallel run</td><td>Under 8-way load, a machine lost its lease between starting and its first heartbeat.</td><td>Fetching the brief now counts as the agent starting: it renews the lease.</td></tr><tr><td>Live agents</td><td>The final note got the consequence backwards: it said refunds are auto-approved, when a £250 threshold means the code asks for approval more often than the policy requires.</td><td>Not a service fault. The upstream outputs it read were right. This is what the person accepting the deliverable is there to catch.</td></tr></tbody></table></div>
+
+<h2>Where it differs from the proposal</h2>
+<div class="scroll"><table class=""><thead><tr><th></th><th>The proposal said</th><th>What was built</th></tr></thead><tbody><tr><td><b>Recall on Postgres</b></td><td>Recall ported to Postgres full-text search.</td><td>Postgres (or SQLite) holds the log. Each workspace&#x27;s graph is a SQLite file projected from it by the existing build and cached on the node. Answers stay identical to the hook&#x27;s, and recall stays at a few milliseconds. Any node rebuilds a workspace&#x27;s graph from the log.</td></tr><tr><td><b>Incremental projection</b></td><td>Only the rows a source produced are recomputed.</td><td>Incremental at the file level: a new version rewrites only its own snapshot files. The SQLite graph is then compiled whole, about 0.3 s for this corpus. A trial before a file becomes current runs only the build&#x27;s four refusal checks. Recomputing rows per source is the next step for large workspaces.</td></tr><tr><td><b>Facts that disagree</b></td><td>Both kept and flagged.</td><td>The build refuses two thresholds for one thing at once, so the newer file is held. A change request offers to make it current and retract the other. The same fact from two files is one claim with two sources.</td></tr><tr><td><b>Meaning search</b></td><td>Full-text and meaning search over projects.</td><td>Full-text and names only.</td></tr><tr><td><b>Plan changes</b></td><td>add_task and set_check operations.</td><td>A new plan version, approved like the first. Tasks it changes are held meanwhile, and the execution moves onto it when it is approved.</td></tr><tr><td><b>Open OpenSpec changes</b></td><td>Shown as pending claims.</td><td>Left out of the graph until archived.</td></tr><tr><td><b>Object storage</b></td><td>Files in object storage.</td><td>Local, content-addressed storage behind a three-method interface. An S3 adapter is not written.</td></tr><tr><td><b>Several approvals</b></td><td>Workspace policy: how many approvals.</td><td>One approval applies a request, as you decided. The setting was removed rather than left unenforced.</td></tr><tr><td><b>Webhook delivery</b></td><td>Delivered from an outbox.</td><td>From the outbox, by one background worker per server process. Running several servers needs one delivery worker, or a lock, to avoid duplicates.</td></tr><tr><td><b>OpenSpec for this repository</b></td><td>openspec init, one change per phase.</td><td>openspec/specs/ was written by hand in OpenSpec&#x27;s format; this machine&#x27;s Node (20.11) is older than the CLI needs. The specs describe what was built, and each scenario is verified by its test.</td></tr></tbody></table></div>
+
+<h2>Not done yet</h2>
+<ul>
+<li>Load testing, backups and restore rehearsal; running the container files (no Docker daemon on this machine).</li>
+<li>An S3 (or other object store) adapter; meaning search; recomputing graph rows per source.</li>
+<li>A sign-in against a real identity provider. OIDC is tested with a local key set, and JWKS URLs are supported.</li>
+<li>Extraction by a model inside the service is wired (<code>KL_EXTRACTOR=claude-cli</code>) but was not run in these
+tests, which send extractions or use fixtures.</li>
+<li>Installed for this work: fastapi 0.116.2, psycopg 3.3.6, PyJWT 2.15.1 and pgserver 0.1.4 (tests only). pgserver
+upgraded platformdirs from 3.10 to 4.12.</li>
+</ul>
+
+<h2>How to run it</h2>
+<pre class="code">pip install -r requirements-dev.txt
+python tests/run_parallel.py            # every suite, in parallel
+python tests/run_parallel.py kl         # the service's suites
+python -m kl init --workspace acme --name "Acme Ltd" --admin-email you@acme.example --admin-name You
+python -m kl serve --port 8080          # REST /v1, OpenAPI /openapi.json, MCP /mcp</pre>
+</main>
+</body>
+</html>

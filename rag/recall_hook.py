@@ -58,6 +58,7 @@ def block(found):
 
 def main():
     try:
+        sys.stdin.reconfigure(encoding="utf-8")  # Claude Code sends UTF-8; Windows would read cp1252
         prompt = json.load(sys.stdin).get("prompt", "")
     except Exception:
         return

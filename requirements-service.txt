@@ -1,0 +1,12 @@
+# The knowledge layer service (kl/). The graph itself (src/) needs only Python 3.10+.
+fastapi>=0.116,<0.117
+uvicorn>=0.35
+pydantic>=2.10
+SQLAlchemy>=2.0.31
+psycopg[binary]>=3.2
+httpx>=0.28
+mcp>=1.12,<1.13
+PyJWT>=2.8
+cryptography>=43
+fasteners>=0.19
+python-multipart>=0.0.20

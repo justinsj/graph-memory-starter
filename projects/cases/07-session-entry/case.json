@@ -1,0 +1,19 @@
+{
+ "title": "A session write-up moves a date and records decisions",
+ "tests": "Reading the digest's write-up of a working session (kind session): the go-live date moves step 5's due date to 7 December and the decisions are recorded. A session is not a new project, and the plan's steps are not added to.",
+ "state": "As after case 06: the helpdesk migration active, step 4 (the migration plan) under way.",
+ "input": "inputs/sessions/2026-09-28-1540.md",
+ "kind": "session",
+ "on": "2026-09-28",
+ "expect": {
+  "created": 0,
+  "projects": {
+   "helpdesk-migration": {
+    "step_due": {
+     "5": "2026-12-07"
+    },
+    "decisions_min": 2
+   }
+  }
+ }
+}

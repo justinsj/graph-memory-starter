@@ -1,0 +1,30 @@
+{
+  "source_doc": "refund-policy-2024.md",
+  "nodes": [
+    {"name": "Refund approvals", "type": "POLICY", "claims": [
+      {"kind": "threshold", "text": "Refunds over £250 need Director approval",
+       "amount": 250, "unit": "GBP", "valid_to": "2026-01-01",
+       "quote": "Refunds over £250 require approval by a Director."},
+      {"kind": "rule", "text": "Refunds under £250 can be approved by any team member after checking the order history",
+       "valid_to": "2026-01-01",
+       "quote": "Refunds under £250 can be approved by any team member after checking the order history."},
+      {"kind": "rule", "text": "Store credit is offered first; cash refunds only where the customer insists or the law requires it",
+       "valid_to": "2026-01-01",
+       "quote": "Store credit is offered first; cash refunds only where the customer insists or the law requires it."},
+      {"kind": "note", "text": "The 2024 refund policy was superseded on 1 January 2026",
+       "quote": "Superseded on 1 January 2026 by the current refund approvals policy."}
+    ]},
+    {"name": "Director", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Approves refunds over £250", "valid_to": "2026-01-01",
+       "quote": "Refunds over £250 require approval by a Director."},
+      {"kind": "unknown", "text": "The 2024 refund policy names no person for the Director role",
+       "valid_to": "2026-01-01",
+       "quote": "Refunds over £250 require approval by a Director."}
+    ]}
+  ],
+  "edges": [
+    {"source": "Refund approvals", "predicate": "approved_by", "target": "Director",
+     "valid_to": "2026-01-01"}
+  ],
+  "aliases": []
+}

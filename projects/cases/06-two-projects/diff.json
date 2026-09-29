@@ -1,0 +1,40 @@
+{
+ "input": "inputs/2026-09-27-ops-catch-up.md",
+ "kind": "transcript",
+ "on": "2026-09-27",
+ "changes": [
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 3,
+   "status": "done",
+   "quote": "I signed the helpdesk contract from the road last night."
+  },
+  {
+   "op": "set_status",
+   "project": "helpdesk-migration",
+   "value": "active",
+   "quote": "Then we're unblocked."
+  },
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 4,
+   "status": "doing",
+   "quote": "I'll start on the migration plan this week."
+  },
+  {
+   "op": "set_field",
+   "project": "refunds-dashboard",
+   "field": "owner",
+   "value": "Marcus Webb",
+   "quote": "Marcus will own it"
+  },
+  {
+   "op": "set_status",
+   "project": "refunds-dashboard",
+   "value": "planning",
+   "quote": "we'll build it once the new helpdesk is live."
+  }
+ ]
+}

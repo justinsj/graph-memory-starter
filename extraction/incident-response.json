@@ -1,8 +1,14 @@
 {
   "source_doc": "incident-response.md",
   "nodes": [
-    {"name": "Incident response", "type": "PROCESS",
-     "description": "Incidents triaged by the Support Lead; severity-1 escalates to the Founder; write-up within 48h"}
+    {"name": "Incident response", "type": "PROCESS", "claims": [
+      {"kind": "responsibility", "text": "Incidents are raised in the ops channel and triaged by the Support Lead",
+       "quote": "Incidents are raised in the ops channel and triaged by the Support Lead."},
+      {"kind": "rule", "text": "Severity-1 incidents (site down, payments failing) escalate to the Founder immediately",
+       "quote": "Severity-1 incidents (site down, payments failing) escalate to the Founder immediately."},
+      {"kind": "deadline", "text": "Every incident gets a write-up within 48 hours of being resolved",
+       "quote": "Every incident gets a short write-up within 48 hours of being resolved."}
+    ]}
   ],
   "edges": [
     {"source": "Incident response", "predicate": "references", "target": "Support Lead"},

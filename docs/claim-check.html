@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>2 ms vs 20 s</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1;
+  --c-startup: #c9ced6; --c-hook: #1baf7a; --c-wait: #9ec5f4; --c-model: #2a78d6;
+  --c-answer: #184f95; --c-tool: #eb6834;
+  --n1: #d7dbe1; --n2: #b9c0c9; --q0: #2e343c; --q1: #7d8793; --q2: #c4cad2;
+  --zoom: rgba(27, 175, 122, 0.10);
+  --good: #0ca30c; --warn: #d99500; --none: #8a929d;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c;
+    --c-startup: #3b424c; --c-hook: #199e70; --c-wait: #1c5cab; --c-model: #3987e5;
+    --c-answer: #b7d3f6; --c-tool: #d95926;
+    --n1: #2c323b; --n2: #434b56; --q0: #e6e9ee; --q1: #99a2ad; --q2: #4b535e;
+    --zoom: rgba(25, 158, 112, 0.14);
+    --good: #0ca30c; --warn: #fab219; --none: #7d8692;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c;
+  --c-startup: #3b424c; --c-hook: #199e70; --c-wait: #1c5cab; --c-model: #3987e5;
+  --c-answer: #b7d3f6; --c-tool: #d95926;
+  --n1: #2c323b; --n2: #434b56; --q0: #e6e9ee; --q1: #99a2ad; --q2: #4b535e;
+  --zoom: rgba(25, 158, 112, 0.14);
+  --good: #0ca30c; --warn: #fab219; --none: #7d8692;
+}
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--sans); }
+.wrap { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+header { display: grid; gap: 18px; margin-bottom: 36px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(40px, 7vw, 64px); line-height: 1; letter-spacing: -.02em; margin: 0; font-weight: 700; }
+h2 { font-size: 24px; line-height: 1.25; margin: 0; text-wrap: balance; font-weight: 650; }
+h3 { font-size: 15px; margin: 0; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code { font: 0.88em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.claim { margin: 0; display: grid; gap: 6px; }
+.claim blockquote { margin: 0; font-size: 19px; line-height: 1.5; max-width: 62ch; color: var(--ink); }
+.claim blockquote::before { content: "“"; } .claim blockquote::after { content: "”"; }
+.claim figcaption { font: 12px var(--mono); color: var(--muted); }
+.lede { font-size: 17px; color: var(--ink-2); }
+.num, .n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.verdicts { display: grid; border-top: 1px solid var(--hair); margin: 8px 0 56px; }
+.verdict-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1.9fr); gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--hair); align-items: start; }
+.verdict-row q { font-weight: 600; quotes: "“" "”"; }
+.verdict-row p { color: var(--ink-2); font-size: 15px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; font: 600 13px/1 var(--sans); padding: 6px 11px 6px 8px; border: 1px solid var(--hair); border-radius: 999px; background: var(--surface); justify-self: start; white-space: nowrap; }
+.chip svg { width: 14px; height: 14px; flex: none; }
+.chip.good svg { color: var(--good); } .chip.warn svg { color: var(--warn); } .chip.none svg { color: var(--none); }
+
+section { display: grid; gap: 16px; margin-bottom: 64px; }
+section > p { color: var(--ink-2); }
+figure.panel { margin: 4px 0 0; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 20px; display: grid; gap: 14px; }
+figure.panel figcaption { font-size: 14px; color: var(--ink-2); max-width: 78ch; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.chart { display: block; width: 100%; height: auto; min-width: 720px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--ink-2); list-style: none; padding: 0; margin: 0; }
+.legend li { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.sw.tall { width: 5px; height: 14px; }
+.sw.dot { width: 11px; height: 11px; border-radius: 50%; }
+.sw.ring { width: 11px; height: 11px; border-radius: 50%; background: var(--surface); border: 2px solid var(--ink-2); box-sizing: border-box; }
+.bullets { display: grid; gap: 8px; margin: 0; padding-left: 20px; color: var(--ink-2); max-width: 78ch; }
+
+/* svg */
+.chart text { fill: var(--ink-2); font: 12px var(--sans); }
+.chart .tick { fill: var(--muted); font: 11px var(--mono); }
+.chart .grid { stroke: var(--hair); stroke-width: 1; }
+.chart .axis { stroke: var(--base); stroke-width: 1; }
+.chart .group { fill: var(--ink); font-weight: 600; font-size: 13px; }
+.chart .group-sub { fill: var(--muted); font: 11px var(--mono); }
+.chart .rowsum .num { fill: var(--ink); font: 600 12px var(--mono); }
+.chart .rowsum .muted { fill: var(--muted); }
+.seg-startup { fill: var(--c-startup); } .seg-hook { fill: var(--c-hook); } .seg-wait { fill: var(--c-wait); }
+.seg-model { fill: var(--c-model); } .seg-answer { fill: var(--c-answer); } .seg-tool { fill: var(--c-tool); }
+.chart .ring { stroke: var(--surface); stroke-width: 1; }
+.chart .lvl { fill: var(--ink); font-weight: 600; font-size: 13px; }
+.chart .lvl-num { fill: var(--ink); font: 600 13px var(--mono); }
+.chart .zl { fill: var(--ink); font-size: 12px; }
+.chart .zv { fill: var(--muted); font: 11px var(--mono); }
+.chart .leader { stroke: var(--base); stroke-width: 1; }
+.chart .zoom { fill: var(--zoom); stroke: var(--base); stroke-width: 1; }
+.z-n1 { fill: var(--n1); } .z-n2 { fill: var(--n2); }
+.q0 { fill: var(--q0); } .q1 { fill: var(--q1); } .q2 { fill: var(--q2); } .q-ans { fill: var(--c-hook); }
+.chart .faded { opacity: .32; }
+.chart .sent { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.chart .ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart .ref-l { fill: var(--muted); font-size: 11px; }
+.chart .line { fill: none; stroke-width: 2; }
+.chart .line.s1 { stroke: var(--c-model); } .chart .line.s2 { stroke: var(--c-tool); }
+.chart .dot { stroke: var(--surface); stroke-width: 2; }
+.chart .dot.s1 { fill: var(--c-model); } .chart .dot.s2 { fill: var(--c-tool); }
+.chart .dot.hollow { fill: var(--surface); stroke-width: 2; }
+.chart .dot.hollow.s1 { stroke: var(--c-model); } .chart .dot.hollow.s2 { stroke: var(--c-tool); }
+.chart .dl { fill: var(--ink); font-weight: 600; }
+.chart [data-tip]:hover { filter: brightness(1.12); }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 760px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 12.5px; white-space: nowrap; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+tr.excluded td { color: var(--muted); font-style: italic; }
+.table-panel { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 6px 10px; }
+
+.tip { position: fixed; z-index: 10; pointer-events: none; max-width: 300px; background: var(--ink); color: var(--bg); font: 12.5px/1.45 var(--sans); padding: 7px 10px; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+
+@media (max-width: 720px) {
+  .verdict-row { grid-template-columns: 1fr; gap: 8px; }
+  .wrap { padding-block: 28px 56px; }
+  figure.panel { padding: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">graph-memory-starter · README claim, measured</div>
+  <h1>2 ms vs 20 s</h1>
+  <figure class="claim">
+    <blockquote>Retrieval: 2 ms per query. The ~400-token injection is fixed at any corpus size; search reads grow with it. Live terminal runs: 20 s of visible searching vs an answer that starts immediately after the 2 ms recall line.</blockquote>
+    <figcaption>README.md · Evals</figcaption>
+  </figure>
+  <p class="lede">Measured on 22–23 September 2026 with the repo's own code and 12 live <code>claude -p</code> runs. The 2 ms is real, but it is the name matching and SQL inside a 130–154 ms hook step, inside a 4–6 s answer. The search time is almost all model turns: Grep, Read and Glob ran for 0.10–0.14 s of each search run.</p>
+<p class="lede" style="font-size:14px">This page measured the code at commit <code>496a6e9</code>, before the changes in <a href="improvement-proposals.html">improvement-proposals.html</a> were applied. Current numbers: <code>bench/recall-report.md</code> and <code>bench/live-report.md</code>.</p>
+</header>
+
+<div class="verdicts" role="list">
+  <div class="verdict-row" role="listitem">
+    <q>Retrieval: 2 ms per query.</q>
+    <span class="chip good"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.6 8.3l2.2 2.2 4.6-4.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Holds at this size</span>
+    <p><code>recall()</code> printed 2–3 ms in every graph run. That covers the name matching and SQL only. The hook step around it took 130–154 ms in Claude Code, mostly starting Python. It also grows with the graph: 89 ms at 3,013 entities.</p>
+  </div>
+  <div class="verdict-row" role="listitem">
+    <q>The ~400-token injection is fixed at any corpus size</q>
+    <span class="chip warn"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg>Partly</span>
+    <p>The refund question injects 1,608 characters, which cost 459 input tokens on Haiku 4.5 and 635 on Sonnet 5. The cap is 8 facts, so it doesn't grow, but it isn't fixed: 68 to 1,627 characters by question. In a bigger graph the cap can push the answer out.</p>
+  </div>
+  <div class="verdict-row" role="listitem">
+    <q>search reads grow with it</q>
+    <span class="chip none"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 8h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Not tested</span>
+    <p>Every run used the same 12 documents, so growth can't be seen here. Each search run read 3,503–3,736 characters of documents in 5–6 tool calls.</p>
+  </div>
+  <div class="verdict-row" role="listitem">
+    <q>20 s of visible searching vs an answer that starts immediately after the 2 ms recall line</q>
+    <span class="chip warn"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg>Partly</span>
+    <p>Search took 10.3–15.9 s here, not 20 s. With the graph, the recall line appeared 0.9–1.1 s in and the first answer word 2.5–4.0 s later, which is one model turn with thinking. That only holds when the model trusts the facts: told the docs were in the folder, Sonnet 5 re-read them and took 13.0–15.3 s.</p>
+  </div>
+</div>
+
+<section id="timeline">
+  <h2>Where the seconds go</h2>
+  <p>Each tool call costs model time on both sides: the model writes the request, then reads the result before its next move. Search runs made 5–6 calls over 3–4 model turns. Graph runs that trusted the injected facts made none and answered in one turn.</p>
+  <figure class="panel">
+    <ul class="legend" aria-label="Legend">
+      <li><span class="sw" style="background:var(--c-startup)"></span>Claude Code start-up</li>
+      <li><span class="sw" style="background:var(--c-hook)"></span>Graph hook</li>
+      <li><span class="sw" style="background:var(--c-wait)"></span>Waiting for first token</li>
+      <li><span class="sw" style="background:var(--c-model)"></span>Model thinking, requesting tools</li>
+      <li><span class="sw" style="background:var(--c-answer)"></span>Answer streaming</li>
+      <li><span class="sw tall" style="background:var(--c-tool)"></span>Tool running</li>
+    </ul>
+    <div class="scroll"><svg class="chart" viewBox="0 0 940 452" role="img" aria-label="Timeline of 12 runs drawn to scale. Search runs took 10.3 to 15.9 seconds, with tools running about a tenth of a second in each. Graph runs where the model trusted the injected facts took 4.4 to 6.1 seconds with no tool calls. Graph runs where Sonnet re-read the docs took 13.0 to 15.3 seconds."><line class="grid" x1="196.0" y1="26" x2="196.0" y2="442"/>
+<text class="tick" x="196.0" y="16" text-anchor="middle">0 s</text>
+<line class="grid" x1="271.0" y1="26" x2="271.0" y2="442"/>
+<text class="tick" x="271.0" y="16" text-anchor="middle">2 s</text>
+<line class="grid" x1="346.0" y1="26" x2="346.0" y2="442"/>
+<text class="tick" x="346.0" y="16" text-anchor="middle">4 s</text>
+<line class="grid" x1="421.0" y1="26" x2="421.0" y2="442"/>
+<text class="tick" x="421.0" y="16" text-anchor="middle">6 s</text>
+<line class="grid" x1="496.0" y1="26" x2="496.0" y2="442"/>
+<text class="tick" x="496.0" y="16" text-anchor="middle">8 s</text>
+<line class="grid" x1="571.0" y1="26" x2="571.0" y2="442"/>
+<text class="tick" x="571.0" y="16" text-anchor="middle">10 s</text>
+<line class="grid" x1="646.0" y1="26" x2="646.0" y2="442"/>
+<text class="tick" x="646.0" y="16" text-anchor="middle">12 s</text>
+<line class="grid" x1="721.0" y1="26" x2="721.0" y2="442"/>
+<text class="tick" x="721.0" y="16" text-anchor="middle">14 s</text>
+<line class="grid" x1="796.0" y1="26" x2="796.0" y2="442"/>
+<text class="tick" x="796.0" y="16" text-anchor="middle">16 s</text>
+<text class="group" x="0" y="50">Search: the model reads the docs itself</text>
+<text class="group-sub" x="940" y="50" text-anchor="end">10.3–15.9 s end to end</text>
+<text class="rowlabel" x="0" y="72">Sonnet 5 · no hint</text>
+<rect class="seg-startup" x="196.00" y="61" width="29.87" height="14" data-tip="Claude Code start-up · 0.80 s (0.00 s to 0.80 s)"/>
+<rect class="seg-wait" x="225.87" y="61" width="50.55" height="14" data-tip="Waiting for the model&#x27;s first token · 1.35 s (0.80 s to 2.14 s)"/>
+<rect class="seg-model" x="276.42" y="61" width="81.71" height="14" data-tip="Model thinking and requesting tools · 2.18 s (2.14 s to 4.32 s)"/>
+<rect class="seg-tool" x="358.13" y="61" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (4.32 s to 4.33 s)"/>
+<rect class="seg-wait" x="358.49" y="61" width="40.72" height="14" data-tip="Waiting for the model&#x27;s first token · 1.09 s (4.33 s to 5.42 s)"/>
+<rect class="seg-model" x="399.21" y="61" width="43.62" height="14" data-tip="Model thinking and requesting tools · 1.16 s (5.42 s to 6.58 s)"/>
+<rect class="seg-tool" x="442.83" y="61" width="1.94" height="14" data-tip="Claude Code handing tool results back · 0.05 s (6.58 s to 6.63 s)"/>
+<rect class="seg-wait" x="444.77" y="61" width="40.05" height="14" data-tip="Waiting for the model&#x27;s first token · 1.07 s (6.63 s to 7.70 s)"/>
+<rect class="seg-model" x="484.82" y="61" width="180.45" height="14" data-tip="Model thinking and requesting tools · 4.81 s (7.70 s to 12.51 s)"/>
+<rect class="seg-tool" x="665.27" y="61" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (12.51 s to 12.53 s)"/>
+<rect class="seg-wait" x="665.74" y="61" width="67.32" height="14" data-tip="Waiting for the model&#x27;s first token · 1.80 s (12.53 s to 14.32 s)"/>
+<rect class="seg-model" x="733.07" y="61" width="1.20" height="14" data-tip="Model thinking and requesting tools · 0.00 s (14.32 s to 14.32 s)"/>
+<rect class="seg-answer" x="733.08" y="61" width="57.12" height="14" data-tip="Answer text streaming · 1.52 s (14.32 s to 15.85 s)"/>
+<rect class="seg-tool ring" x="357.38" y="58" width="2.20" height="20" data-tip="Read ran 18 ms · 233 characters back"/>
+<rect class="seg-tool ring" x="442.40" y="58" width="2.31" height="20" data-tip="Glob ran 62 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="566.02" y="58" width="2.20" height="20" data-tip="Read ran 11 ms · 1,830 characters back"/>
+<rect class="seg-tool ring" x="601.13" y="58" width="2.20" height="20" data-tip="Read ran 12 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="636.50" y="58" width="2.20" height="20" data-tip="Read ran 12 ms · 455 characters back"/>
+<rect class="seg-tool ring" x="664.91" y="58" width="2.20" height="20" data-tip="Read ran 9 ms · 485 characters back"/>
+<text class="rowsum" x="940" y="72" text-anchor="end"><tspan class="num">15.9 s</tspan><tspan class="muted"> · 6 tools</tspan></text>
+<text class="rowlabel" x="0" y="98">Sonnet 5 · hint · run 1</text>
+<rect class="seg-startup" x="196.00" y="87" width="30.50" height="14" data-tip="Claude Code start-up · 0.81 s (0.00 s to 0.81 s)"/>
+<rect class="seg-wait" x="226.50" y="87" width="81.41" height="14" data-tip="Waiting for the model&#x27;s first token · 2.17 s (0.81 s to 2.98 s)"/>
+<rect class="seg-model" x="307.91" y="87" width="35.40" height="14" data-tip="Model thinking and requesting tools · 0.94 s (2.98 s to 3.93 s)"/>
+<rect class="seg-tool" x="343.31" y="87" width="1.30" height="14" data-tip="Claude Code handing tool results back · 0.03 s (3.93 s to 3.96 s)"/>
+<rect class="seg-wait" x="344.61" y="87" width="42.40" height="14" data-tip="Waiting for the model&#x27;s first token · 1.13 s (3.96 s to 5.09 s)"/>
+<rect class="seg-model" x="387.01" y="87" width="170.27" height="14" data-tip="Model thinking and requesting tools · 4.54 s (5.09 s to 9.63 s)"/>
+<rect class="seg-tool" x="557.28" y="87" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.02 s (9.63 s to 9.65 s)"/>
+<rect class="seg-wait" x="557.97" y="87" width="48.86" height="14" data-tip="Waiting for the model&#x27;s first token · 1.30 s (9.65 s to 10.96 s)"/>
+<rect class="seg-model" x="606.82" y="87" width="1.20" height="14" data-tip="Model thinking and requesting tools · 0.00 s (10.96 s to 10.96 s)"/>
+<rect class="seg-answer" x="606.83" y="87" width="78.95" height="14" data-tip="Answer text streaming · 2.11 s (10.96 s to 13.06 s)"/>
+<rect class="seg-tool ring" x="342.45" y="84" width="2.20" height="20" data-tip="Glob ran 55 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="458.02" y="84" width="2.20" height="20" data-tip="Read ran 41 ms · 1,830 characters back"/>
+<rect class="seg-tool ring" x="508.59" y="84" width="2.20" height="20" data-tip="Read ran 11 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="524.79" y="84" width="2.20" height="20" data-tip="Read ran 9 ms · 485 characters back"/>
+<rect class="seg-tool ring" x="556.95" y="84" width="2.20" height="20" data-tip="Read ran 13 ms · 455 characters back"/>
+<text class="rowsum" x="940" y="98" text-anchor="end"><tspan class="num">13.1 s</tspan><tspan class="muted"> · 5 tools</tspan></text>
+<text class="rowlabel" x="0" y="124">Sonnet 5 · hint · run 2</text>
+<rect class="seg-startup" x="196.00" y="113" width="31.95" height="14" data-tip="Claude Code start-up · 0.85 s (0.00 s to 0.85 s)"/>
+<rect class="seg-wait" x="227.95" y="113" width="27.17" height="14" data-tip="Waiting for the model&#x27;s first token · 0.72 s (0.85 s to 1.58 s)"/>
+<rect class="seg-model" x="255.13" y="113" width="29.34" height="14" data-tip="Model thinking and requesting tools · 0.78 s (1.58 s to 2.36 s)"/>
+<rect class="seg-tool" x="284.47" y="113" width="1.27" height="14" data-tip="Claude Code handing tool results back · 0.03 s (2.36 s to 2.39 s)"/>
+<rect class="seg-wait" x="285.73" y="113" width="23.49" height="14" data-tip="Waiting for the model&#x27;s first token · 0.63 s (2.39 s to 3.02 s)"/>
+<rect class="seg-model" x="309.22" y="113" width="187.90" height="14" data-tip="Model thinking and requesting tools · 5.01 s (3.02 s to 8.03 s)"/>
+<rect class="seg-tool" x="497.12" y="113" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.02 s (8.03 s to 8.05 s)"/>
+<rect class="seg-wait" x="497.76" y="113" width="19.06" height="14" data-tip="Waiting for the model&#x27;s first token · 0.51 s (8.05 s to 8.56 s)"/>
+<rect class="seg-model" x="516.82" y="113" width="20.13" height="14" data-tip="Model thinking and requesting tools · 0.54 s (8.56 s to 9.09 s)"/>
+<rect class="seg-answer" x="536.95" y="113" width="45.56" height="14" data-tip="Answer text streaming · 1.21 s (9.09 s to 10.31 s)"/>
+<rect class="seg-tool ring" x="283.60" y="110" width="2.20" height="20" data-tip="Glob ran 54 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="387.84" y="110" width="2.20" height="20" data-tip="Read ran 12 ms · 1,830 characters back"/>
+<rect class="seg-tool ring" x="425.25" y="110" width="2.20" height="20" data-tip="Read ran 10 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="461.30" y="110" width="2.20" height="20" data-tip="Read ran 11 ms · 485 characters back"/>
+<rect class="seg-tool ring" x="496.50" y="110" width="2.20" height="20" data-tip="Read ran 12 ms · 455 characters back"/>
+<text class="rowsum" x="940" y="124" text-anchor="end"><tspan class="num">10.3 s</tspan><tspan class="muted"> · 5 tools</tspan></text>
+<text class="rowlabel" x="0" y="150">Haiku 4.5 · hint · run 2</text>
+<rect class="seg-startup" x="196.00" y="139" width="31.79" height="14" data-tip="Claude Code start-up · 0.85 s (0.00 s to 0.85 s)"/>
+<rect class="seg-wait" x="227.79" y="139" width="27.10" height="14" data-tip="Waiting for the model&#x27;s first token · 0.72 s (0.85 s to 1.57 s)"/>
+<rect class="seg-model" x="254.89" y="139" width="66.19" height="14" data-tip="Model thinking and requesting tools · 1.76 s (1.57 s to 3.34 s)"/>
+<rect class="seg-tool" x="321.08" y="139" width="1.91" height="14" data-tip="Claude Code handing tool results back · 0.05 s (3.34 s to 3.39 s)"/>
+<rect class="seg-wait" x="322.99" y="139" width="19.27" height="14" data-tip="Waiting for the model&#x27;s first token · 0.51 s (3.39 s to 3.90 s)"/>
+<rect class="seg-model" x="342.26" y="139" width="97.40" height="14" data-tip="Model thinking and requesting tools · 2.60 s (3.90 s to 6.50 s)"/>
+<rect class="seg-tool" x="439.66" y="139" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (6.50 s to 6.51 s)"/>
+<rect class="seg-wait" x="439.98" y="139" width="22.03" height="14" data-tip="Waiting for the model&#x27;s first token · 0.59 s (6.51 s to 7.09 s)"/>
+<rect class="seg-model" x="462.01" y="139" width="102.44" height="14" data-tip="Model thinking and requesting tools · 2.73 s (7.09 s to 9.83 s)"/>
+<rect class="seg-tool" x="564.45" y="139" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (9.83 s to 9.83 s)"/>
+<rect class="seg-wait" x="564.75" y="139" width="25.02" height="14" data-tip="Waiting for the model&#x27;s first token · 0.67 s (9.83 s to 10.50 s)"/>
+<rect class="seg-model" x="589.77" y="139" width="35.73" height="14" data-tip="Model thinking and requesting tools · 0.95 s (10.50 s to 11.45 s)"/>
+<rect class="seg-answer" x="625.50" y="139" width="55.16" height="14" data-tip="Answer text streaming · 1.47 s (11.45 s to 12.92 s)"/>
+<rect class="seg-tool ring" x="320.59" y="136" width="2.28" height="20" data-tip="Glob ran 61 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="407.32" y="136" width="2.20" height="20" data-tip="Read ran 44 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="423.38" y="136" width="2.20" height="20" data-tip="Read ran 11 ms · 1,830 characters back"/>
+<rect class="seg-tool ring" x="439.18" y="136" width="2.20" height="20" data-tip="Read ran 11 ms · 455 characters back"/>
+<rect class="seg-tool ring" x="564.10" y="136" width="2.20" height="20" data-tip="Read ran 14 ms · 485 characters back"/>
+<text class="rowsum" x="940" y="150" text-anchor="end"><tspan class="num">12.9 s</tspan><tspan class="muted"> · 5 tools</tspan></text>
+<text class="rowlabel" x="0" y="176">Haiku 4.5 · hint · run 3</text>
+<rect class="seg-startup" x="196.00" y="165" width="31.90" height="14" data-tip="Claude Code start-up · 0.85 s (0.00 s to 0.85 s)"/>
+<rect class="seg-wait" x="227.90" y="165" width="28.43" height="14" data-tip="Waiting for the model&#x27;s first token · 0.76 s (0.85 s to 1.61 s)"/>
+<rect class="seg-model" x="256.33" y="165" width="62.13" height="14" data-tip="Model thinking and requesting tools · 1.66 s (1.61 s to 3.27 s)"/>
+<rect class="seg-tool" x="318.46" y="165" width="1.99" height="14" data-tip="Claude Code handing tool results back · 0.05 s (3.27 s to 3.32 s)"/>
+<rect class="seg-wait" x="320.45" y="165" width="18.62" height="14" data-tip="Waiting for the model&#x27;s first token · 0.50 s (3.32 s to 3.82 s)"/>
+<rect class="seg-model" x="339.07" y="165" width="176.27" height="14" data-tip="Model thinking and requesting tools · 4.70 s (3.82 s to 8.52 s)"/>
+<rect class="seg-tool" x="515.34" y="165" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (8.52 s to 8.52 s)"/>
+<rect class="seg-wait" x="515.61" y="165" width="16.82" height="14" data-tip="Waiting for the model&#x27;s first token · 0.45 s (8.52 s to 8.97 s)"/>
+<rect class="seg-model" x="532.43" y="165" width="118.04" height="14" data-tip="Model thinking and requesting tools · 3.15 s (8.97 s to 12.12 s)"/>
+<rect class="seg-answer" x="650.47" y="165" width="53.46" height="14" data-tip="Answer text streaming · 1.43 s (12.12 s to 13.54 s)"/>
+<rect class="seg-tool ring" x="317.92" y="162" width="2.39" height="20" data-tip="Glob ran 64 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="423.20" y="162" width="2.20" height="20" data-tip="Read ran 12 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="452.77" y="162" width="2.20" height="20" data-tip="Read ran 10 ms · 485 characters back"/>
+<rect class="seg-tool ring" x="484.42" y="162" width="2.20" height="20" data-tip="Read ran 10 ms · 455 characters back"/>
+<rect class="seg-tool ring" x="514.87" y="162" width="2.20" height="20" data-tip="Read ran 12 ms · 1,830 characters back"/>
+<text class="rowsum" x="940" y="176" text-anchor="end"><tspan class="num">13.6 s</tspan><tspan class="muted"> · 5 tools</tspan></text>
+<text class="group" x="0" y="214">Graph: the model answers from the injected facts</text>
+<text class="group-sub" x="940" y="214" text-anchor="end">4.4–6.1 s end to end</text>
+<text class="rowlabel" x="0" y="236">Sonnet 5 · no hint</text>
+<rect class="seg-startup" x="196.00" y="225" width="31.89" height="14" data-tip="Claude Code start-up · 0.85 s (0.00 s to 0.85 s)"/>
+<rect class="seg-hook" x="227.89" y="225" width="5.14" height="14" data-tip="Graph hook (recall runs inside) · 0.14 s (0.85 s to 0.99 s)"/>
+<rect class="seg-wait" x="233.68" y="225" width="26.31" height="14" data-tip="Waiting for the model&#x27;s first token · 0.70 s (1.00 s to 1.71 s)"/>
+<rect class="seg-model" x="259.99" y="225" width="66.74" height="14" data-tip="Model thinking and requesting tools · 1.78 s (1.71 s to 3.49 s)"/>
+<rect class="seg-answer" x="326.73" y="225" width="32.05" height="14" data-tip="Answer text streaming · 0.85 s (3.49 s to 4.34 s)"/>
+<text class="rowsum" x="940" y="236" text-anchor="end"><tspan class="num">4.4 s</tspan><tspan class="muted"> · 0 tools</tspan></text>
+<text class="rowlabel" x="0" y="262">Haiku 4.5 · no hint</text>
+<rect class="seg-startup" x="196.00" y="251" width="30.30" height="14" data-tip="Claude Code start-up · 0.81 s (0.00 s to 0.81 s)"/>
+<rect class="seg-hook" x="226.30" y="251" width="4.88" height="14" data-tip="Graph hook (recall runs inside) · 0.13 s (0.81 s to 0.94 s)"/>
+<rect class="seg-wait" x="231.70" y="251" width="24.40" height="14" data-tip="Waiting for the model&#x27;s first token · 0.65 s (0.95 s to 1.60 s)"/>
+<rect class="seg-model" x="256.10" y="251" width="88.68" height="14" data-tip="Model thinking and requesting tools · 2.36 s (1.60 s to 3.97 s)"/>
+<rect class="seg-answer" x="344.78" y="251" width="33.09" height="14" data-tip="Answer text streaming · 0.88 s (3.97 s to 4.85 s)"/>
+<text class="rowsum" x="940" y="262" text-anchor="end"><tspan class="num">4.9 s</tspan><tspan class="muted"> · 0 tools</tspan></text>
+<text class="rowlabel" x="0" y="288">Haiku 4.5 · hint · run 1</text>
+<rect class="seg-startup" x="196.00" y="277" width="31.81" height="14" data-tip="Claude Code start-up · 0.85 s (0.00 s to 0.85 s)"/>
+<rect class="seg-hook" x="227.81" y="277" width="5.44" height="14" data-tip="Graph hook (recall runs inside) · 0.14 s (0.85 s to 0.99 s)"/>
+<rect class="seg-wait" x="233.83" y="277" width="19.40" height="14" data-tip="Waiting for the model&#x27;s first token · 0.52 s (1.01 s to 1.53 s)"/>
+<rect class="seg-model" x="253.22" y="277" width="115.84" height="14" data-tip="Model thinking and requesting tools · 3.09 s (1.53 s to 4.62 s)"/>
+<rect class="seg-answer" x="369.07" y="277" width="38.00" height="14" data-tip="Answer text streaming · 1.01 s (4.62 s to 5.63 s)"/>
+<text class="rowsum" x="940" y="288" text-anchor="end"><tspan class="num">5.6 s</tspan><tspan class="muted"> · 0 tools</tspan></text>
+<text class="rowlabel" x="0" y="314">Haiku 4.5 · hint · run 2</text>
+<rect class="seg-startup" x="196.00" y="303" width="32.48" height="14" data-tip="Claude Code start-up · 0.87 s (0.00 s to 0.87 s)"/>
+<rect class="seg-hook" x="228.48" y="303" width="5.50" height="14" data-tip="Graph hook (recall runs inside) · 0.15 s (0.87 s to 1.01 s)"/>
+<rect class="seg-wait" x="234.58" y="303" width="24.98" height="14" data-tip="Waiting for the model&#x27;s first token · 0.67 s (1.03 s to 1.70 s)"/>
+<rect class="seg-model" x="259.56" y="303" width="125.61" height="14" data-tip="Model thinking and requesting tools · 3.35 s (1.70 s to 5.04 s)"/>
+<rect class="seg-answer" x="385.17" y="303" width="39.50" height="14" data-tip="Answer text streaming · 1.05 s (5.04 s to 6.10 s)"/>
+<text class="rowsum" x="940" y="314" text-anchor="end"><tspan class="num">6.1 s</tspan><tspan class="muted"> · 0 tools</tspan></text>
+<text class="rowlabel" x="0" y="340">Haiku 4.5 · hint · run 3</text>
+<rect class="seg-startup" x="196.00" y="329" width="35.31" height="14" data-tip="Claude Code start-up · 0.94 s (0.00 s to 0.94 s)"/>
+<rect class="seg-hook" x="231.31" y="329" width="5.31" height="14" data-tip="Graph hook (recall runs inside) · 0.14 s (0.94 s to 1.08 s)"/>
+<rect class="seg-wait" x="237.22" y="329" width="17.73" height="14" data-tip="Waiting for the model&#x27;s first token · 0.47 s (1.10 s to 1.57 s)"/>
+<rect class="seg-model" x="254.95" y="329" width="88.50" height="14" data-tip="Model thinking and requesting tools · 2.36 s (1.57 s to 3.93 s)"/>
+<rect class="seg-answer" x="343.45" y="329" width="46.33" height="14" data-tip="Answer text streaming · 1.24 s (3.93 s to 5.17 s)"/>
+<text class="rowsum" x="940" y="340" text-anchor="end"><tspan class="num">5.2 s</tspan><tspan class="muted"> · 0 tools</tspan></text>
+<text class="group" x="0" y="378">Graph: the model re-reads the docs anyway</text>
+<text class="group-sub" x="940" y="378" text-anchor="end">13.0–15.3 s end to end</text>
+<text class="rowlabel" x="0" y="400">Sonnet 5 · hint · run 1</text>
+<rect class="seg-startup" x="196.00" y="389" width="31.76" height="14" data-tip="Claude Code start-up · 0.85 s (0.00 s to 0.85 s)"/>
+<rect class="seg-hook" x="227.76" y="389" width="5.79" height="14" data-tip="Graph hook (recall runs inside) · 0.15 s (0.85 s to 1.00 s)"/>
+<rect class="seg-wait" x="234.23" y="389" width="42.87" height="14" data-tip="Waiting for the model&#x27;s first token · 1.14 s (1.02 s to 2.16 s)"/>
+<rect class="seg-model" x="277.10" y="389" width="107.02" height="14" data-tip="Model thinking and requesting tools · 2.85 s (2.16 s to 5.02 s)"/>
+<rect class="seg-tool" x="384.12" y="389" width="1.84" height="14" data-tip="Claude Code handing tool results back · 0.05 s (5.02 s to 5.07 s)"/>
+<rect class="seg-wait" x="385.96" y="389" width="19.08" height="14" data-tip="Waiting for the model&#x27;s first token · 0.51 s (5.07 s to 5.57 s)"/>
+<rect class="seg-model" x="405.04" y="389" width="257.97" height="14" data-tip="Model thinking and requesting tools · 6.88 s (5.57 s to 12.45 s)"/>
+<rect class="seg-tool" x="663.01" y="389" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (12.45 s to 12.46 s)"/>
+<rect class="seg-wait" x="663.35" y="389" width="26.96" height="14" data-tip="Waiting for the model&#x27;s first token · 0.72 s (12.46 s to 13.18 s)"/>
+<rect class="seg-model" x="690.31" y="389" width="1.20" height="14" data-tip="Model thinking and requesting tools · 0.00 s (13.18 s to 13.18 s)"/>
+<rect class="seg-answer" x="690.32" y="389" width="80.28" height="14" data-tip="Answer text streaming · 2.14 s (13.18 s to 15.32 s)"/>
+<rect class="seg-tool ring" x="383.57" y="386" width="2.28" height="20" data-tip="Glob ran 61 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="562.88" y="386" width="2.20" height="20" data-tip="Read ran 12 ms · 1,830 characters back"/>
+<rect class="seg-tool ring" x="598.65" y="386" width="2.20" height="20" data-tip="Read ran 13 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="631.00" y="386" width="2.20" height="20" data-tip="Read ran 10 ms · 455 characters back"/>
+<rect class="seg-tool ring" x="661.60" y="386" width="2.20" height="20" data-tip="Read ran 10 ms · 485 characters back"/>
+<text class="rowsum" x="940" y="400" text-anchor="end"><tspan class="num">15.3 s</tspan><tspan class="muted"> · 5 tools</tspan></text>
+<text class="rowlabel" x="0" y="426">Sonnet 5 · hint · run 2</text>
+<rect class="seg-startup" x="196.00" y="415" width="28.63" height="14" data-tip="Claude Code start-up · 0.76 s (0.00 s to 0.76 s)"/>
+<rect class="seg-hook" x="224.63" y="415" width="5.23" height="14" data-tip="Graph hook (recall runs inside) · 0.14 s (0.76 s to 0.90 s)"/>
+<rect class="seg-wait" x="230.52" y="415" width="22.55" height="14" data-tip="Waiting for the model&#x27;s first token · 0.60 s (0.92 s to 1.52 s)"/>
+<rect class="seg-model" x="253.07" y="415" width="60.84" height="14" data-tip="Model thinking and requesting tools · 1.62 s (1.52 s to 3.14 s)"/>
+<rect class="seg-tool" x="313.92" y="415" width="1.67" height="14" data-tip="Claude Code handing tool results back · 0.04 s (3.14 s to 3.19 s)"/>
+<rect class="seg-wait" x="315.59" y="415" width="24.00" height="14" data-tip="Waiting for the model&#x27;s first token · 0.64 s (3.19 s to 3.83 s)"/>
+<rect class="seg-model" x="339.58" y="415" width="221.78" height="14" data-tip="Model thinking and requesting tools · 5.91 s (3.83 s to 9.74 s)"/>
+<rect class="seg-tool" x="561.37" y="415" width="1.20" height="14" data-tip="Claude Code handing tool results back · 0.01 s (9.74 s to 9.75 s)"/>
+<rect class="seg-wait" x="561.77" y="415" width="21.13" height="14" data-tip="Waiting for the model&#x27;s first token · 0.56 s (9.75 s to 10.32 s)"/>
+<rect class="seg-model" x="582.91" y="415" width="1.20" height="14" data-tip="Model thinking and requesting tools · 0.00 s (10.32 s to 10.32 s)"/>
+<rect class="seg-answer" x="582.91" y="415" width="100.25" height="14" data-tip="Answer text streaming · 2.67 s (10.32 s to 12.99 s)"/>
+<rect class="seg-tool ring" x="313.41" y="412" width="2.20" height="20" data-tip="Glob ran 55 ms · 241 characters back"/>
+<rect class="seg-tool ring" x="447.26" y="412" width="2.20" height="20" data-tip="Read ran 13 ms · 1,830 characters back"/>
+<rect class="seg-tool ring" x="488.32" y="412" width="2.20" height="20" data-tip="Read ran 10 ms · 492 characters back"/>
+<rect class="seg-tool ring" x="527.58" y="412" width="2.20" height="20" data-tip="Read ran 15 ms · 455 characters back"/>
+<rect class="seg-tool ring" x="559.88" y="412" width="2.20" height="20" data-tip="Read ran 9 ms · 485 characters back"/>
+<text class="rowsum" x="940" y="426" text-anchor="end"><tspan class="num">13.0 s</tspan><tspan class="muted"> · 5 tools</tspan></text></svg></div>
+    <figcaption>Every run on one time scale; hover a segment for its duration. In search runs 91–94% of the time was the model. The tools are the orange slivers: 0.10–0.14 s per run, most of it one Glob. The bottom group is the catch: the hook ran and injected the answer, and Sonnet 5 checked the docs anyway.</figcaption>
+  </figure>
+</section>
+
+<section id="zoom">
+  <h2>What the 2 ms covers</h2>
+  <p>The recall line reads “memory: 8 facts recalled in 2 ms” because <code>recall()</code> times itself. Around that call, Claude Code starts a Python process for the hook: 75 ms run on its own, 130–154 ms inside Claude Code. Around the hook sits the model's turn, which is most of the answer.</p>
+  <figure class="panel">
+    <div class="scroll"><svg class="chart" viewBox="0 0 940 542" role="img" aria-label="Zoom diagram. A 4.35 s graph answer contains a 137 ms hook step; inside it, recall() is 2 to 3 ms; inside recall, the SQL walk is about 0.5 ms warm."><text class="lvl" x="40" y="30">One graph-condition answer · Sonnet 5, no hint</text>
+<text class="lvl-num" x="900" y="30" text-anchor="end">4.35 s</text>
+<rect class="seg-startup" x="40.00" y="40" width="166.59" height="26" data-tip="Claude Code start-up · 850 ms"/>
+<rect class="seg-hook" x="208.09" y="40" width="25.60" height="26" data-tip="Graph hook · 137 ms"/>
+<rect class="seg-wait" x="235.20" y="40" width="137.22" height="26" data-tip="Waiting for first token · 702 ms"/>
+<rect class="seg-model" x="373.91" y="40" width="350.32" height="26" data-tip="Model thinking · 1780 ms"/>
+<rect class="seg-answer" x="725.74" y="40" width="172.76" height="26" data-tip="Answer streaming · 855 ms"/>
+<line class="leader" x1="124.0" y1="67" x2="124.0" y2="71"/>
+<text class="zl" x="124.0" y="82" text-anchor="middle">Claude Code start-up</text>
+<text class="zv" x="124.0" y="95" text-anchor="middle">850 ms</text>
+<text class="zl" x="243.2" y="112" text-anchor="start">Graph hook</text>
+<text class="zv" x="243.2" y="125" text-anchor="start">137 ms</text>
+<line class="leader" x1="304.6" y1="67" x2="304.6" y2="71"/>
+<text class="zl" x="304.6" y="82" text-anchor="middle">Waiting for first token</text>
+<text class="zv" x="304.6" y="95" text-anchor="middle">702 ms</text>
+<line class="leader" x1="549.8" y1="67" x2="549.8" y2="71"/>
+<text class="zl" x="549.8" y="82" text-anchor="middle">Model thinking</text>
+<text class="zv" x="549.8" y="95" text-anchor="middle">1780 ms</text>
+<line class="leader" x1="812.9" y1="67" x2="812.9" y2="71"/>
+<text class="zl" x="812.9" y="82" text-anchor="middle">Answer streaming</text>
+<text class="zv" x="812.9" y="95" text-anchor="middle">855 ms</text>
+<polygon class="zoom" points="208.1,67 235.2,67 235.2,146 900,206 40,206 208.1,146"/>
+<text class="lvl" x="40" y="226">Inside the graph hook</text>
+<text class="lvl-num" x="900" y="226" text-anchor="end">137 ms</text>
+<rect class="z-n1" x="40.00" y="236" width="411.25" height="26" data-tip="Claude Code launches it · ≈66 ms"/>
+<rect class="z-n2" x="452.75" y="236" width="160.97" height="26" data-tip="Python starts · ≈26 ms"/>
+<rect class="z-n1" x="615.22" y="236" width="121.45" height="26" data-tip="Imports sqlite3, re, json · ≈20 ms"/>
+<rect class="z-n2" x="738.16" y="236" width="147.79" height="26" data-tip="Loads hook + recall.py · ≈24 ms"/>
+<rect class="seg-hook" x="887.45" y="236" width="11.05" height="26" data-tip="recall() + JSON out · 2–3 ms"/>
+<line class="leader" x1="246.4" y1="263" x2="246.4" y2="267"/>
+<text class="zl" x="246.4" y="278" text-anchor="middle">Claude Code launches it</text>
+<text class="zv" x="246.4" y="291" text-anchor="middle">≈66 ms</text>
+<line class="leader" x1="534.0" y1="263" x2="534.0" y2="267"/>
+<text class="zl" x="534.0" y="278" text-anchor="middle">Python starts</text>
+<text class="zv" x="534.0" y="291" text-anchor="middle">≈26 ms</text>
+<line class="leader" x1="676.7" y1="263" x2="676.7" y2="297"/>
+<text class="zl" x="676.7" y="308" text-anchor="middle">Imports sqlite3, re, json</text>
+<text class="zv" x="676.7" y="321" text-anchor="middle">≈20 ms</text>
+<line class="leader" x1="812.8" y1="263" x2="812.8" y2="267"/>
+<text class="zl" x="812.8" y="278" text-anchor="middle">Loads hook + recall.py</text>
+<text class="zv" x="812.8" y="291" text-anchor="middle">≈24 ms</text>
+<text class="zl" x="879.5" y="308" text-anchor="end">recall() + JSON out</text>
+<text class="zv" x="879.5" y="321" text-anchor="end">2–3 ms</text>
+<polygon class="zoom" points="887.5,263 900.0,263 900.0,342 900,402 40,402 887.5,342"/>
+<text class="lvl" x="40" y="422">Inside recall(), warm (a first call in a new process prints 2–3 ms)</text>
+<text class="lvl-num" x="900" y="422" text-anchor="end">1.11 ms</text>
+<rect class="z-n1" x="40.00" y="432" width="114.82" height="26" data-tip="Open graph.db · 0.15 ms"/>
+<rect class="z-n2" x="156.32" y="432" width="239.67" height="26" data-tip="Match names in the question (Python) · 0.31 ms"/>
+<rect class="seg-hook" x="397.49" y="432" width="402.52" height="26" data-tip="Recursive walk, 3 hops (SQL) · 0.52 ms"/>
+<rect class="z-n2" x="801.51" y="432" width="96.99" height="26" data-tip="Fetch descriptions (SQL) · 0.13 ms"/>
+<line class="leader" x1="98.2" y1="459" x2="98.2" y2="463"/>
+<text class="zl" x="94.2" y="474" text-anchor="start">Open graph.db</text>
+<text class="zv" x="94.2" y="487" text-anchor="start">0.15 ms</text>
+<line class="leader" x1="276.9" y1="459" x2="276.9" y2="493"/>
+<text class="zl" x="276.9" y="504" text-anchor="middle">Match names in the question (Python)</text>
+<text class="zv" x="276.9" y="517" text-anchor="middle">0.31 ms</text>
+<line class="leader" x1="599.5" y1="459" x2="599.5" y2="463"/>
+<text class="zl" x="599.5" y="474" text-anchor="middle">Recursive walk, 3 hops (SQL)</text>
+<text class="zv" x="599.5" y="487" text-anchor="middle">0.52 ms</text>
+<line class="leader" x1="850.8" y1="459" x2="850.8" y2="493"/>
+<text class="zl" x="854.8" y="504" text-anchor="end">Fetch descriptions (SQL)</text>
+<text class="zv" x="854.8" y="517" text-anchor="end">0.13 ms</text></svg></div>
+    <figcaption>Each row zooms into one slice of the row above. The top row is one measured run. The middle row splits that run's hook time using medians of 30 launches each, so its slices are approximate. The bottom row is the median of 300 warm calls.</figcaption>
+  </figure>
+  <p>So “an answer that starts immediately” means no tool round trips, not no wait. The first word still comes after one full model turn: 2.5–4.0 s after the recall line in these runs.</p>
+</section>
+
+<section id="cap">
+  <h2>Fixed size, not fixed content</h2>
+  <p>The hook collects every fact within 3 hops of a name in the question, sorts them by how close they sit, and sends the first 8. That caps the size. For the refund question it adds 459 input tokens on Haiku 4.5 and 635 on Sonnet 5, measured as the difference in the first request's input between the two conditions. That is more than the README's ~400, which comes from dividing characters by four. Other questions inject less:</p>
+  <div class="table-panel scroll">
+    <table>
+      <thead><tr><th>Question</th><th class="n">Facts</th><th class="n">Characters</th><th class="n">Tokens (chars ÷ 4)</th></tr></thead>
+      <tbody><tr><td>A customer wants an £800 refund in March. Who signs it off?</td><td class=n>8</td><td class=n>1,608</td><td class=n>≈402</td></tr>
+<tr><td>Who approves supplier payments over £2,000?</td><td class=n>7</td><td class=n>1,313</td><td class=n>≈328</td></tr>
+<tr><td>What is the onboarding process?</td><td class=n>8</td><td class=n>1,627</td><td class=n>≈407</td></tr>
+<tr><td>What does Priya do?</td><td class=n>5</td><td class=n>965</td><td class=n>≈241</td></tr>
+<tr><td>Who is in charge when the boss is away?</td><td class=n>0</td><td class=n>68</td><td class=n>≈17</td></tr></tbody>
+    </table>
+  </div>
+  <p>What goes in is decided by that sort. In the demo graph the answer only just makes it:</p>
+  <figure class="panel">
+    <ul class="legend" aria-label="Legend">
+      <li><span class="sw" style="background:var(--q0)"></span>0 hops from the question</li>
+      <li><span class="sw" style="background:var(--q1)"></span>1 hop</li>
+      <li><span class="sw" style="background:var(--q2)"></span>2 hops</li>
+      <li><span class="sw" style="background:var(--c-hook)"></span>The answer</li>
+    </ul>
+    <div class="scroll"><svg class="chart" viewBox="0 0 940 431" role="img" aria-label="Two ranked lists of candidate facts. In the demo graph the answer fact is 6th of 9 and inside the 8 that are sent. With 100 more policies linked to the Ops Manager, 103 facts sit one hop away, and the answer falls to 106th and is cut."><text class="lvl" x="40" y="22">Demo graph · 13 entities</text>
+<text class="zv" x="40" y="40">9 candidate facts, ranked by distance, first 8 sent</text>
+<rect class="q0" x="40" y="60" width="24" height="24" rx="3" data-tip="#1 · Customer support SOP → Refund approvals (references) · 0 hops away · sent to Claude"/>
+<rect class="q0" x="69" y="60" width="24" height="24" rx="3" data-tip="#2 · Refund approvals → Ops Manager (approved_by) · 0 hops away · sent to Claude"/>
+<rect class="q1" x="98" y="60" width="24" height="24" rx="3" data-tip="#3 · Customer support SOP → Support Lead (references) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="127" y="60" width="24" height="24" rx="3" data-tip="#4 · Onboarding process → Ops Manager (references) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="156" y="60" width="24" height="24" rx="3" data-tip="#5 · Ops Manager → Sarah Chen (held_by) · 1 hop away · sent to Claude"/>
+<rect class="q-ans" x="185" y="60" width="24" height="24" rx="3" data-tip="#6 · Sarah Chen → Marcus Webb (delegates_to) · 2 hops away · sent to Claude"/>
+<rect class="q2" x="214" y="60" width="24" height="24" rx="3" data-tip="#7 · Incident response → Support Lead (references) · 2 hops away · sent to Claude"/>
+<rect class="q2" x="243" y="60" width="24" height="24" rx="3" data-tip="#8 · Onboarding process → Tooling inventory (references) · 2 hops away · sent to Claude"/>
+<rect class="q2 faded" x="272" y="60" width="24" height="24" rx="3" data-tip="#9 · Support Lead → Priya Patel (held_by) · 2 hops away · cut"/>
+<rect class="sent" x="36" y="56" width="235" height="32" rx="6"/>
+<line class="leader" x1="197.0" y1="85" x2="197.0" y2="98"/>
+<text class="zl" x="197.0" y="111" text-anchor="middle">Sarah Chen → Marcus Webb</text>
+<text class="zv" x="197.0" y="125" text-anchor="middle">the answer: sent, 6th of 8</text>
+<text class="lvl" x="520" y="22">Plus 100 policies approved by the Ops Manager</text>
+<text class="zv" x="520" y="40">109 candidate facts, ranked by distance, first 8 sent</text>
+<rect class="q0" x="520" y="60" width="24" height="24" rx="3" data-tip="#1 · Customer support SOP → Refund approvals (references) · 0 hops away · sent to Claude"/>
+<rect class="q0" x="549" y="60" width="24" height="24" rx="3" data-tip="#2 · Refund approvals → Ops Manager (approved_by) · 0 hops away · sent to Claude"/>
+<rect class="q1" x="578" y="60" width="24" height="24" rx="3" data-tip="#3 · Customer support SOP → Support Lead (references) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="607" y="60" width="24" height="24" rx="3" data-tip="#4 · Onboarding process → Ops Manager (references) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="636" y="60" width="24" height="24" rx="3" data-tip="#5 · Ops Manager → Sarah Chen (held_by) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="665" y="60" width="24" height="24" rx="3" data-tip="#6 · Policy 0 → Ops Manager (approved_by) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="694" y="60" width="24" height="24" rx="3" data-tip="#7 · Policy 1 → Ops Manager (approved_by) · 1 hop away · sent to Claude"/>
+<rect class="q1" x="723" y="60" width="24" height="24" rx="3" data-tip="#8 · Policy 2 → Ops Manager (approved_by) · 1 hop away · sent to Claude"/>
+<rect class="q1 faded" x="752" y="60" width="24" height="24" rx="3" data-tip="#9 · Policy 3 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="60" width="24" height="24" rx="3" data-tip="#10 · Policy 4 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="89" width="24" height="24" rx="3" data-tip="#11 · Policy 5 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="89" width="24" height="24" rx="3" data-tip="#12 · Policy 6 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="89" width="24" height="24" rx="3" data-tip="#13 · Policy 7 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="89" width="24" height="24" rx="3" data-tip="#14 · Policy 8 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="89" width="24" height="24" rx="3" data-tip="#15 · Policy 9 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="89" width="24" height="24" rx="3" data-tip="#16 · Policy 10 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="89" width="24" height="24" rx="3" data-tip="#17 · Policy 11 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="89" width="24" height="24" rx="3" data-tip="#18 · Policy 12 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="89" width="24" height="24" rx="3" data-tip="#19 · Policy 13 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="89" width="24" height="24" rx="3" data-tip="#20 · Policy 14 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="118" width="24" height="24" rx="3" data-tip="#21 · Policy 15 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="118" width="24" height="24" rx="3" data-tip="#22 · Policy 16 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="118" width="24" height="24" rx="3" data-tip="#23 · Policy 17 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="118" width="24" height="24" rx="3" data-tip="#24 · Policy 18 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="118" width="24" height="24" rx="3" data-tip="#25 · Policy 19 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="118" width="24" height="24" rx="3" data-tip="#26 · Policy 20 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="118" width="24" height="24" rx="3" data-tip="#27 · Policy 21 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="118" width="24" height="24" rx="3" data-tip="#28 · Policy 22 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="118" width="24" height="24" rx="3" data-tip="#29 · Policy 23 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="118" width="24" height="24" rx="3" data-tip="#30 · Policy 24 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="147" width="24" height="24" rx="3" data-tip="#31 · Policy 25 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="147" width="24" height="24" rx="3" data-tip="#32 · Policy 26 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="147" width="24" height="24" rx="3" data-tip="#33 · Policy 27 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="147" width="24" height="24" rx="3" data-tip="#34 · Policy 28 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="147" width="24" height="24" rx="3" data-tip="#35 · Policy 29 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="147" width="24" height="24" rx="3" data-tip="#36 · Policy 30 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="147" width="24" height="24" rx="3" data-tip="#37 · Policy 31 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="147" width="24" height="24" rx="3" data-tip="#38 · Policy 32 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="147" width="24" height="24" rx="3" data-tip="#39 · Policy 33 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="147" width="24" height="24" rx="3" data-tip="#40 · Policy 34 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="176" width="24" height="24" rx="3" data-tip="#41 · Policy 35 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="176" width="24" height="24" rx="3" data-tip="#42 · Policy 36 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="176" width="24" height="24" rx="3" data-tip="#43 · Policy 37 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="176" width="24" height="24" rx="3" data-tip="#44 · Policy 38 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="176" width="24" height="24" rx="3" data-tip="#45 · Policy 39 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="176" width="24" height="24" rx="3" data-tip="#46 · Policy 40 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="176" width="24" height="24" rx="3" data-tip="#47 · Policy 41 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="176" width="24" height="24" rx="3" data-tip="#48 · Policy 42 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="176" width="24" height="24" rx="3" data-tip="#49 · Policy 43 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="176" width="24" height="24" rx="3" data-tip="#50 · Policy 44 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="205" width="24" height="24" rx="3" data-tip="#51 · Policy 45 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="205" width="24" height="24" rx="3" data-tip="#52 · Policy 46 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="205" width="24" height="24" rx="3" data-tip="#53 · Policy 47 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="205" width="24" height="24" rx="3" data-tip="#54 · Policy 48 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="205" width="24" height="24" rx="3" data-tip="#55 · Policy 49 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="205" width="24" height="24" rx="3" data-tip="#56 · Policy 50 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="205" width="24" height="24" rx="3" data-tip="#57 · Policy 51 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="205" width="24" height="24" rx="3" data-tip="#58 · Policy 52 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="205" width="24" height="24" rx="3" data-tip="#59 · Policy 53 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="205" width="24" height="24" rx="3" data-tip="#60 · Policy 54 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="234" width="24" height="24" rx="3" data-tip="#61 · Policy 55 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="234" width="24" height="24" rx="3" data-tip="#62 · Policy 56 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="234" width="24" height="24" rx="3" data-tip="#63 · Policy 57 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="234" width="24" height="24" rx="3" data-tip="#64 · Policy 58 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="234" width="24" height="24" rx="3" data-tip="#65 · Policy 59 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="234" width="24" height="24" rx="3" data-tip="#66 · Policy 60 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="234" width="24" height="24" rx="3" data-tip="#67 · Policy 61 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="234" width="24" height="24" rx="3" data-tip="#68 · Policy 62 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="234" width="24" height="24" rx="3" data-tip="#69 · Policy 63 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="234" width="24" height="24" rx="3" data-tip="#70 · Policy 64 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="263" width="24" height="24" rx="3" data-tip="#71 · Policy 65 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="263" width="24" height="24" rx="3" data-tip="#72 · Policy 66 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="263" width="24" height="24" rx="3" data-tip="#73 · Policy 67 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="263" width="24" height="24" rx="3" data-tip="#74 · Policy 68 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="263" width="24" height="24" rx="3" data-tip="#75 · Policy 69 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="263" width="24" height="24" rx="3" data-tip="#76 · Policy 70 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="263" width="24" height="24" rx="3" data-tip="#77 · Policy 71 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="263" width="24" height="24" rx="3" data-tip="#78 · Policy 72 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="263" width="24" height="24" rx="3" data-tip="#79 · Policy 73 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="263" width="24" height="24" rx="3" data-tip="#80 · Policy 74 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="292" width="24" height="24" rx="3" data-tip="#81 · Policy 75 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="292" width="24" height="24" rx="3" data-tip="#82 · Policy 76 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="292" width="24" height="24" rx="3" data-tip="#83 · Policy 77 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="292" width="24" height="24" rx="3" data-tip="#84 · Policy 78 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="292" width="24" height="24" rx="3" data-tip="#85 · Policy 79 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="292" width="24" height="24" rx="3" data-tip="#86 · Policy 80 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="292" width="24" height="24" rx="3" data-tip="#87 · Policy 81 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="292" width="24" height="24" rx="3" data-tip="#88 · Policy 82 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="292" width="24" height="24" rx="3" data-tip="#89 · Policy 83 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="292" width="24" height="24" rx="3" data-tip="#90 · Policy 84 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="321" width="24" height="24" rx="3" data-tip="#91 · Policy 85 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="321" width="24" height="24" rx="3" data-tip="#92 · Policy 86 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="321" width="24" height="24" rx="3" data-tip="#93 · Policy 87 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="321" width="24" height="24" rx="3" data-tip="#94 · Policy 88 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="321" width="24" height="24" rx="3" data-tip="#95 · Policy 89 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="665" y="321" width="24" height="24" rx="3" data-tip="#96 · Policy 90 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="694" y="321" width="24" height="24" rx="3" data-tip="#97 · Policy 91 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="723" y="321" width="24" height="24" rx="3" data-tip="#98 · Policy 92 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="752" y="321" width="24" height="24" rx="3" data-tip="#99 · Policy 93 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="781" y="321" width="24" height="24" rx="3" data-tip="#100 · Policy 94 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="520" y="350" width="24" height="24" rx="3" data-tip="#101 · Policy 95 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="549" y="350" width="24" height="24" rx="3" data-tip="#102 · Policy 96 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="578" y="350" width="24" height="24" rx="3" data-tip="#103 · Policy 97 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="607" y="350" width="24" height="24" rx="3" data-tip="#104 · Policy 98 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q1 faded" x="636" y="350" width="24" height="24" rx="3" data-tip="#105 · Policy 99 → Ops Manager (approved_by) · 1 hop away · cut"/>
+<rect class="q-ans faded" x="665" y="350" width="24" height="24" rx="3" data-tip="#106 · Sarah Chen → Marcus Webb (delegates_to) · 2 hops away · cut"/>
+<rect class="q2 faded" x="694" y="350" width="24" height="24" rx="3" data-tip="#107 · Incident response → Support Lead (references) · 2 hops away · cut"/>
+<rect class="q2 faded" x="723" y="350" width="24" height="24" rx="3" data-tip="#108 · Onboarding process → Tooling inventory (references) · 2 hops away · cut"/>
+<rect class="q2 faded" x="752" y="350" width="24" height="24" rx="3" data-tip="#109 · Support Lead → Priya Patel (held_by) · 2 hops away · cut"/>
+<rect class="sent" x="516" y="56" width="235" height="32" rx="6"/>
+<line class="leader" x1="677.0" y1="375" x2="677.0" y2="388"/>
+<text class="zl" x="677.0" y="401" text-anchor="middle">Sarah Chen → Marcus Webb</text>
+<text class="zv" x="677.0" y="415" text-anchor="middle">the answer: cut, #106</text></svg></div>
+    <figcaption>Each square is one candidate fact, in the order the query returns them; the outline marks the 8 that are sent. In the demo graph the answer is 6th of 9. Add 100 policies approved by the Ops Manager, each one hop from the question, and 103 facts outrank it.</figcaption>
+  </figure>
+</section>
+
+<section id="scale">
+  <h2>At bigger sizes</h2>
+  <p>I grew a copy of <code>graph.db</code> with made-up entities and asked the refund question again. How the graph grows matters:</p>
+  <ul class="bullets">
+    <li><strong>Growth elsewhere</strong> (separate clusters): the walk stays small, but matching names checks every entity in the graph, one pattern at a time. That step is 87 of the 89 ms at 3,013 entities. The answer stays in.</li>
+    <li><strong>Growth around the Ops Manager</strong>: every new policy is one hop from the question, so the walk and the sort handle all of them. It reaches 161 ms at 1,013 entities and 12.7 s at 10,013. That is past the hook's 10 s timeout, so Claude Code would stop the hook and inject nothing. The answer drops out from 113 entities on.</li>
+  </ul>
+  <figure class="panel">
+    <ul class="legend" aria-label="Legend">
+      <li><span class="sw dot" style="background:var(--c-model)"></span>Growth elsewhere</li>
+      <li><span class="sw dot" style="background:var(--c-tool)"></span>Growth around the Ops Manager</li>
+      <li><span class="sw dot" style="background:var(--ink-2)"></span>Answer in the 8 facts</li>
+      <li><span class="sw ring"></span>Answer pushed out</li>
+    </ul>
+    <div class="scroll"><svg class="chart" viewBox="0 0 760 380" role="img" aria-label="Log-log chart of recall time against graph size. Growth elsewhere: 1.3 ms at 13 entities to 929 ms at 30,013. Growth around the Ops Manager: 1.0 ms to 12.7 s at 10,013 entities, past the 10 second hook timeout, and the answer is pushed out of the injection from 113 entities on."><line class="grid" x1="70" y1="308.8" x2="560" y2="308.8"/>
+<text class="tick" x="62" y="312.8" text-anchor="end">1 ms</text>
+<line class="grid" x1="70" y1="245.2" x2="560" y2="245.2"/>
+<text class="tick" x="62" y="249.2" text-anchor="end">10 ms</text>
+<line class="grid" x1="70" y1="181.6" x2="560" y2="181.6"/>
+<text class="tick" x="62" y="185.6" text-anchor="end">100 ms</text>
+<line class="grid" x1="70" y1="118.0" x2="560" y2="118.0"/>
+<text class="tick" x="62" y="122.0" text-anchor="end">1 s</text>
+<line class="grid" x1="70" y1="54.4" x2="560" y2="54.4"/>
+<text class="tick" x="62" y="58.4" text-anchor="end">10 s</text>
+<line class="axis" x1="70.0" y1="328" x2="70.0" y2="333"/>
+<text class="tick" x="70.0" y="347" text-anchor="middle">10</text>
+<line class="axis" x1="192.5" y1="328" x2="192.5" y2="333"/>
+<text class="tick" x="192.5" y="347" text-anchor="middle">100</text>
+<line class="axis" x1="315.0" y1="328" x2="315.0" y2="333"/>
+<text class="tick" x="315.0" y="347" text-anchor="middle">1,000</text>
+<line class="axis" x1="437.5" y1="328" x2="437.5" y2="333"/>
+<text class="tick" x="437.5" y="347" text-anchor="middle">10,000</text>
+<line class="axis" x1="560.0" y1="328" x2="560.0" y2="333"/>
+<text class="tick" x="560.0" y="347" text-anchor="middle">100,000</text>
+<line class="axis" x1="70" y1="328" x2="560" y2="328"/>
+<text class="tick" x="315.0" y="372" text-anchor="middle">Entities in the graph (log scale)</text>
+<line class="ref" x1="70" y1="289.7" x2="560" y2="289.7"/>
+<text class="ref-l" x="76" y="283.7">README: 2 ms</text>
+<line class="ref" x1="70" y1="54.4" x2="560" y2="54.4"/>
+<text class="ref-l" x="76" y="48.4">Hook timeout: 10 s</text>
+<polyline class="line s1" points="84.0,300.9 253.2,284.2 373.7,184.7 496.0,120.0"/>
+<circle class="dot s1" cx="84.0" cy="300.9" r="5.5" data-tip="Growth elsewhere: 13 entities · recall 1.3 ms · 8 facts, ~402 tokens · answer in the injection"/>
+<circle class="dot s1" cx="253.2" cy="284.2" r="5.5" data-tip="Growth elsewhere: 313 entities · recall 2.4 ms · 8 facts, ~402 tokens · answer in the injection"/>
+<circle class="dot s1" cx="373.7" cy="184.7" r="5.5" data-tip="Growth elsewhere: 3,013 entities · recall 89.3 ms · 8 facts, ~402 tokens · answer in the injection"/>
+<circle class="dot s1" cx="496.0" cy="120.0" r="5.5" data-tip="Growth elsewhere: 30,013 entities · recall 929.1 ms · 8 facts, ~402 tokens · answer in the injection"/>
+<text class="dl" x="508.0" y="121.0">Growth elsewhere</text>
+<text class="zv" x="508.0" y="135.0">0.9 s at 30,013 · answer kept</text>
+<polyline class="line s2" points="84.0,309.5 199.0,275.9 315.7,168.5 437.6,47.8"/>
+<circle class="dot s2" cx="84.0" cy="309.5" r="5.5" data-tip="Growth around the Ops Manager: 13 entities · recall 1.0 ms · 8 facts, ~402 tokens · answer in the injection"/>
+<circle class="dot hollow s2" cx="199.0" cy="275.9" r="5.5" data-tip="Growth around the Ops Manager: 113 entities · recall 3.3 ms · 8 facts, ~364 tokens · answer not in the injection"/>
+<circle class="dot hollow s2" cx="315.7" cy="168.5" r="5.5" data-tip="Growth around the Ops Manager: 1,013 entities · recall 160.9 ms · 8 facts, ~365 tokens · answer not in the injection"/>
+<circle class="dot hollow s2" cx="437.6" cy="47.8" r="5.5" data-tip="Growth around the Ops Manager: 10,013 entities · recall 12,667.2 ms · 8 facts, ~365 tokens · answer not in the injection"/>
+<text class="dl" x="449.6" y="48.8">Growth around the Ops Manager</text>
+<text class="zv" x="449.6" y="62.8">12.7 s at 10,013 · answer pushed out</text></svg></div>
+    <figcaption>Time is <code>recall()</code> alone: median of 15 warm calls, 3 at the largest sizes. Both axes are logarithmic.</figcaption>
+  </figure>
+  <div class="table-panel scroll">
+    <table>
+      <thead><tr><th>Graph</th><th class="n">Entities</th><th class="n">recall()</th><th class="n">Name matching</th><th class="n">Walk (SQL)</th><th class="n">Injection chars</th><th>Answer in it</th></tr></thead>
+      <tbody><tr><td>Demo graph</td><td class=n>13</td><td class=n>1.3 ms</td><td class=n>0.3 ms</td><td class=n>0.4 ms</td><td class=n>1,608</td><td>Yes</td></tr>
+<tr><td>+100 elsewhere</td><td class=n>313</td><td class=n>2.4 ms</td><td class=n>1.5 ms</td><td class=n>0.6 ms</td><td class=n>1,609</td><td>Yes</td></tr>
+<tr><td>+1,000 elsewhere</td><td class=n>3,013</td><td class=n>89.3 ms</td><td class=n>86.6 ms</td><td class=n>2.8 ms</td><td class=n>1,609</td><td>Yes</td></tr>
+<tr><td>+10,000 elsewhere</td><td class=n>30,013</td><td class=n>929.1 ms</td><td class=n>873.4 ms</td><td class=n>29.7 ms</td><td class=n>1,610</td><td>Yes</td></tr>
+<tr><td>Demo graph</td><td class=n>13</td><td class=n>1.0 ms</td><td class=n>0.3 ms</td><td class=n>0.3 ms</td><td class=n>1,608</td><td>Yes</td></tr>
+<tr><td>+100 around the Ops Manager</td><td class=n>113</td><td class=n>3.3 ms</td><td class=n>0.6 ms</td><td class=n>2.4 ms</td><td class=n>1,457</td><td>No</td></tr>
+<tr><td>+1,000 around the Ops Manager</td><td class=n>1,013</td><td class=n>160.9 ms</td><td class=n>30.8 ms</td><td class=n>130.4 ms</td><td class=n>1,459</td><td>No</td></tr>
+<tr><td>+10,000 around the Ops Manager</td><td class=n>10,013</td><td class=n>12,667.2 ms</td><td class=n>300.9 ms</td><td class=n>12,206.7 ms</td><td class=n>1,461</td><td>No</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="runs">
+  <h2>All runs</h2>
+  <p>Every live run, including the two left out of the timeline. Haiku 4.5 found Marcus Webb in both of its search runs here, whereas the README's Haiku stopped at 1 of 3 hops.</p>
+  <div class="table-panel scroll">
+    <table>
+      <thead><tr><th>Run</th><th>Condition</th><th>Answer</th><th class="n">Tool calls</th><th class="n">Doc text read</th><th class="n">Recall line</th><th class="n">First answer word</th><th class="n">Total</th><th class="n">Cost</th></tr></thead>
+      <tbody><tr><td>Sonnet 5 · no hint</td><td>Search</td><td>Marcus Webb</td><td class=n>6</td><td class=n>3,736</td><td class=n>—</td><td class=n>14.32 s</td><td class=n>15.85 s</td><td class=n>$0.036</td></tr>
+<tr><td>Sonnet 5 · hint · run 1</td><td>Search</td><td>Marcus Webb</td><td class=n>5</td><td class=n>3,503</td><td class=n>—</td><td class=n>10.96 s</td><td class=n>13.07 s</td><td class=n>$0.049</td></tr>
+<tr><td>Sonnet 5 · hint · run 2</td><td>Search</td><td>Marcus Webb</td><td class=n>5</td><td class=n>3,503</td><td class=n>—</td><td class=n>9.09 s</td><td class=n>10.32 s</td><td class=n>$0.027</td></tr>
+<tr><td>Haiku 4.5 · hint · run 2</td><td>Search</td><td>Marcus Webb</td><td class=n>5</td><td class=n>3,503</td><td class=n>—</td><td class=n>11.45 s</td><td class=n>12.93 s</td><td class=n>$0.016</td></tr>
+<tr><td>Haiku 4.5 · hint · run 3</td><td>Search</td><td>Marcus Webb</td><td class=n>5</td><td class=n>3,503</td><td class=n>—</td><td class=n>12.12 s</td><td class=n>13.55 s</td><td class=n>$0.013</td></tr>
+<tr><td>Sonnet 5 · no hint</td><td>Graph</td><td>Marcus Webb</td><td class=n>0</td><td class=n>0</td><td class=n>0.99 s</td><td class=n>3.49 s</td><td class=n>4.35 s</td><td class=n>$0.010</td></tr>
+<tr><td>Haiku 4.5 · no hint</td><td>Graph</td><td>Marcus Webb</td><td class=n>0</td><td class=n>0</td><td class=n>0.94 s</td><td class=n>3.97 s</td><td class=n>4.86 s</td><td class=n>$0.013</td></tr>
+<tr><td>Haiku 4.5 · hint · run 1</td><td>Graph</td><td>Marcus Webb</td><td class=n>0</td><td class=n>0</td><td class=n>0.99 s</td><td class=n>4.62 s</td><td class=n>5.64 s</td><td class=n>$0.006</td></tr>
+<tr><td>Haiku 4.5 · hint · run 2</td><td>Graph</td><td>Marcus Webb</td><td class=n>0</td><td class=n>0</td><td class=n>1.01 s</td><td class=n>5.04 s</td><td class=n>6.11 s</td><td class=n>$0.006</td></tr>
+<tr><td>Haiku 4.5 · hint · run 3</td><td>Graph</td><td>Marcus Webb</td><td class=n>0</td><td class=n>0</td><td class=n>1.08 s</td><td class=n>3.93 s</td><td class=n>5.18 s</td><td class=n>$0.003</td></tr>
+<tr><td>Sonnet 5 · hint · run 1</td><td>Graph</td><td>Marcus Webb</td><td class=n>5</td><td class=n>3,503</td><td class=n>1.00 s</td><td class=n>13.18 s</td><td class=n>15.33 s</td><td class=n>$0.056</td></tr>
+<tr><td>Sonnet 5 · hint · run 2</td><td>Graph</td><td>Marcus Webb</td><td class=n>5</td><td class=n>3,503</td><td class=n>0.90 s</td><td class=n>10.32 s</td><td class=n>13.00 s</td><td class=n>$0.032</td></tr>
+<tr><td>Haiku 4.5 · no hint</td><td>Search</td><td>Asked for the docs</td><td class=n>0</td><td class=n>0</td><td class=n>—</td><td class=n>4.13 s</td><td class=n>5.89 s</td><td class=n>$0.012</td></tr>
+<tr class="excluded"><td>Haiku 4.5 · hint · run 1</td><td>Search</td><td colspan="7">Left out: the model's response stalled for 857 s mid-stream, then Claude Code resumed it. A network stall, not search time; run 3 replaced it.</td></tr></tbody>
+    </table>
+  </div>
+  <h3>How it was measured</h3>
+  <ul class="bullets">
+    <li>The question was “A customer wants an £800 refund in March. Who signs it off?”. Hint runs open with “Our company docs are in this folder.” Without the hint, Haiku 4.5 didn't search at all and asked for the docs.</li>
+    <li>Both conditions had the same 12 files from <code>corpus-before/</code> and the same tools (Grep, Read, Glob), with user and project settings and MCP servers turned off. The graph condition added only the UserPromptSubmit hook, <code>src/recall_hook.py</code>.</li>
+    <li>Runs used <code>claude -p</code> with stream-json output, and each event was timestamped as it arrived. Setup: Claude Code 2.1.280, <code>claude-sonnet-5</code> and <code>claude-haiku-4-5-20251001</code>, Windows 11, Python 3.12.7, SQLite 3.45.3.</li>
+    <li>These are headless runs. The README's 20 s came from interactive terminal runs, where its Sonnet made up to 13 tool calls; here the models made 5–6.</li>
+    <li>The graph-growth test adds made-up entities to a copy of <code>graph.db</code>. The repo's own graph and code are unchanged.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function () {
+  var tip = document.createElement("div");
+  tip.className = "tip";
+  tip.hidden = true;
+  tip.setAttribute("role", "tooltip");
+  document.body.appendChild(tip);
+  function show(e) {
+    var t = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute("data-tip");
+    tip.hidden = false;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var x = Math.min(e.clientX + 14, window.innerWidth - w - 8);
+    var y = e.clientY + 16 + h > window.innerHeight ? e.clientY - h - 12 : e.clientY + 16;
+    tip.style.left = Math.max(8, x) + "px";
+    tip.style.top = Math.max(8, y) + "px";
+  }
+  document.addEventListener("pointermove", show);
+  document.addEventListener("pointerdown", show);
+  window.addEventListener("scroll", function () { tip.hidden = true; }, { passive: true });
+})();
+</script>
+
+</body>
+</html>

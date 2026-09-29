@@ -1,9 +1,18 @@
 {
   "source_doc": "customer-support-sop.md",
   "nodes": [
-    {"name": "Customer support SOP", "type": "PROCESS",
-     "description": "Tickets answered within one business day; refunds under £500 processed by agents; escalation after two replies"},
-    {"name": "Support Lead", "type": "ROLE", "description": "Escalation point for complaints"}
+    {"name": "Customer support SOP", "type": "PROCESS", "claims": [
+      {"kind": "deadline", "text": "Support agents answer tickets within one business day",
+       "quote": "Support agents answer tickets within one business day."},
+      {"kind": "rule", "text": "Refunds under the approval threshold in the refund approvals policy are processed directly by the agent",
+       "quote": "Refunds under the approval threshold in the refund approvals policy are processed directly by the agent."},
+      {"kind": "rule", "text": "Complaints and anything unresolved after two replies escalate to the Support Lead",
+       "quote": "Complaints and anything unresolved after two replies escalate to the Support Lead."}
+    ]},
+    {"name": "Support Lead", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Escalation point for complaints",
+       "quote": "Complaints and anything unresolved after two replies escalate to the Support Lead."}
+    ]}
   ],
   "edges": [
     {"source": "Customer support SOP", "predicate": "references", "target": "Refund approvals"},

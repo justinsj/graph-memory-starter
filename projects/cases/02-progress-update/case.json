@@ -1,0 +1,26 @@
+{
+ "title": "A later meeting moves the plan along",
+ "tests": "Updating an existing project by its id: a step done, a deliverable delivered, the next step started with the due date said in the meeting. Two lines of the meeting are not about the project (ticket volume, a macro task for this week) and must not become changes or a project.",
+ "state": "Helpdesk migration, active, plan v1 agreed on 15 September, nothing done yet.",
+ "input": "inputs/2026-09-24-support-sync.md",
+ "kind": "transcript",
+ "on": "2026-09-24",
+ "expect": {
+  "created": 0,
+  "projects": {
+   "helpdesk-migration": {
+    "status": "active",
+    "steps": {
+     "1": "done",
+     "2": "doing"
+    },
+    "step_due": {
+     "2": "2026-10-02"
+    },
+    "deliverable_status": {
+     "D1": "delivered"
+    }
+   }
+  }
+ }
+}

@@ -46,12 +46,13 @@ installed, search runs keyword-only and says so.
 ## Test cases
 
 The corpus is ../corpus-before, the same twelve messy docs the graph
-was built from. Every row below is a real run.
+was built from. Every row below is a real run, and a test in
+../tests/test_rag.py.
 
 | Question | Top hits | Why |
 |---|---|---|
 | what is the mileage rate | expenses.md, both legs | plain keywords, both legs agree |
-| how do we talk to customers in writing | handbook § Tone of voice and brand-voice.md, meaning leg | keywords match "in writing" in the wrong doc; meaning finds the right ones |
+| how do we talk to customers in writing | handbook § Tone of voice first, brand-voice.md third, meaning leg | keywords match "in writing" in the wrong doc; meaning finds the right ones, and breaks the tie |
 | who has sign-off while Sarah is away | the distilled entry, then the memo itself | a distilled question meets the question you ask |
 | A customer wants an £800 refund in March. Who signs it off? | the £500 rule, first hit | the rule surfaces; chaining March to Marcus is the graph's job, one folder up |
 
@@ -92,6 +93,14 @@ hands the top five hits back as context, under about 1,500 characters, with a
 one-line note saying how many. It never blocks a prompt: no index, no hits, or
 any failure at all and it prints nothing.
 
-It is a fresh process each time, so it loads the embedding model before every
-prompt. Measured on a laptop: about 0.9 seconds with the meaning leg, under
-0.1 without it.
+It is a fresh process each time, so on its own it loads the embedding model
+before every prompt: 1.4-1.5 s measured on a Windows laptop, most of the hook's
+time. `hooks.json` therefore also starts a warm model at the start of a session:
+
+    python embedder.py --start    (the SessionStart hook does this)
+    python embedder.py --stop
+
+With it running the same hook took 0.17-0.20 s, with the same vectors. It
+listens on 127.0.0.1 only, answers only requests carrying a random key kept in
+your temp folder, and exits after 30 minutes without a request. Without it,
+search falls back to loading the model itself.

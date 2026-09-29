@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Why the Model Re-reads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; }
+blockquote p { margin: 0; font-size: 15px; }
+blockquote footer { margin-top: 6px; font: 12px var(--mono); color: var(--muted); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 650; border-top: 2px solid var(--hair); }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .lane { fill: var(--ink-2); font-weight: 600; font-size: 13px; }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+svg .box-good { fill: var(--good-bg); stroke: var(--good); stroke-width: 1.5; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } figure { padding: 12px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · findings, 24 September 2026</div>
+<h1>Why the model re-reads the docs</h1>
+<p class="lede">The graph saves time only when the model answers from the facts the hook injects. Sometimes it searches the documents anyway. This page explains why, from the model's own words and a controlled rerun, and what would reduce it.</p>
+
+<div class="answer">
+<p><strong>Nothing in the system prevents it.</strong> The graph hook only adds text to the prompt. The model keeps its Grep, Read and Glob tools and decides for itself whether to use them.</p>
+<p><strong>The main trigger was a citation mismatch.</strong> Every injected fact names its source file, and in the test folder those files did not exist, so the model judged the memory stale. With the cited files present, the four searching questions took 8 tool calls instead of 17, and 37.5 s instead of 71.8 s. All answers stayed correct.</p>
+</div>
+
+<h2>How often it happened</h2>
+<p>In the before/after comparison of claims support, each of 10 questions ran once per model, graph hook on, in a folder holding the 12 unstructured documents of <code>corpus-before/</code>.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Model</th><th class="n">Runs that searched, before claims</th><th class="n">After claims</th><th>After claims: which questions</th></tr></thead>
+<tbody>
+<tr><td style="white-space:nowrap">Haiku 4.5</td><td class="n">2 of 10</td><td class="n good">0 of 10</td><td>none</td></tr>
+<tr><td style="white-space:nowrap">Sonnet 5</td><td class="n">3 of 10</td><td class="n warn">4 of 10</td><td>onboarding process, what Priya does, a £300 refund in June 2025, how the refund threshold changed</td></tr>
+</tbody>
+</table>
+</div>
+<p>Earlier, with the prompt opening “Our company docs are in this folder.”, Sonnet searched in both of its graph runs: 5 tool calls and 13.0–15.3 s each, against 0 tool calls and 4.35 s without that sentence.</p>
+
+<h2>The three triggers</h2>
+
+<h3>1. The facts cited files the model could not find</h3>
+<p>The graph is built from the modelled documents in <code>corpus/</code>, so its facts end in <code>[refund-policy.md]</code>, <code>[org-chart.md]</code> and so on. The test folder held <code>corpus-before/</code>, whose files have other names. The model noticed, and said so:</p>
+<blockquote><p>“The memory hook references files that don't match what's actually in this directory — the real file is named <code>refunds-policy-2024-superseded.md</code>, suggesting the policy has been superseded. Let me check the actual current files rather than relying on the stale memory.”</p><footer>Sonnet 5, £300 refund in June 2025, with claims</footer></blockquote>
+<blockquote><p>“The hook context references files like <code>onboarding-process.md</code> and <code>org-chart.md</code>, but those don't exist in this directory — let me check the actual files present.”</p><footer>Sonnet 5, onboarding process, with claims</footer></blockquote>
+<blockquote><p>“The files in this workspace don't match what the memory hook surfaced (it referenced files like <code>refund-policy.md</code>, <code>org-chart.md</code>, <code>delegation-memo.md</code> that don't exist here) — I ignored that stale memory and read the actual documents in this directory instead.”</p><footer>Sonnet 5, refund threshold in 2025, before claims</footer></blockquote>
+
+<h3>2. The graph lacked something the answer needed</h3>
+<p>The 2024 refund policy says a Director approved refunds over £250, but names no person, and the org chart has no Director. Asked about June 2025, Sonnet went looking, even with the cited files present:</p>
+<blockquote><p>“One issue worth flagging: the org chart (<code>org-chart.md</code>) doesn't list a ‘Director’ role at all … So the policy names an approver title that doesn't map to anyone …”</p><footer>Sonnet 5, £300 refund in June 2025, cited files present</footer></blockquote>
+<p>Asked what Priya does, Sonnet searched once for her name and added a detail the graph does not hold: she writes the monthly support report.</p>
+
+<h3>3. The prompt pointed at the documents</h3>
+<p>“Our company docs are in this folder.” reads as an invitation to check them. With it, Sonnet re-read the documents in every graph run, despite the injected answer.</p>
+
+<h2>What the model does, with and without the cited files</h2>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 262" role="img" aria-label="Two paths. When the cited file is missing from the folder, the model treats the memory as stale and searches, with 5 to 6 tool calls and 24 to 29 seconds. When the cited file is present, it answers from the facts or opens that one file, with 0 to 2 tool calls and 4 to 10 seconds.">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+  <text class="lane" x="0" y="22">Cited files not in the folder</text>
+  <rect class="box" x="0" y="36" width="175" height="62" rx="8"/>
+  <text x="14" y="62">Hook injects 8 facts</text>
+  <text class="sub" x="14" y="82">… [refund-policy.md]</text>
+  <rect class="box" x="240" y="36" width="175" height="62" rx="8"/>
+  <text x="254" y="62">Model looks for</text>
+  <text x="254" y="80">the cited file</text>
+  <rect class="box-warn" x="480" width="175" y="36" height="62" rx="8"/>
+  <text x="494" y="62">Not found</text>
+  <text class="sub" x="494" y="82">“stale memory”</text>
+  <rect class="box" x="720" y="36" width="200" height="62" rx="8"/>
+  <text x="734" y="62">Searches the folder</text>
+  <text class="sub" x="734" y="82">5–6 tool calls, 24–29 s</text>
+  <path class="line" d="M175 67 H236" marker-end="url(#arr)"/>
+  <path class="line" d="M415 67 H476" marker-end="url(#arr)"/>
+  <path class="line" d="M655 67 H716" marker-end="url(#arr)"/>
+  <text class="edge" x="445" y="59" text-anchor="middle">Glob</text>
+  <text class="edge" x="685" y="59" text-anchor="middle">distrusts</text>
+
+  <text class="lane" x="0" y="150">Cited files in the folder</text>
+  <rect class="box" x="0" y="164" width="175" height="62" rx="8"/>
+  <text x="14" y="190">Hook injects 8 facts</text>
+  <text class="sub" x="14" y="210">… [refund-policy.md]</text>
+  <rect class="box" x="240" y="164" width="175" height="62" rx="8"/>
+  <text x="254" y="190">Model looks for</text>
+  <text x="254" y="208">the cited file</text>
+  <rect class="box-good" x="480" width="175" y="164" height="62" rx="8"/>
+  <text x="494" y="190">Found</text>
+  <text class="sub" x="494" y="210">matches the facts</text>
+  <rect class="box" x="720" y="164" width="200" height="62" rx="8"/>
+  <text x="734" y="190">Answers, or opens</text>
+  <text x="734" y="208">that one file</text>
+  <path class="line" d="M175 195 H236" marker-end="url(#arr)"/>
+  <path class="line" d="M415 195 H476" marker-end="url(#arr)"/>
+  <path class="line" d="M655 195 H716" marker-end="url(#arr)"/>
+  <text class="edge" x="445" y="187" text-anchor="middle">Glob</text>
+  <text class="edge" x="685" y="187" text-anchor="middle">trusts</text>
+  <text class="sub" x="734" y="246">0–2 tool calls, 4–10 s</text>
+</svg>
+</div>
+<figcaption>The same code, questions and model; only the folder differs. The model does not always look for the file first; when a fact looks stale or incomplete it may search straight away. The June 2025 question searched in both folders, for the missing Director (trigger 2).</figcaption>
+</figure>
+
+<h2>The test: the same questions, with the cited files present</h2>
+<p>The four questions where Sonnet searched with claims, rerun with the same code in a folder holding <code>corpus/</code>, the nine documents the graph was built from. Time is the whole run; turns are model turns.</p>
+<div class="scroll">
+<table>
+<thead>
+<tr><th rowspan="2">Question</th><th class="n" colspan="3">Cited files not in the folder</th><th class="n" colspan="3">Cited files in the folder</th></tr>
+<tr><th class="n">Time</th><th class="n">Turns</th><th class="n">Tool calls</th><th class="n">Time</th><th class="n">Turns</th><th class="n">Tool calls</th></tr>
+</thead>
+<tbody>
+<tr><td>What is the onboarding process?</td><td class="n">23.6 s</td><td class="n">4</td><td class="n">5</td><td class="n">10.2 s</td><td class="n">3</td><td class="n">2</td></tr>
+<tr><td>What does Priya do?</td><td class="n">7.0 s</td><td class="n">2</td><td class="n">1</td><td class="n good">4.0 s</td><td class="n good">1</td><td class="n good">0</td></tr>
+<tr><td>Who approves a £300 refund in June 2025?</td><td class="n">28.7 s</td><td class="n">5</td><td class="n">6</td><td class="n">16.5 s</td><td class="n">4</td><td class="n">6</td></tr>
+<tr><td>How has the refund approval threshold changed?</td><td class="n">12.5 s</td><td class="n">4</td><td class="n">5</td><td class="n good">6.8 s</td><td class="n good">1</td><td class="n good">0</td></tr>
+<tr class="total"><td>Total</td><td class="n">71.8 s</td><td class="n">15</td><td class="n">17</td><td class="n">37.5 s</td><td class="n">9</td><td class="n">8</td></tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>All eight answers were correct.</li>
+<li>Two questions no longer searched at all.</li>
+<li>For onboarding, the model went straight to the cited file (<code>onboarding-process.md</code>) and read only that: 2 tool calls instead of 5.</li>
+<li>June 2025 still searched, for the Director the graph cannot name.</li>
+</ul>
+
+<h2>What in the current design helps</h2>
+<p>None of this stops re-reading; it gives the model fewer reasons to.</p>
+<ul>
+<li><strong>Every fact names its source file</strong>, e.g. <code>[refund-policy.md]</code>. When the model checks, it opens that one file instead of scanning the folder.</li>
+<li><strong>Dated claims close gaps.</strong> Since claims were added, Haiku stopped searching entirely: 0 tool calls, down from 0.4 per question.</li>
+<li><strong>The first line names the period</strong>, e.g. “for June 2025”, so the model knows what time frame the facts cover.</li>
+</ul>
+<p>Nothing in the injection says the facts are current, complete, or safe to rely on without checking.</p>
+
+<h2>What would reduce it further</h2>
+<p>This is proposal 7 in <a href="improvement-proposals.html">improvement-proposals.html</a>, not implemented yet.</p>
+<ul>
+<li><strong>Say where the facts come from and how fresh they are.</strong> One opening line: when the graph was built, from which documents, with a source per fact.</li>
+<li><strong>Check the cited files at recall time.</strong> If a cited file is missing from the working folder, or changed after the graph was built, say so up front. Then the model does not discover it on its own and distrust everything, as it did here.</li>
+<li><strong>Close known gaps in the extraction.</strong> For example, record that the 2024 policy names no person for the Director role, so the model does not go looking for one.</li>
+<li><strong>Add one line of guidance:</strong> “Answer from these facts unless they are marked changed or missing.”</li>
+</ul>
+<h3>What not to do</h3>
+<p>Blocking the tools, for example with a hook that stops file reads once the graph has answered, would stop the searching. But checking the source when the memory looks stale is the right, safe behaviour. The aim is to remove false alarms such as missing citations, not to stop the model checking when something really is out of date.</p>
+
+<h2>A flaw in the benchmark</h2>
+<p><code>bench/live_eval.py</code> copies <code>corpus-before/</code> into both conditions, so its graph condition has the same citation mismatch built in. In real use the graph is built from your own documents, in the folder you work in, and the citations resolve. The graph condition should get the documents the graph was built from.</p>
+
+<h2>How this was measured</h2>
+<ul class="method">
+<li>Live runs of <code>claude -p</code> (Claude Code 2.1.280) on 23–24 September 2026, with <code>claude-sonnet-5</code> and <code>claude-haiku-4-5-20251001</code>, graph hook on, tools limited to Grep, Read and Glob, user and project settings and MCP servers off. Dates were pinned with <code>GRAPH_MEMORY_TODAY=2026-09-23</code>.</li>
+<li>Every stream event was timestamped as it arrived; turns and tool calls were counted from the event stream, and the model's reasons are quoted from its own text in those streams.</li>
+<li>The comparison ran each of 10 questions once per model and version (40 runs, about $0.55). The rerun repeated four Sonnet questions in a folder holding <code>corpus/</code> (4 runs, about $0.10).</li>
+<li>One run per question: time differences of about a second are within run-to-run noise. The tool-call counts and the model's stated reasons are the firmer evidence.</li>
+</ul>
+</main>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Knowledge Graph API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } }
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+td code, td .m { white-space: nowrap; }
+.m { font: 12.5px var(--mono); }
+.verb { font: 600 11.5px var(--mono); padding: 1px 6px; border-radius: 4px; background: var(--bg); border: 1px solid var(--hair); }
+.stack { display: grid; gap: 8px; margin: 10px 0 18px; }
+.layer { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: stretch; }
+.layer > b { font: 600 12px/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-top: 10px; }
+.boxes { display: flex; flex-wrap: wrap; gap: 8px; }
+.box { flex: 1 1 8em; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+.box small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 2px; }
+.box.keep { border-color: var(--good); background: var(--good-bg); }
+.box.new { border-color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin: 0 0 6px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--hair); background: var(--surface); }
+.legend .k::before { border-color: var(--good); background: var(--good-bg); }
+.legend .n::before { border-color: var(--accent); }
+@media (max-width: 620px) { .layer { grid-template-columns: 1fr; gap: 4px; } .layer > b { padding-top: 0; } }
+.lede-list li { font-size: 17px; color: var(--ink-2); }
+.note { font-size: 14px; color: var(--ink-2); }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 12px; }
+.flow .st { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; font-weight: 600; max-width: 13em; }
+.flow .st small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.flow .st.gate { border-color: var(--warn); background: var(--warn-bg); }
+.flow .ar { color: var(--muted); }
+</style>
+
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · proposal, revised 28 September 2026</div>
+<h1>A plug-and-play API for the knowledge graph</h1>
+<p class="lede">How to turn the graph from a folder that a script rebuilds into a hosted service that other systems plug
+into. It includes every decision made so far:</p>
+<ul class="lede-list">
+<li>shared by teams, in separate workspaces;</li>
+<li>projects first, with a task app as the main client;</li>
+<li>any execution platform, which brings its own credentials;</li>
+<li>a person approving every edit.</li>
+</ul>
+<p class="lede">The last section covers where OpenSpec fits.</p>
+
+<div class="answer" style="border-color: var(--good); background: var(--good-bg)"><p><strong>Built on 28 September 2026.</strong> The service is in <code>kl/</code>, with all tests passing. The results, and where it differs from this proposal, are in <a href="api-results.html">api-results.html</a>. The client guide is <a href="api-guide.html">api-guide.html</a>.</p></div>
+
+<div class="answer">
+<p><strong>In short.</strong> A hosted service, one workspace per team, on Postgres. One core, reached through REST
+(with an OpenAPI contract) and an MCP server that offers the same operations. The Claude Code hook becomes one more
+client.</p>
+<p><strong>Projects come first.</strong> A project has deliverables. Each deliverable has a plan, and each plan is a
+graph of tasks. One orchestrator runs an approved plan by handing ready tasks to machines it starts. Any agent on any
+machine works through one run protocol: get the brief, ask for context, report, hand in evidence, finish.</p>
+<p><strong>People approve every edit.</strong> A project edit, a proposed plan, what an agent learns, a finished
+deliverable: each is a change request, and a person approves it before it applies. One approval is enough, and a person
+may approve their own request. Agents and ingestion can only propose. An approved plan is the go-ahead for
+the tasks inside it. So run progress moves on its own, except at steps the plan marks for a person.</p>
+<p><strong>What stays.</strong> Every change goes through the checks the build already makes. Quotes are checked
+against their source, and project changes go through the same pure <code>validate</code> and <code>apply</code>. The
+source of truth becomes an append-only log, and the graph is a projection of it, updated one source at a time.</p>
+<p><strong>OpenSpec fits three ways.</strong> It is the plan format for deliverables that change code. The graph reads
+it as a source, so requirements connect to the code and the business rules. And it is the way to build this API
+itself.</p>
+</div>
+
+<h2>Your decisions, and what each changes</h2>
+<div class="scroll"><table>
+<thead><tr><th>You decided</th><th>What it changes</th></tr></thead>
+<tbody>
+<tr><td><b>Hosted, shared by a team, several workspaces</b></td><td>Postgres with row-level security, keyed by
+workspace; files in object storage; a job queue; several API servers. People sign in with single sign-on (OIDC).
+Systems use service accounts. Each agent run gets its own short-lived token. SQLite stays as the backend for local use
+and tests.</td></tr>
+<tr><td><b>Our own task model, projects first; a task app is the main client</b></td><td>Project → deliverable → plan →
+task graph → run. Deliverables produce plans, and plans are what the orchestrator runs. The service holds the model and
+has no screens of its own. A task app shows projects, plans and the review queue through the API, and sends inputs in.
+External task systems become optional connectors, not the model.</td></tr>
+<tr><td><b>Any execution platform, which holds
+the credentials</b></td><td>A run protocol over plain HTTP and JSON, with MCP tools for the same operations. Tasks say
+what they need, runners say what they offer, and nothing assumes a particular agent. Pull (leases) and push (webhooks, a
+server-sent event stream) both work. The platform injects every credential at run time, including the one run token
+this service issues. The service never stores or passes on anyone else's.</td></tr>
+<tr><td><b>Edits approved by people first</b></td><td>Every write becomes a change request: a list of change-set
+operations with its reasons and sources. A person approves it, rejects it, or edits it and then approves it, in whole
+or one operation at a time. It is checked when opened and again when approved, against whatever has changed
+since.</td></tr>
+<tr><td><b>One approval; proposers may approve their own</b></td><td>The defaults, set per workspace so they can be
+tightened later. Only people approve: an agent's or an ingestion job's request always waits for a person.</td></tr>
+</tbody></table></div>
+
+<h2>What stops it being plug and play today</h2>
+<div class="scroll"><table>
+<thead><tr><th>Today</th><th>Why that blocks it</th><th>Proposed</th></tr></thead>
+<tbody>
+<tr><td><code>build_graph.build()</code> recreates <code>graph.db</code> from files every time.</td><td>A stream of files
+and concurrent edits would mean a full rebuild per write.</td><td>A projection updated per source version; full rebuild
+kept as a test.</td></tr>
+<tr><td>SQLite, one file, one user.</td><td>A team service needs many writers, isolation between workspaces, and backups.</td>
+<td>Postgres behind a storage interface; SQLite for local use and tests.</td></tr>
+<tr><td>Extraction is a model run by hand with <code>extract-prompt.md</code>.</td><td>No way to hand the system a
+file.</td><td>Ingestion jobs, a pluggable extractor, and your own extraction JSON accepted.</td></tr>
+<tr><td>Claim ids are integers assigned at build; each claim has one <code>source_doc</code>.</td><td>Nothing outside can
+refer to a fact, and the same fact in two files is two claims.</td><td>Content ids; many sources per claim.</td></tr>
+<tr><td>A plan is a list of steps in a project record; there are no runs.</td><td>Nothing can be handed to machines or
+tracked while it runs.</td><td>Plans per deliverable, a task graph, runs with leases.</td></tr>
+<tr><td>Project changes apply once someone runs a CLI command; no delete.</td><td>No review by a named person, no
+concurrency control.</td><td>Change requests with approvals; versions; soft delete.</td></tr>
+<tr><td><code>recall()</code> runs in-process; the hook starts Python per prompt.</td><td>Other systems cannot call it.</td>
+<td>The context API; the hook becomes a client.</td></tr>
+</tbody></table></div>
+
+<h2>The shape</h2>
+<div class="legend"><span class="k">exists today, kept</span><span class="n">new</span><span>changed</span></div>
+<div class="stack">
+<div class="layer"><b>Clients</b><div class="boxes">
+<div class="box">Input handlers<small>uploads, folders, connectors</small></div>
+<div class="box">Task app<small>the main client: projects, plans, review screens</small></div>
+<div class="box">Execution platform<small>orchestrator, machines, credentials</small></div>
+<div class="box">Agents on machines<small>any kind</small></div>
+<div class="box keep">Claude Code hook<small>and /project commands</small></div>
+</div></div>
+<div class="layer"><b>Adapters</b><div class="boxes">
+<div class="box new">REST + OpenAPI<small>/v1, generated clients</small></div>
+<div class="box new">MCP server<small>the same operations, as tools</small></div>
+<div class="box new">Webhooks, event stream<small>signed; cursor or SSE</small></div>
+</div></div>
+<div class="layer"><b>Service</b><div class="boxes">
+<div class="box new">Identity<small>OIDC, service accounts, run tokens</small></div>
+<div class="box new">Review<small>change requests, approvals</small></div>
+<div class="box new">Scheduler<small>ready tasks, leases, retries</small></div>
+<div class="box new">Jobs<small>ingestion, extraction</small></div>
+<div class="box new">Outbox<small>every event, once</small></div>
+</div></div>
+<div class="layer"><b>Core</b><div class="boxes">
+<div class="box">Ingest<small>normalise, deduplicate, route</small></div>
+<div class="box">Extract, verify<small>quote check kept</small></div>
+<div class="box keep">Change-set engine<small>validate / apply, status rules</small></div>
+<div class="box new">Plans<small>task graphs, OpenSpec import</small></div>
+<div class="box keep">Code index<small>and the dependents trace</small></div>
+<div class="box">Recall, search<small>ported to the storage interface</small></div>
+</div></div>
+<div class="layer"><b>Store</b><div class="boxes">
+<div class="box new">Postgres<small>one schema, rows scoped by workspace; log + projection</small></div>
+<div class="box new">Object storage<small>file versions, artifacts</small></div>
+<div class="box">SQLite<small>local and tests, same interface</small></div>
+</div></div>
+</div>
+
+<h2>Projects first: the model</h2>
+<div class="scroll"><table>
+<thead><tr><th>Thing</th><th>Holds</th><th>Comes from</th></tr></thead>
+<tbody>
+<tr><td><b>Workspace</b></td><td>Members and roles (viewer, editor, approver, admin), service accounts, settings, connected
+repositories.</td><td>An admin.</td></tr>
+<tr><td><b>Project</b></td><td>Title, description, status, owner, due date, dependencies, questions, decisions, sources
+(today's record), with a version and <code>deleted_at</code>. Also an entity in the graph, so recall finds it.</td>
+<td>A change request, often proposed from a transcript or request.</td></tr>
+<tr><td><b>Deliverable</b></td><td>What the project hands over, with its acceptance criteria and status.</td><td>A change
+request.</td></tr>
+<tr><td><b>Plan</b></td><td>How one deliverable gets made. Versioned. Its kind is <code>general</code> or
+<code>openspec</code>, and it has a state: draft, in review, approved, running, done or superseded.</td><td>Drafted by
+a person or a model after discussion; the drafter can research through the context API. Approved by a person.</td></tr>
+<tr><td><b>Task</b></td><td>One node of the plan's graph: instructions, what it waits on, the checks that decide it is
+done, what a runner must offer (a repository, a browser, a language, a GPU), its inputs and outputs, and whether a
+person must look before it counts as done.</td><td>Part of the plan.</td></tr>
+<tr><td><b>Execution</b></td><td>One go at running an approved plan version.</td><td>The orchestrator.</td></tr>
+<tr><td><b>Run</b></td><td>One attempt at one task by one
+runner. It moves from leased to provisioning to running, and ends succeeded, failed, lost or cancelled. It holds the
+lease, heartbeats, log, artifacts and outcome. One table, with a <code>kind</code> column: with two tables, an id taken
+from one gets read back from the other.</td><td>The orchestrator, then the agent.</td></tr>
+<tr><td><b>Artifact</b></td><td>What a run hands in: a file, a pull request, a test report, text, a link. Typed, in object
+storage.</td><td>The agent.</td></tr>
+<tr><td><b>Change request</b></td><td>Proposed operations, reasons, sources, the proposer (a person, an ingestion job, a
+run), reviewers, comments and a state.</td><td>Anyone. Applied only when a person approves.</td></tr>
+</tbody></table></div>
+<h3>A deliverable's life, and where people decide</h3>
+<div class="flow">
+<span class="st">Input arrives</span><span class="ar">→</span>
+<span class="st gate">Project and deliverables proposed<small>a person approves</small></span><span class="ar">→</span>
+<span class="st">Plan drafted<small>after discussion; research through the context API</small></span><span class="ar">→</span>
+<span class="st gate">Plan approved<small>the go-ahead</small></span><span class="ar">→</span>
+<span class="st">Orchestrator runs ready tasks<small>on the machines it starts</small></span><span class="ar">→</span>
+<span class="st">Runs hand in evidence<small>checks decide each task</small></span><span class="ar">→</span>
+<span class="st gate">Deliverable accepted<small>a person approves</small></span>
+</div>
+<p class="note">Orange marks a person's decision. A task the plan marks for a person also stops for one. Anything that
+would change the plan, such as a new task, a changed check or a new dependency, is a change request, and the execution
+waits at the tasks it affects.</p>
+
+<h2>People approve every edit</h2>
+<ul>
+<li><strong>One object for every edit.</strong> A change request is a list of change-set operations (today's
+<code>create_project</code>, <code>set_status</code>, <code>agree_plan</code> and the rest). New ones:
+<code>delete_project</code>, <code>restore_project</code>, <code>add_task</code>, <code>set_check</code> and
+<code>accept_deliverable</code>. Each comes with its reasons and sources. The project app's edit screens open change
+requests. So do ingestion and agents.</li>
+<li><strong>Checked twice.</strong> <code>validate</code> runs when the request is opened, as a dry run showing the diff
+and any problems. It runs again at approval, against the current state. If another approved request has changed
+something it touches, it is marked stale and must be brought up to date, like a pull request that no longer applies
+cleanly.</li>
+<li><strong>Approve all, some, or an edited version.</strong> Approval is per operation. A reviewer can edit an operation
+before approving it, and the edit is recorded. Rejections keep their reason.</li>
+<li><strong>Who may approve.</strong> By default, any member with the approver role. One approval is enough, and a
+proposer may approve their own request. So a person editing in the task app can propose and approve in one step, and
+the record still shows both. Agents and ingestion jobs are never people, so their requests always wait. The policy is
+per workspace, so a team can require more later. Every approval records who approved, when, and exactly what.</li>
+<li><strong>What does not wait for anyone:</strong> operational state inside an approved plan. That is leases,
+heartbeats, logs, and a task attempt succeeding or failing on its checks. The plan's approval covers these. A workspace
+that wants a person on every task can mark every task for a person.</li>
+<li><strong>Facts from documents</strong> apply once their quotes check out, because they report what a document says,
+not an edit. Conflicts and entity merges go to review. A workspace can require review of every extraction.</li>
+<li><strong>Reads show approved state.</strong> <code>?include=pending</code> overlays open change requests, so the app
+can show what is proposed beside what is true.</li>
+</ul>
+
+<h2>1. Input handlers: any set of files</h2>
+<h3>What happens to a file</h3>
+<ol>
+<li><b>Store</b> the bytes in object storage, content-addressed, with where they came from.</li>
+<li><b>Normalise</b> to text with a line map, so quotes can be checked and cited by line. This covers markdown, PDF,
+docx, email and transcripts. Repositories go to the code indexer, and their OpenSpec folders to the spec parser.</li>
+<li><b>Deduplicate</b> (below); a duplicate stops here.</li>
+<li><b>Route:</b> a document goes to fact extraction. A transcript or request goes to project ingestion, which opens a
+change request. Code goes to the code index, and loose notes to the passage index.</li>
+<li><b>Extract</b> as a job, with the workspace's extractor, or accept extraction JSON sent with the file.</li>
+<li><b>Verify:</b> every quote must be in the text and every date in ISO form. Failures come back on the job.</li>
+<li><b>Commit</b> the version, project it into the graph, and emit events.</li>
+</ol>
+<h3>Deduplication, at six levels</h3>
+<div class="scroll"><table>
+<thead><tr><th>Level</th><th>Detected by</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>Same bytes, or same text</td><td>SHA-256 of the bytes, and of the normalised text</td><td>No new version and no
+new extraction; the new path becomes another location of the same version.</td></tr>
+<tr><td>Same document, new content</td><td>Same external id or URI, different hash</td><td>A new version. Its facts
+replace the old version's. Facts that are no longer there are retracted as of that version and kept in history.</td></tr>
+<tr><td>Near duplicate</td><td>MinHash over five-word shingles, Jaccard similarity of 0.9 or more</td><td>Linked to the
+original. Per request: link and skip (the default), ingest anyway, or send to review.</td></tr>
+<tr><td>Same fact, two sources</td><td>The claim's content id</td><td>One claim, two sources, two quotes.</td></tr>
+<tr><td>Facts that disagree</td><td>Same entity and kind, different amount or text, overlapping dates</td><td>Both kept,
+flagged, and sent to review. Recall shows both, each with its source.</td></tr>
+<tr><td>Same entity, another name</td><td>Normalised name and aliases (exact); alias rules and embeddings
+(candidates)</td><td>Exact matches are one entity. Candidates go to review, and a merge leaves a redirect.</td></tr>
+</tbody></table></div>
+<h3>Endpoints</h3>
+<div class="scroll"><table>
+<thead><tr><th>Call</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/sources</span>, <span class="m">/v1/sources:batch</span></td>
+<td>One or many files, or <code>{uri | text, external_id, collection, kind}</code>. Replies 202 with source, version,
+hash, the dedup decision and a job id. Takes an <code>Idempotency-Key</code>.</td></tr>
+<tr><td><span class="verb">PUT</span> <span class="m">/v1/collections/{id}/manifest</span></td><td>Sync a folder, drive
+or repository: send the full listing, get back what to upload and what will be retracted.</td></tr>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/sources/{id}</span></td><td>Versions, duplicate links,
+extraction runs, and the facts that came from it.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/sources/{id}/extraction</span></td><td>Your own extraction
+JSON, checked like any other.</td></tr>
+<tr><td><span class="verb">DELETE</span> <span class="m">/v1/sources/{id}</span>, <span class="m">…:restore</span></td>
+<td>Soft: retracted, and claims left with no source are hidden from recall but kept in history.</td></tr>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/jobs/{id}</span></td><td>Stage, problems, and counts added,
+changed and retracted.</td></tr>
+</tbody></table></div>
+
+<h2>2. The project app: search, get, create, update, soft delete</h2>
+<p>Reads return approved state. Every write opens a change request and replies 202 with its id; nothing applies until a
+person approves. A person with the approver role can add <code>?approve=true</code> to propose and approve in one call,
+and both the request and the approval are recorded. Agents and service accounts cannot.</p>
+<div class="scroll"><table>
+<thead><tr><th>Call</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/projects</span></td><td>Filters: status, owner, due before or
+after, blocked, depends on. Plus <code>q</code> for full-text and meaning search, a cursor, <code>include_deleted</code>
+and <code>include=pending</code>.</td></tr>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/projects/{id}</span></td><td>With
+<code>include=deliverables,plans,questions,decisions,sources,events</code>. The <code>ETag</code> is the version.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/projects</span>, <span class="verb">PATCH</span>
+<span class="m">/v1/projects/{id}</span>, <span class="verb">DELETE</span> <span class="m">/v1/projects/{id}</span></td>
+<td>Open a change request to create, edit (a merge patch with <code>If-Match</code>) or soft-delete. A move the status
+rules forbid is refused at once with the reason, before anyone is asked.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">…/deliverables</span>, <span class="m">…/deliverables/{key}/plans</span></td>
+<td>Propose a deliverable; propose a plan for it (general, or an OpenSpec change).</td></tr>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/change-requests</span>, <span class="m">/{id}</span></td><td>The
+review queue, by workspace, project, proposer or state, with each request's diff and any problems.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/change-requests/{id}:approve</span>, <span class="m">:reject</span>,
+<span class="verb">PATCH</span> <span class="m">/{id}</span></td><td>Approve all or some operations; reject with a
+reason; edit before approving.</td></tr>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/projects/{id}/events</span></td><td>History: what, when, who
+proposed it, who approved it, and from which source.</td></tr>
+</tbody></table></div>
+<pre class="code">PATCH /v1/projects/refunds-dashboard      If-Match: "v7"
+{"status": "active"}
+
+202 Accepted
+{"change_request": "cr_41", "state": "open", "diff": ["status: planning → active"],
+ "problems": [], "can_approve": ["you, as the proposer", "workspace approvers"]}</pre>
+
+<h2>3. Any execution platform: the run protocol</h2>
+<p>Built for an orchestrator that starts machines and for agents of any kind on them. Everything is plain HTTP and JSON.
+The MCP server offers the agent's side as tools, so an agent that speaks MCP needs no client code.</p>
+<h3>The orchestrator's side</h3>
+<div class="scroll"><table>
+<thead><tr><th>Call</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><span class="verb">GET</span> <span class="m">/v1/events?types=plan.approved,task.ready</span></td><td>What to
+start: a stream (SSE) or a cursor, plus signed webhooks.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/plans/{id}/executions</span></td><td>Start running an approved
+plan version. Returns the task graph and which tasks are ready.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/executions/{id}/tasks/{task}/runs</span></td><td>Lease a
+ready task to a runner, sending what that runner offers. Returns the run id, a run token scoped to this task, and the
+lease length.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/runs/{id}/events</span></td><td>While the machine is queued or
+starting, the orchestrator marks the run <code>provisioning</code> and keeps renewing the lease; the agent takes over
+once it runs.</td></tr>
+<tr><td><span class="verb">POST</span> <span class="m">/v1/runs/{id}:cancel</span>, <span class="verb">GET</span>
+<span class="m">/v1/executions/{id}</span></td><td>Stop a run; see where everything stands.</td></tr>
+</tbody></table></div>
+<h3>The agent's side (REST and MCP)</h3>
+<div class="scroll"><table>
+<thead><tr><th>MCP tool</th><th>REST</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><code>get_brief</code></td><td><span class="m">GET /v1/runs/{id}/brief</span></td><td>The task, its checks, the
+outputs of the tasks it waited on, and its project and deliverable. For a code task it adds the requirements and
+scenarios it serves and the dependents of the code it names. The facts it needs come as JSON and as text, within a
+token budget.</td></tr>
+<tr><td><code>graph_context</code></td><td><span class="m">POST /v1/context</span></td><td>More context mid-task: what the
+hook injects today, with ids, sources and freshness marks.</td></tr>
+<tr><td><code>graph_search</code>, <code>graph_get</code>, <code>code_impact</code></td><td><span class="m">GET
+/v1/search</span>, <span class="m">/v1/entities/{id}</span>, <span class="m">/v1/code/impact</span></td><td>Look things
+up; every dependent of a code change.</td></tr>
+<tr><td><code>heartbeat</code>, <code>log</code></td><td><span class="m">POST /v1/runs/{id}/events</span></td><td>Keep the
+lease; record progress.</td></tr>
+<tr><td><code>attach</code></td><td><span class="m">POST /v1/runs/{id}/artifacts</span></td><td>Hand in a file, pull
+request, test report, text or link.</td></tr>
+<tr><td><code>ask_person</code></td><td><span class="m">POST /v1/runs/{id}/questions</span></td><td>Stop and ask. The run
+waits, and the answer arrives as an event.</td></tr>
+<tr><td><code>propose</code></td><td><span class="m">POST /v1/runs/{id}/change-requests</span></td><td>Something learned
+that would change the project or the plan: a change request for a person.</td></tr>
+<tr><td><code>complete</code>, <code>fail</code></td><td><span class="m">POST /v1/runs/{id}:complete</span></td><td>Finish,
+with evidence and outputs. The task's checks decide whether it is done, and done tasks unlock the tasks waiting on
+them.</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Leases, not trust.</strong> A run that stops sending heartbeats loses its lease, and the task goes back to
+ready under the plan's retry rules. Completing is idempotent, so a retried call cannot finish a task twice.</li>
+<li><strong>Tokens as narrow as the task.</strong> A run token reads the workspace's context and writes only to its own
+run. Anything wider is a change request.</li>
+<li><strong>Nothing assumes the agent.</strong> Claude, another model, a script or a person with a checklist can hold a
+run. Tasks state what they need, and artifacts are typed but opaque.</li>
+<li><strong>Returned text is data.</strong> Quotes come with their source and are labelled as quoted material. Ingested
+files can carry prompt injection, and the brief says so.</li>
+</ul>
+<h3>Credentials: the platform's, never the service's</h3>
+<ul>
+<li><strong>The platform injects them.</strong> Repository access, cloud roles, connector tokens and the agent's own
+model credential are injected into the machine's environment at run time by the execution platform. The service never
+stores, sees or passes them on. A task only says what it needs, such as write access to a repository or a browser, and
+the platform decides which of its credentials meets that.</li>
+<li><strong>One token of the service's own.</strong> The run token goes to the orchestrator when it leases a task, and
+the platform injects it like any other credential, as <code>KL_RUN_TOKEN</code> beside <code>KL_API_URL</code>.
+Credentials live only in the environment. Nothing credential-like goes into a machine image, a plan or a brief.</li>
+<li><strong>The brief is fetched, not injected.</strong> The agent fetches it with the token as its first call. It is
+specific to the run, and often too large for the environment variables or start-up overrides a platform allows.</li>
+<li><strong>The token outlives any queue.</strong> Its value is fixed when it is issued, but its expiry is kept on the
+server and moves with the lease. The orchestrator renews the lease while the machine is queued or starting; the agent's
+heartbeats renew it once it runs. A machine that takes hours to start still wakes up holding a valid token. A lease
+nobody renews expires, the token with it, and the task goes back to ready.</li>
+<li><strong>Kept small.</strong> Tokens are stored hashed, revoked when the run ends, and removed from logs and
+artifacts before storage.</li>
+</ul>
+
+<h2>Where OpenSpec fits</h2>
+<p>OpenSpec (the version 1.13.2 workflow on <code>openspec-workflow.html</code>) keeps two things in a repository.
+<code>openspec/specs/</code> says what the system does now, as requirements with scenarios.
+<code>openspec/changes/</code> holds planned changes, each with a proposal, spec deltas, an optional design and a task
+list. A change is proposed, reviewed, applied and archived, and archiving merges its deltas into the specs. That is
+the same loop as this system's: a proposed change, reviewed by a person, applied, then kept as history. It fits in
+three places.</p>
+
+<h3>1. The plan format for deliverables that change code</h3>
+<p>When a deliverable changes a repository, its plan can be an OpenSpec change. Importing it gives an ordinary plan, so
+the orchestrator runs it like any other.</p>
+<div class="scroll"><table>
+<thead><tr><th>OpenSpec</th><th>Here</th></tr></thead>
+<tbody>
+<tr><td><code>changes/&lt;name&gt;/</code></td><td>A plan of kind <code>openspec</code> for one deliverable, linked to
+the repository and branch.</td></tr>
+<tr><td><code>proposal.md</code> (why, what changes, impact)</td><td>The plan's summary, shown in review.</td></tr>
+<tr><td>Spec deltas: requirements and <code>WHEN</code>/<code>THEN</code> scenarios</td><td>The deliverable's acceptance
+criteria. Each scenario becomes a check, ideally a test that names it.</td></tr>
+<tr><td><code>design.md</code></td><td>The plan's design notes, given to every task's brief.</td></tr>
+<tr><td><code>tasks.md</code> (numbered checkboxes)</td><td>Tasks. Its order becomes the default dependencies, since it
+has no graph of its own. The plan adds what runners must offer, and which tasks can run side by side.</td></tr>
+<tr><td><code>/opsx:propose</code>, then review</td><td>Plan drafted, then a change request that a person approves.</td></tr>
+<tr><td><code>/opsx:apply</code></td><td>The execution: the orchestrator hands the tasks to machines, and each agent ticks
+its own box.</td></tr>
+<tr><td><code>openspec validate --strict</code>, <code>/opsx:verify</code></td><td>Checks when the plan is imported, and
+the deliverable's checks at the end.</td></tr>
+<tr><td><code>/opsx:archive</code></td><td>Deliverable accepted by a person; the deltas are merged into the specs.</td></tr>
+</tbody></table></div>
+<p>The repository stays the specs' source of truth. The system writes the change folder to a branch, and approval
+happens once, in the review queue. The system then merges it, so the repository and the queue cannot disagree.</p>
+
+<h3>2. A source the graph reads</h3>
+<ul>
+<li><strong>No model needed.</strong> The spec format is strict enough to parse in code, like the code index. Each
+capability, requirement and scenario becomes an entity. Each requirement's <code>SHALL</code> sentence and each
+scenario becomes a claim, quoting its own line in <code>spec.md</code>, checked like any quote.</li>
+<li><strong>Dated for free.</strong> An archived change's folder carries its date
+(<code>2026-09-28-add-2fa</code>). A MODIFIED requirement ends the old claim that day and starts the new one; a REMOVED
+one ends it. So the graph can say what the spec required in August, as it does for the two refund policies. Open
+changes are pending claims, shown as proposed, never as fact.</li>
+<li><strong>Requirements linked to code.</strong> A test that names a scenario, and the files a change's tasks touched,
+link requirements to code symbols. The dependents trace then answers two new questions. “If I change
+<code>needs_approval</code>, which requirements and scenarios are at stake?” And the reverse: “what implements
+two-factor login?”</li>
+<li><strong>Three-way disagreements.</strong> The graph already finds the refund threshold at £250 in the backend, £500 in
+the frontend and £500 in the current policy. With specs, a requirement joins that comparison. A spec that says one
+thing while the policy and the code say others is exactly what a person should see before a plan is approved.</li>
+</ul>
+
+<h3>3. How to build this API</h3>
+<p>Run <code>openspec init --tools claude</code> in this repository. Write capability specs for sources, projects,
+review, plans, execution, context and workspaces. Each phase of the plan below becomes one OpenSpec change. Each
+phase's “done when” becomes its scenarios, and the tests that name them are its checks. <code>openspec validate
+--strict</code> runs in CI, and archiving a change is how a phase lands.</p>
+
+<h3>Where it does not fit</h3>
+<ul>
+<li>It is about code in one repository. A deliverable that is a report, a migration weekend or a hire gets a general
+plan instead.</li>
+<li><code>tasks.md</code> is a checklist, with no dependencies, runner needs or people's gates. Those live in the plan,
+not in OpenSpec's files.</li>
+<li>It keeps state in files. The bridge is the branch-and-merge step above; the service never edits a repository's specs
+any other way.</li>
+</ul>
+
+<h2>Across everything</h2>
+<div class="scroll"><table>
+<thead><tr><th>Concern</th><th>Proposal</th></tr></thead>
+<tbody>
+<tr><td>Identity</td><td>OIDC single sign-on for people; service accounts with API keys (stored hashed) for systems;
+run tokens for agents, injected by the execution platform, with the expiry on the server moving with the lease. Scopes per workspace: <code>sources:write</code>, <code>projects:propose</code>,
+<code>review:approve</code>, <code>runs:lease</code>, <code>context:read</code>, <code>admin</code>.</td></tr>
+<tr><td>Isolation</td><td>Every row carries its workspace. Postgres row-level security enforces it under the application
+code too. Per-workspace quotas cover storage, extraction spend and concurrent runs.</td></tr>
+<tr><td>Provenance</td><td>Every change records who proposed it, who approved it, its source, and its time. Every run
+records its runner and its evidence.</td></tr>
+<tr><td>Events</td><td>An outbox written in the same transaction as the change, delivered as signed webhooks and readable
+as a stream (<code>change_request.opened</code>, <code>plan.approved</code>, <code>task.ready</code>,
+<code>run.lost</code>, <code>deliverable.accepted</code>, <code>claim.retracted</code>…).</td></tr>
+<tr><td>Recall on Postgres</td><td>The walk, names and claims port directly. Relevance moves from SQLite's BM25 to
+Postgres full-text search, or to a BM25 extension. Today's cases are the check: the same questions must give the same
+facts. Expect tens of milliseconds, not today's 3.</td></tr>
+<tr><td>Contracts</td><td><code>/v1</code>; OpenAPI generated from typed models; JSON Schemas for extraction output,
+change sets, plans and run events. Python and TypeScript clients generated from them.</td></tr>
+</tbody></table></div>
+
+<h2>What changes in the database</h2>
+<div class="scroll"><table>
+<thead><tr><th>Tables</th><th>New or changed</th><th>Hold</th></tr></thead>
+<tbody>
+<tr><td><code>workspaces</code>, <code>members</code>, <code>service_accounts</code></td><td>new</td><td>Tenancy, roles,
+keys.</td></tr>
+<tr><td><code>documents</code>, <code>source_versions</code>, <code>extraction_runs</code></td><td>new</td><td>What
+arrived, every version, every extraction.</td></tr>
+<tr><td><code>claims</code>, <code>relations</code>, <code>claim_sources</code>, <code>entity_redirects</code></td>
+<td>changed, new</td><td>Content ids, many sources per claim, merged ids.</td></tr>
+<tr><td><code>projects</code>, <code>deliverables</code></td><td>changed</td><td>Versions, <code>deleted_at</code>,
+acceptance criteria.</td></tr>
+<tr><td><code>plans</code>, <code>tasks</code>, <code>task_deps</code>, <code>checks</code></td><td>new (replace
+<code>steps</code> and <code>step_after</code>)</td><td>Versioned task graphs per deliverable.</td></tr>
+<tr><td><code>executions</code>, <code>runs</code>, <code>run_events</code>, <code>artifacts</code></td><td>new</td>
+<td>Running plans; one run table.</td></tr>
+<tr><td><code>change_requests</code>, <code>approvals</code>, <code>change_log</code></td><td>new</td><td>Every proposed
+edit, every decision, every applied change.</td></tr>
+<tr><td>spec entities</td><td>new types</td><td>CAPABILITY, REQUIREMENT, SCENARIO, in the existing entity and claim
+tables.</td></tr>
+<tr><td><code>jobs</code>, <code>outbox</code>, <code>sessions</code></td><td>new</td><td>The service's own state.</td></tr>
+</tbody></table></div>
+
+<h2>The plan</h2>
+<p>Each phase is one OpenSpec change, done when its scenarios pass.</p>
+<div class="scroll"><table>
+<thead><tr><th>Phase</th><th>What</th><th>Done when</th></tr></thead>
+<tbody>
+<tr><td><b>1. Core and storage interface</b></td><td>One package with typed models. The storage interface has two
+backends, SQLite and Postgres.</td><td>All 215 tests pass on both backends, and the recall and code cases give the same
+facts on each.</td></tr>
+<tr><td><b>2. Log and projection</b></td><td>Source versions, stable ids, per-source updates, retraction, workspace
+scoping.</td><td>Random sequences of adding, changing and retracting files give the same graph as a full rebuild. Claim
+ids are stable. One workspace never sees another's rows.</td></tr>
+<tr><td><b>3. Review</b></td><td>Change requests, approvals and policies; every write goes through them.</td><td>Nothing
+applies without an approval. A stale request is caught at approval. Per-operation and edited approvals are recorded.
+The project cases pass as change requests.</td></tr>
+<tr><td><b>4. Projects, plans, context</b></td><td>The project app's API, plans per deliverable, OpenSpec import, and the
+context API with MCP.</td><td>An OpenSpec change imports into the right task graph. Context answers match
+in-process recall.</td></tr>
+<tr><td><b>5. Execution</b></td><td>Executions, leases, the run protocol, and a reference orchestrator that starts local
+workers.</td><td>A fake agent drives every path: success, failure, lost lease, a question to a person, a proposal. A run
+whose machine takes longer to start than a token would first have lasted still starts, and one whose lease nobody renews
+cannot write. Then a live run: two real agents on two machines carry out a sample plan.</td></tr>
+<tr><td><b>6. Ingestion</b></td><td>Uploads, manifests, the six dedup levels, extraction jobs, the spec parser.</td><td>The
+dedup suite passes. Every quote is checked. Specs arrive dated, and requirements link to code.</td></tr>
+<tr><td><b>7. Hosting</b></td><td>OIDC, row-level security, quotas, deployment, backups.</td><td>An isolation suite run as
+two tenants; load tested; restore rehearsed.</td></tr>
+</tbody></table></div>
+
+<h2>Decided</h2>
+<div class="scroll"><table>
+<thead><tr><th>Question</th><th>Decision</th></tr></thead>
+<tbody>
+<tr><td>Local or hosted</td><td>Hosted, shared by teams, several workspaces.</td></tr>
+<tr><td>Which task system</td><td>Our own model, projects first; deliverables produce plans that one orchestrator runs
+across many machines. A task app is the service's main client.</td></tr>
+<tr><td>Which execution platform</td><td>Any: an agent-neutral run protocol, over REST and MCP.</td></tr>
+<tr><td>Edits</td><td>Approved by a person first. One approval is enough; a proposer may approve their own request.</td></tr>
+<tr><td>Credentials</td><td>The execution platform injects them at run time, including this service's run token; the
+service holds none of anyone else's.</td></tr>
+</tbody></table></div>
+</main>
+
+</body>
+</html>

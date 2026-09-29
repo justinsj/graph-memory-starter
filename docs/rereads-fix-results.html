@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Re-reading Fix Results</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; }
+blockquote p { margin: 0; font-size: 15px; }
+blockquote footer { margin-top: 6px; font: 12px var(--mono); color: var(--muted); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 650; border-top: 2px solid var(--hair); }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .lane { fill: var(--ink-2); font-weight: 600; font-size: 13px; }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+svg .box-good { fill: var(--good-bg); stroke: var(--good); stroke-width: 1.5; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } figure { padding: 12px; } }
+
+th.c, td.c { text-align: center; white-space: nowrap; }
+pre.inj { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre-wrap; }
+.values td:first-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.big { display: flex; flex-wrap: wrap; gap: 14px 28px; margin: 6px 0 4px; }
+.big div { font-size: 14px; color: var(--ink-2); }
+.big b { display: block; font: 700 26px/1.2 var(--mono); color: var(--ink); }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · results, 24 September 2026</div>
+<h1>Stopping the model re-reading the docs</h1>
+<p class="lede">The injection now carries the documents' own words, checked against the files each time,
+with a line saying where the facts come from and to answer from them. Tested live on the same questions,
+in the same folder where Sonnet used to search.</p>
+
+<div class="answer">
+<p><strong>Partly fixed.</strong> Without a hint in the prompt, Sonnet's searching halved: 4 of 10 runs
+searched before and 2 of 10 with the fix (17 tool calls down to 6); its
+average time fell from 9.6 s to 5.0 s and its cost per question by
+32%. Haiku did not search before and does not now.</p>
+<p><strong>A prompt pointing at the documents still wins.</strong> Told “Our company docs are in this folder.”,
+Sonnet searched in 10 of 10 runs before and 10 of 10 with the fix.</p>
+<p>Every answer was correct in every set (30 of 30 with the fix). The injection
+grew by about 321 input tokens per prompt on average.</p>
+</div>
+
+<div class="big">
+<div><b>4 → 2</b>Sonnet runs that searched, of 10</div>
+<div><b>17 → 6</b>Sonnet tool calls</div>
+<div><b>9.6 → 5.0 s</b>Sonnet average time</div>
+<div><b>10 → 10</b>runs that searched, prompt pointing at the docs</div>
+</div>
+
+<h2>What was built</h2>
+<p>Everything from the list in <a href="why-the-model-rereads.html">why-the-model-rereads.html</a> except the optional
+standing instruction in <code>CLAUDE.md</code>. The values are the ones recommended from the measurements below them.</p>
+<div class="scroll"><table class="values">
+<thead><tr><th>Setting</th><th class="n">Value</th><th>What it does, and why this value</th></tr></thead>
+<tbody>
+<tr><td>quote</td><td class="n">per claim</td><td>Each claim carries the shortest passage of its document that states it, word for word. The build refuses a quote its document does not contain (markdown and spacing aside).</td></tr>
+<tr><td>MAX_QUOTE</td><td class="n">300 chars</td><td>Longest quote the build accepts. Sentences in the documents run 59–71 characters at the median, 87–112 at the 90th percentile and 295 at most, so any one sentence fits.</td></tr>
+<tr><td>EXCERPT_BUDGET</td><td class="n">2,000 chars</td><td>Source quotes per prompt, most relevant claim first. Document text measured 2.81 characters per token on Sonnet 5, so at most about 710 tokens.</td></tr>
+<tr><td>MAX_EXCERPTS</td><td class="n">8</td><td>Quotes per prompt, like the 8 facts. A quote backing several claims is sent once.</td></tr>
+<tr><td>freshness check</td><td class="n">every prompt</td><td>Each quote is checked against the file as it is now. A changed file is marked “changed since extraction, check it”, a missing one “no longer in the documents folder”, so the model is told instead of finding out.</td></tr>
+<tr><td>provenance line</td><td class="n">1 line</td><td>Under the header: how many documents, which folder, when extracted, each fact names its source, and “answer from these facts unless a source below is marked changed or missing”.</td></tr>
+<tr><td>SESSION_HOURS</td><td class="n">12</td><td>Within a conversation a quote is sent once, remembered per session id in the temp folder. Forgotten on compaction and on a cleared session (hooks.json runs <code>--forget</code> on PreCompact and SessionStart; a resumed conversation keeps them), and after 12 idle hours.</td></tr>
+<tr><td>unknown claims</td><td class="n">new kind</td><td>What a document leaves open is stated, so the model does not go looking: “The 2024 refund policy names no person for the Director role”.</td></tr>
+<tr><td>coverage check</td><td class="n">at build</td><td>Warns about a role nobody holds without an unknown claim, and an entity with no claims. The repo graph has none.</td></tr>
+<tr><td>benchmark</td><td class="n">fixed</td><td><code>bench/live_eval.py</code> gives the graph condition the documents the graph was built from, and reports runs that searched.</td></tr>
+</tbody></table></div>
+
+<h2>What the model now gets</h2>
+<p>The injection for “Who approves a £300 refund in June 2025?”, as the hook prints it:</p>
+<pre class="inj">memory: 5 facts recalled in 3.2 ms, for June 2025
+From 9 documents in corpus/, extracted 2026-09-24; each fact names its source. Answer from these facts unless a source below is marked changed or missing.
+Refund approvals approved_by Director [refund-policy-2024.md] (until 2025-12-31)
+Customer support SOP references Refund approvals [customer-support-sop.md]
+Customer support SOP references Support Lead [customer-support-sop.md]
+Support Lead held_by Priya Patel [org-chart.md]
+Incident response references Support Lead [incident-response.md]
+where:
+Customer support SOP: Support agents answer tickets within one business day
+Customer support SOP: Refunds under the approval threshold in the refund approvals policy are processed directly by the agent
+Director: Approves refunds over £250 (until 2025-12-31)
+Director: The 2024 refund policy names no person for the Director role (until 2025-12-31)
+Refund approvals: Refunds over £250 need Director approval (until 2025-12-31)
+Refund approvals: Refunds under £250 can be approved by any team member after checking the order history (until 2025-12-31)
+Refund approvals: Store credit is offered first; cash refunds only where the customer insists or the law requires it (until 2025-12-31)
+Refund approvals: The 2024 refund policy was superseded on 1 January 2026
+sources, quoted from the documents just now:
+[refund-policy-2024.md] &quot;Refunds over £250 require approval by a Director.&quot;
+[customer-support-sop.md] &quot;Refunds under the approval threshold in the refund approvals policy are processed directly by the agent.&quot;
+[refund-policy-2024.md] &quot;Refunds under £250 can be approved by any team member after checking the order history.&quot;
+[refund-policy-2024.md] &quot;Store credit is offered first; cash refunds only where the customer insists or the law requires it.&quot;
+[refund-policy-2024.md] &quot;Superseded on 1 January 2026 by the current refund approvals policy.&quot;
+[customer-support-sop.md] &quot;Support agents answer tickets within one business day.&quot;</pre>
+
+<h2>Result 1: the same questions, the same folder</h2>
+<p>Ten questions, once per model, graph hook on, in the folder of 12 unstructured documents
+(<code>corpus-before/</code>) whose file names do not match the facts' sources: the setup where Sonnet searched.
+“Claims only” is the version before this change, from the earlier comparison.</p>
+<div class="scroll"><table><thead><tr><th>Measure</th><th class="n">Haiku 4.5<br>claims only</th><th class="n">Haiku 4.5<br>with the fix</th><th class="n">Sonnet 5<br>claims only</th><th class="n">Sonnet 5<br>with the fix</th></tr></thead><tbody><tr><td>Correct</td><td class="n">10 of 10</td><td class="n ">10 of 10</td><td class="n">10 of 10</td><td class="n ">10 of 10</td></tr><tr><td>Runs that searched the docs</td><td class="n">0 of 10</td><td class="n ">0 of 10</td><td class="n">4 of 10</td><td class="n good">2 of 10</td></tr><tr><td>Tool calls, total</td><td class="n">0</td><td class="n ">0</td><td class="n">17</td><td class="n good">6</td></tr><tr><td>Average model turns</td><td class="n">1.00</td><td class="n ">1.00</td><td class="n">2.10</td><td class="n good">1.40</td></tr><tr><td>Average total time</td><td class="n">4.27 s</td><td class="n warn">4.56 s</td><td class="n">9.63 s</td><td class="n good">5.01 s</td></tr><tr><td>Average time to first answer word</td><td class="n">3.45 s</td><td class="n warn">3.67 s</td><td class="n">7.75 s</td><td class="n good">3.66 s</td></tr><tr><td>Average first-request input tokens</td><td class="n">9,778</td><td class="n warn">10,060</td><td class="n">12,772</td><td class="n warn">13,133</td></tr><tr><td>Average cost per question</td><td class="n">$0.0060</td><td class="n warn">$0.0067</td><td class="n">$0.0219</td><td class="n good">$0.0149</td></tr></tbody></table></div>
+<h3>Sonnet, question by question</h3>
+<div class="scroll"><table><thead><tr><th>#</th><th>Question</th><th class="c">Claims only</th><th class="c">With the fix</th></tr></thead><tbody><tr><td>1</td><td>£800 refund in March</td><td class="c"><span class="good">✓</span> 5.1 s</td><td class="c"><span class="good">✓</span> 4.8 s</td></tr><tr><td>2</td><td>Supplier payments over £2,000</td><td class="c"><span class="good">✓</span> 3.9 s</td><td class="c"><span class="good">✓</span> 2.4 s</td></tr><tr><td>3</td><td>Onboarding process</td><td class="c"><span class="good">✓</span> 23.6 s, <b class="warn">5 tools</b></td><td class="c"><span class="good">✓</span> 7.5 s, <b class="warn">3 tools</b></td></tr><tr><td>4</td><td>What does Priya do?</td><td class="c"><span class="good">✓</span> 7.0 s, <b class="warn">1 tools</b></td><td class="c"><span class="good">✓</span> 3.5 s</td></tr><tr><td>5</td><td>£800 refund in April 2026</td><td class="c"><span class="good">✓</span> 4.1 s</td><td class="c"><span class="good">✓</span> 2.4 s</td></tr><tr><td>6</td><td>£300 refund in June 2025</td><td class="c"><span class="good">✓</span> 28.7 s, <b class="warn">6 tools</b></td><td class="c"><span class="good">✓</span> 10.7 s, <b class="warn">3 tools</b></td></tr><tr><td>7</td><td>£300 refund today</td><td class="c"><span class="good">✓</span> 4.0 s</td><td class="c"><span class="good">✓</span> 2.3 s</td></tr><tr><td>8</td><td>Threshold in 2025</td><td class="c"><span class="good">✓</span> 3.3 s</td><td class="c"><span class="good">✓</span> 3.7 s</td></tr><tr><td>9</td><td>How the threshold changed</td><td class="c"><span class="good">✓</span> 12.5 s, <b class="warn">5 tools</b></td><td class="c"><span class="good">✓</span> 5.4 s</td></tr><tr><td>10</td><td>Supplier payments in 2025</td><td class="c"><span class="good">✓</span> 4.1 s</td><td class="c"><span class="good">✓</span> 7.3 s</td></tr></tbody></table></div>
+
+<h2>Result 2: a prompt that points at the documents</h2>
+<p>The same ten questions on Sonnet 5, each prompt opening with “Our company docs are in this folder.”,
+which made Sonnet re-read in every earlier run. Both versions ran here, one after the other.</p>
+<div class="scroll"><table><thead><tr><th>Measure</th><th class="n">Sonnet 5<br>claims only</th><th class="n">Sonnet 5<br>with the fix</th></tr></thead><tbody><tr><td>Correct</td><td class="n">10 of 10</td><td class="n ">10 of 10</td></tr><tr><td>Runs that searched the docs</td><td class="n">10 of 10</td><td class="n ">10 of 10</td></tr><tr><td>Tool calls, total</td><td class="n">47</td><td class="n good">44</td></tr><tr><td>Average model turns</td><td class="n">3.50</td><td class="n ">3.50</td></tr><tr><td>Average total time</td><td class="n">19.29 s</td><td class="n warn">20.95 s</td></tr><tr><td>Average time to first answer word</td><td class="n">16.60 s</td><td class="n warn">18.22 s</td></tr><tr><td>Average first-request input tokens</td><td class="n">12,816</td><td class="n warn">13,167</td></tr><tr><td>Average cost per question</td><td class="n">$0.0407</td><td class="n warn">$0.0418</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>#</th><th>Question</th><th class="c">Claims only</th><th class="c">With the fix</th></tr></thead><tbody><tr><td>1</td><td>£800 refund in March</td><td class="c"><span class="good">✓</span> 20.4 s, <b class="warn">5 tools</b></td><td class="c"><span class="good">✓</span> 9.6 s, <b class="warn">3 tools</b></td></tr><tr><td>2</td><td>Supplier payments over £2,000</td><td class="c"><span class="good">✓</span> 12.2 s, <b class="warn">4 tools</b></td><td class="c"><span class="good">✓</span> 15.9 s, <b class="warn">3 tools</b></td></tr><tr><td>3</td><td>Onboarding process</td><td class="c"><span class="good">✓</span> 27.8 s, <b class="warn">7 tools</b></td><td class="c"><span class="good">✓</span> 17.8 s, <b class="warn">7 tools</b></td></tr><tr><td>4</td><td>What does Priya do?</td><td class="c"><span class="good">✓</span> 5.9 s, <b class="warn">1 tools</b></td><td class="c"><span class="good">✓</span> 8.8 s, <b class="warn">1 tools</b></td></tr><tr><td>5</td><td>£800 refund in April 2026</td><td class="c"><span class="good">✓</span> 16.1 s, <b class="warn">6 tools</b></td><td class="c"><span class="good">✓</span> 23.1 s, <b class="warn">5 tools</b></td></tr><tr><td>6</td><td>£300 refund in June 2025</td><td class="c"><span class="good">✓</span> 35.4 s, <b class="warn">6 tools</b></td><td class="c"><span class="good">✓</span> 41.0 s, <b class="warn">5 tools</b></td></tr><tr><td>7</td><td>£300 refund today</td><td class="c"><span class="good">✓</span> 17.1 s, <b class="warn">4 tools</b></td><td class="c"><span class="good">✓</span> 18.2 s, <b class="warn">6 tools</b></td></tr><tr><td>8</td><td>Threshold in 2025</td><td class="c"><span class="good">✓</span> 14.2 s, <b class="warn">4 tools</b></td><td class="c"><span class="good">✓</span> 12.7 s, <b class="warn">4 tools</b></td></tr><tr><td>9</td><td>How the threshold changed</td><td class="c"><span class="good">✓</span> 20.5 s, <b class="warn">4 tools</b></td><td class="c"><span class="good">✓</span> 15.2 s, <b class="warn">5 tools</b></td></tr><tr><td>10</td><td>Supplier payments in 2025</td><td class="c"><span class="good">✓</span> 23.5 s, <b class="warn">6 tools</b></td><td class="c"><span class="good">✓</span> 47.2 s, <b class="warn">5 tools</b></td></tr></tbody></table></div>
+
+<h2>Result 3: the fixed benchmark</h2>
+<p><code>python bench/live_eval.py</code>, now with the graph condition in the folder of the graph's own sources.
+Runs that searched the docs: search 1 of 2, graph 0 of 2.</p>
+<div class="scroll"><table><thead><tr><th>Model</th><th>Condition</th><th>Answer</th><th class="n">Tool calls</th><th class="n">Total</th><th class="n">First-request tokens</th></tr></thead><tbody><tr><td>haiku</td><td>search</td><td>wrong</td><td class="n">0</td><td class="n">41.84 s</td><td class="n">9247</td></tr><tr><td>haiku</td><td>graph</td><td>correct</td><td class="n">0</td><td class="n">8.83 s</td><td class="n">10032</td></tr><tr><td>sonnet</td><td>search</td><td>wrong</td><td class="n">1</td><td class="n">4.79 s</td><td class="n">12076</td></tr><tr><td>sonnet</td><td>graph</td><td>correct</td><td class="n">0</td><td class="n">8.26 s</td><td class="n">13105</td></tr></tbody></table></div>
+<ul><li>haiku, run 1: the graph hook added 785 input tokens to the first request.</li><li>sonnet, run 1: the graph hook added 1029 input tokens to the first request.</li></ul>
+
+<h2>Why it still searches</h2>
+<p>The runs that still searched show two causes.</p>
+<ul>
+<li><strong>The provenance line named a folder the model could not find.</strong> It says the facts come from
+“9 documents in corpus/”. In the test folder there is no <code>corpus/</code>, and in 5 of the
+12 runs that searched with the fix, the first tool call was a Glob for it. In real use the documents
+are in the folder you work in and the name resolves; the benchmark's fixed setup (Result 3) did not search.</li>
+<li><strong>The hint is an instruction the injection cannot outweigh.</strong> “Our company docs are in this
+folder” tells the model where the truth is, and in the test folder those really are different files from the
+graph's sources, so checking them is reasonable. The guidance line did not change that: Sonnet read the folder in
+every run, before and after.</li>
+</ul>
+
+<h2>Next steps</h2>
+<ul>
+<li><strong>Drop the folder name from the provenance line</strong>, and say that the quotes were checked against the
+files just now and do not need opening unless marked. That removes the lookup behind 5 of the
+12 remaining searches.</li>
+<li><strong>Test the hint where it is true:</strong> in a folder holding the graph's own sources, where “the docs
+in this folder” are the documents the quotes come from. The mismatched folder measures a conflict, not normal use.</li>
+<li><strong>If the hint still wins there</strong>, try the standing instruction in <code>CLAUDE.md</code>, which
+the model reads as project guidance rather than as part of a hook's output.</li>
+</ul>
+
+<h2>Tests</h2>
+<p>78 tests pass (<code>python -m unittest discover tests</code>). New in <code>tests/test_excerpts.py</code>:
+the build refuses a paraphrased quote, a quote over 300 characters and a quote from a missing document, and accepts
+markdown and spacing differences; quotes stay within the budget and are never duplicated; the answer comes with its
+sources; an edited file is marked changed and a deleted one missing; the Director unknown is stated; the coverage
+check finds a role nobody holds; and the hook sends each quote once per conversation, keeps them on resume and
+forgets them on compaction.</p>
+
+<h2>Still not implemented</h2>
+<ul>
+<li><strong>RAG fallback when no names match</strong> (proposal 8): “Who is in charge when the boss is away?” still gets no memory. Waiting on the choice in the proposals doc: keep failing loudly, or add labelled RAG passages.</li>
+<li><strong>RAG hook speed</strong>: it still loads the embedding model on every prompt, about 1.4 s.</li>
+<li><strong>A standing instruction in <code>CLAUDE.md</code></strong>: the lever left for a prompt that points at the documents (see Next steps).</li>
+<li><strong>Injection size</strong> (the rest of proposal 6): the timing line still opens the injection, and claims plus quotes put it well past the old ~400-token target; this change trades tokens for fewer searches.</li>
+<li><strong>Merging <code>aliases</code> into <code>names</code></strong>: suggested, not done.</li>
+<li><strong>Stale pages</strong>: <code>docs/improvement-proposals.html</code>, <code>docs/claim-check.html</code> and <code>test-report.md</code> describe earlier versions.</li>
+</ul>
+
+<h2>How this was measured</h2>
+<ul class="method">
+<li>Live <code>claude -p</code> runs (Claude Code 2.1.280) on 24 September 2026, <code>claude-sonnet-5</code> and <code>claude-haiku-4-5-20251001</code>, tools limited to Grep, Read and Glob, user and project settings and MCP servers off, <code>GRAPH_MEMORY_TODAY=2026-09-23</code>. Each prompt ends by asking for a final <code>ANSWER:</code> line, which is graded automatically.</li>
+<li>Result 1 compares with the claims-only runs of 23–24 September (same questions, folder and grading). Result 2 ran both versions back to back.</li>
+<li>One run per question: differences of a second or so are within run-to-run noise. The tool-call counts are the firmer evidence. Total cost of these runs: about $1.04.</li>
+</ul>
+</main>
+</body>
+</html>
