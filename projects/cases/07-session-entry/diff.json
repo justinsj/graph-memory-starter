@@ -1,0 +1,33 @@
+{
+ "input": "inputs/sessions/2026-09-28-1540.md",
+ "kind": "session",
+ "on": "2026-09-28",
+ "changes": [
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 5,
+   "due": "2026-12-07",
+   "quote": "Go-live is 7 December, well before the January peak."
+  },
+  {
+   "op": "set_deliverable",
+   "project": "helpdesk-migration",
+   "key": "D2",
+   "status": "in_progress",
+   "quote": "Priya and Claude drafted the migration plan for the new helpdesk"
+  },
+  {
+   "op": "add_decision",
+   "project": "helpdesk-migration",
+   "text": "The test import runs on the weekend of 21 November",
+   "quote": "The test import runs on the weekend of 21 November."
+  },
+  {
+   "op": "add_decision",
+   "project": "helpdesk-migration",
+   "text": "Go-live is 7 December",
+   "quote": "Go-live is 7 December, well before the January peak."
+  }
+ ]
+}

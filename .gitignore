@@ -13,6 +13,7 @@ client_secret*.json
 graph.db
 rag/rag.db
 __pycache__/
+bench/live-raw/
 
 # local
 .claude/
@@ -27,3 +28,17 @@ CLAUDE.md
 digest/pending/
 digest/log/
 rag/distilled/.state.json
+
+# projects: your inputs and records stay local unless you remove these lines
+inputs/
+.kl-data/
+projects/records/
+projects/pending/
+projects/ingested.json
+projects/BOARD.md
+projects/eval-raw/
+bench/project-raw/
+bench/code-raw/
+bench/code-raw-plain/
+bench/code-raw-deps/
+bench/project-raw-hint/

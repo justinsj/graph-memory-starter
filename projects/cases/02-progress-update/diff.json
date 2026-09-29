@@ -1,0 +1,29 @@
+{
+ "input": "inputs/2026-09-24-support-sync.md",
+ "kind": "transcript",
+ "on": "2026-09-24",
+ "changes": [
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 1,
+   "status": "done",
+   "quote": "Shortlist's done, three options in the shared drive."
+  },
+  {
+   "op": "set_deliverable",
+   "project": "helpdesk-migration",
+   "key": "D1",
+   "status": "delivered",
+   "quote": "Shortlist's done, three options in the shared drive."
+  },
+  {
+   "op": "set_step",
+   "project": "helpdesk-migration",
+   "n": 2,
+   "status": "doing",
+   "due": "2026-10-02",
+   "quote": "I'm checking integrations against the inventory next, done by 2 October."
+  }
+ ]
+}

@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>What a Funded CEO Needs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td:first-child { font-weight: 600; }
+td ul { margin: 0; gap: 4px; padding-left: 18px; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .title { font-weight: 600; }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-good { fill: var(--good-bg); stroke: var(--good); stroke-width: 1.5; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+.toc { columns: 2 16em; font-size: 15px; display: block; }
+.toc li { break-inside: avoid; margin-bottom: 6px; }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } figure { padding: 12px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · research notes, 28 September 2026</div>
+<h1>What a funded SaaS CEO needs answered</h1>
+<p class="lede">What matters to a software founder after a VC round, what they need from their engineers, a daily report built around their questions, and the decisions they make from it. Written as background for the knowledge layer: which of these questions it could answer that a dashboard can't.</p>
+
+<div class="answer">
+<p><strong>After funding, one question drives everything:</strong> can the company become a repeatable, growing business before the money runs out?</p>
+<p><strong>Founders ask engineering about time, money, risk and which options stay open.</strong> A good answer is a set of options, each with a cost, rather than a yes or no.</p>
+<p><strong>A daily CEO report should say what changed, what needs the CEO, and what's about to go wrong,</strong> in about three minutes. It is not the dashboard sent by email.</p>
+<p><strong>Every item that needs the CEO should end in a question they can answer in one line.</strong> Those answers, recorded as dated decisions with reasons, are the most valuable data the report produces.</p>
+<p><strong>The gaps are where a knowledge graph fits.</strong> Existing frameworks and tools leave out promises made to customers, the links between strategic bets and actual work, and the reasons behind decisions. A graph with dated claims can hold all three.</p>
+</div>
+
+<h3>Contents</h3>
+<ol class="toc">
+<li><a href="#after-funding">After the money lands</a></li>
+<li><a href="#engineering">What founders need engineering to answer</a></li>
+<li><a href="#frameworks">Frameworks for the CEO's recurring questions</a></li>
+<li><a href="#daily-report">A daily report for the CEO</a></li>
+<li><a href="#strategy-execution">Tying strategy to execution</a></li>
+<li><a href="#ceo-answers">What the CEO answers from the report</a></li>
+<li><a href="#decision-log">Decisions are the most valuable data</a></li>
+<li><a href="#graph">Where a knowledge graph fits</a></li>
+<li><a href="#sources">Sources</a></li>
+</ol>
+
+<h2 id="after-funding">1. After the money lands</h2>
+<p>Funding changes the founder's question from “is this a real problem?” to “can we turn this into a repeatable, growing business before the money runs out?” Most of their priorities come from three limits:</p>
+<ul>
+<li><strong>Runway.</strong> Usually 18–24 months to reach the milestones that earn the next round.</li>
+<li><strong>The next round's bar.</strong> For a SaaS Series A this roughly means strong retention, a sales process that repeats, and fast growth in annual recurring revenue (ARR). A commonly cited figure is about $1–3M ARR growing 2–3x a year; the bar moves with the market.</li>
+<li><strong>Focus.</strong> A small team can only make a few bets, and each wrong one costs months.</li>
+</ul>
+
+<h3>What matters most to them, roughly in order</h3>
+<ol>
+<li><strong>Real product-market fit, measured by retention, not signups.</strong> Do users keep coming back, and do accounts grow (net revenue retention)? Early “validation” is often enthusiasm, not real demand.</li>
+<li><strong>How fast they learn:</strong> the time from idea, to shipped, to measured, to a decision.</li>
+<li><strong>Repeatable sales:</strong> moving from the founder closing every deal to a playbook someone else can run.</li>
+<li><strong>Capital efficiency:</strong> burn multiple (net burn ÷ net new ARR), how long it takes to earn back the cost of winning a customer, and gross margin.</li>
+<li><strong>Team:</strong> the first 10–20 hires set both the culture and the ceiling.</li>
+<li><strong>Customer trust:</strong> security, reliability and compliance start blocking deals as soon as they sell to larger companies.</li>
+<li><strong>Defensibility:</strong> what's hard to copy, now that AI makes features cheap to replicate.</li>
+</ol>
+
+<h3>The highest-value things founders do</h3>
+<ul>
+<li><strong>Selling and talking to customers.</strong> Founders usually lead sales until about $1M ARR, because nobody else learns the objections as fast.</li>
+<li><strong>Deciding what not to do.</strong> Prioritising is the scarce skill.</li>
+<li><strong>Hiring key people.</strong></li>
+<li><strong>Setting how the company runs:</strong> which metrics count, the weekly rhythm, and how decisions get made.</li>
+<li><strong>Fundraising in bursts</strong>, with investor updates in between.</li>
+</ul>
+<p>Common low-value traps: hiring ahead of product-market fit, building for scale they don't have yet, polishing, vanity metrics, and custom work for one loud customer.</p>
+
+<h2 id="engineering">2. What founders need engineering to answer</h2>
+<p>Founders rarely ask in engineering terms. They're really asking about <strong>time, money, risk and which options stay open</strong>.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Area</th><th>Questions</th></tr></thead>
+<tbody>
+<tr><td>Speed and scope</td><td><ul>
+<li>What's the smallest thing we can ship that tests this idea?</li>
+<li>When can we realistically have X, and how sure is that date?</li>
+<li>What's slowing us down right now?</li>
+<li>If we hired two more engineers, would we actually go faster?</li></ul></td></tr>
+<tr><td>Trade-offs and technical debt</td><td><ul>
+<li>What will the quick way cost us later, and when?</li>
+<li>Should we build it, buy it, or integrate something?</li>
+<li>Which decisions can we undo, and which lock us in? The hard ones to reverse are usually the data model, how customers' data is separated, the core vendors, and how billing is built.</li></ul></td></tr>
+<tr><td>Unit economics</td><td><ul>
+<li>What does it cost to serve one customer, and how does that change at 10x usage?</li>
+<li>What's our gross margin once AI model costs are included?</li>
+<li>Can the system support the pricing we want: per seat, usage-based, tiers?</li></ul></td></tr>
+<tr><td>Winning deals</td><td><ul>
+<li>Can we pass this prospect's security questionnaire? How long until we have SOC 2?</li>
+<li>Do we have single sign-on, audit logs, role-based permissions, a choice of data location, and data deletion?</li>
+<li>Can we build this big prospect's custom feature without splitting the product into separate versions?</li>
+<li>What can we safely promise in a contract, such as uptime guarantees?</li></ul></td></tr>
+<tr><td>Scale and reliability</td><td><ul>
+<li>If the big pilot converts, what breaks first?</li>
+<li>If something goes down, how would we find out, and how fast could we recover?</li></ul></td></tr>
+<tr><td>Risk</td><td><ul>
+<li>Who is the only person who understands X?</li>
+<li>What would a data breach look like, and how exposed are we?</li>
+<li>How much do we depend on one cloud or AI model provider? What if they raise prices or ship our feature?</li>
+<li>Do we own our code: signed IP agreements with contractors, compliant open-source licences?</li></ul></td></tr>
+<tr><td>Measurement</td><td><ul>
+<li>Can we answer the board's metric questions from our own data?</li>
+<li>Do we know what users actually do in the product, and can we run experiments?</li></ul></td></tr>
+<tr><td>Defensibility</td><td><ul>
+<li>What's genuinely hard to copy: our data, integrations, how deep we go into the customer's workflow, network effects?</li>
+<li>What will a Series A investor's technical review find?</li></ul></td></tr>
+<tr><td>Team</td><td><ul>
+<li>Who's the next hire and why? Senior generalist or specialist? Employee or contractor?</li>
+<li>How do we know engineering is productive without micromanaging?</li></ul></td></tr>
+<tr><td>AI features</td><td><ul>
+<li>How do we measure whether the AI feature is any good? Do we have a test set for it?</li>
+<li>What does each task cost, how long does it take, and how does it fail?</li>
+<li>When the next generation of models arrives, does our product get more valuable, or does the model do what we do?</li></ul></td></tr>
+</tbody>
+</table>
+</div>
+<h3>What a good answer looks like</h3>
+<p>Options, each with a cost attached: “Option A takes 2 weeks and adds about $X a month, but it's hard to undo. Option B takes 5 weeks and is cheap to run, and it keeps us able to sell to large companies.” Much of a CTO's value is turning engineering reality into those terms.</p>
+
+<h2 id="frameworks">3. Frameworks for the CEO's recurring questions</h2>
+<p>There is no single, research-proven framework of CEO questions. Several well-regarded ones largely agree, and nearly all come down to four questions: where are we going, do we have the right people, are we doing what we said, and will the money last. Most are practitioner methods with bestselling books behind them; the Balanced Scorecard has had the most academic study.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Framework</th><th>The recurring questions</th><th>Standing</th><th>Fit for a funded SaaS startup</th></tr></thead>
+<tbody>
+<tr><td>Fred Wilson, “What a CEO Does” (2010)</td><td>Is the vision and strategy set and communicated? Are we hiring and keeping the best people? Is there always enough cash?</td><td>A VC's blog post, widely quoted by investors</td><td>High: it's how investors think</td></tr>
+<tr><td>Scaling Up / Rockefeller Habits (Verne Harnish, 2002, 2014)</td><td>Four decisions: People, Strategy, Execution, Cash, each tied to a meeting rhythm from daily to annual</td><td>Widely used by growing companies</td><td>High: the only one built around a regular schedule</td></tr>
+<tr><td>Traction / EOS (Gino Wickman, 2007)</td><td>Six areas: Vision, People, Data, Issues, Process, Traction; a weekly scorecard</td><td>Very widely adopted by small and mid-sized businesses; criticised as rigid for fast-changing startups</td><td>Medium</td></tr>
+<tr><td>Balanced Scorecard (Kaplan and Norton, 1992)</td><td>How do customers see us? What must we excel at? Can we keep improving? How do we look to shareholders?</td><td>The most academically studied; evidence on whether it improves results is mixed</td><td>Medium: rigorous but heavy</td></tr>
+<tr><td>Drucker's Five Questions (1993)</td><td>What is our mission? Who is our customer? What does the customer value? What are our results? What is our plan?</td><td>Classic; first written for nonprofits</td><td>Strategy, not daily running</td></tr>
+<tr><td>Playing to Win (Lafley and Martin, 2013)</td><td>What is our aim? Where will we compete? How will we win? What capabilities do we need? What management systems?</td><td>Well-regarded strategy book</td><td>Strategy only</td></tr>
+<tr><td>The Hard Thing About Hard Things (Ben Horowitz, 2014)</td><td>Does the CEO know what to do? Can they get the company to do it? Did the company hit the right goals?</td><td>Widely read by startup founders</td><td>A self-check, not a working checklist</td></tr>
+<tr><td>CEO Excellence (McKinsey authors, 2022)</td><td>Set direction, align the organisation, lead through the top team, work with the board, deal with outside stakeholders, manage their own effectiveness</td><td>Based on interviews with top CEOs of large companies</td><td>Low to medium at an early stage</td></tr>
+</tbody>
+</table>
+</div>
+<p>Three more are rules for answering the questions well rather than lists of questions:</p>
+<ul>
+<li><strong>Andy Grove, <em>High Output Management</em>:</strong> track a few numbers that predict results early, and pair each with a counterweight so pushing one doesn't quietly break another. For example, pair shipping speed with defect rate.</li>
+<li><strong>Amazon's Weekly Business Review</strong> (described in <em>Working Backwards</em>): focus on numbers the team directly controls, such as sales demos booked. Revenue follows from those; the team can't control it directly.</li>
+<li><strong>Paul Graham, “Default alive or default dead?”:</strong> at current growth and spending, does the company become profitable before the cash runs out?</li>
+</ul>
+<h3>Recommendation: Scaling Up's four areas as the backbone</h3>
+<ul>
+<li>People, Strategy, Execution and Cash match Fred Wilson's three CEO jobs plus Execution, so they line up with how investors think.</li>
+<li>It's the only framework that assigns questions to a daily, weekly, monthly or quarterly slot. Its daily check-in is three questions: what's new, today's numbers, and where are you stuck.</li>
+<li>It's simple enough that every item in a report fits under one area.</li>
+</ul>
+<p>Add Grove's paired numbers and Amazon's focus on numbers the team controls.</p>
+
+<h2 id="daily-report">4. A daily report for the CEO</h2>
+<p>Most business numbers are noise from day to day; daily revenue moves with when invoices land, not because anything changed. So the daily report's job is to say <strong>what changed, what needs the CEO, and what's about to go wrong</strong>, in about three minutes.</p>
+
+<h3>The questions it answers, in order of importance</h3>
+<ol>
+<li><strong>What needs me today?</strong> Decisions waiting on the CEO, approvals, people waiting on a reply, deadlines landing today.</li>
+<li><strong>What went wrong, or is about to?</strong> Outages, security issues, customer escalations, a deal slipping, a candidate turning down an offer, a promise about to be missed.</li>
+<li><strong>What did we promise, and is it on track?</strong> Commitments to customers, investors, the board and the team, especially those due in the next two weeks. This section is the one most often missing, and missing it causes the most damage.</li>
+<li><strong>Which customers moved?</strong> Warning signs: falling usage, a spike in support tickets, their champion leaving, a renewal coming up while engagement is low. Good signs: interest in expanding, a new use case, a referral.</li>
+<li><strong>Did revenue move?</strong> Deals closed, lost, advanced or stalled; unusual payments or failed charges.</li>
+<li><strong>Who am I meeting today, and what should I know?</strong> The last conversation, open issues, what they want and what we want.</li>
+<li><strong>What shipped, and what's slipping?</strong> Only against promised dates, not a full changelog.</li>
+<li><strong>Has anything outside changed our assumptions?</strong> A competitor launch, a price change from a key vendor such as the AI model provider, new regulation. Only if it matters.</li>
+</ol>
+
+<h3>Layout, ordered by urgency</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Section</th><th>Contents</th><th>Rule</th></tr></thead>
+<tbody>
+<tr><td>Needs you</td><td>At most 5 items, each ending in a question with options and a recommendation</td><td>If there are none, say so</td></tr>
+<tr><td>Proceeding unless you object</td><td>Easily reversed decisions with a default and a deadline</td><td>Silence means yes</td></tr>
+<tr><td>Changed since yesterday</td><td>Deals, customers, incidents, hires, releases</td><td>Only what changed, not ongoing status</td></tr>
+<tr><td>At risk</td><td>Promises and customer accounts heading the wrong way</td><td>Include the date it goes bad</td></tr>
+<tr><td>Strategy and execution</td><td>Events that touch a strategic bet</td><td>Name the bet</td></tr>
+<tr><td>Today's meetings</td><td>One short briefing per meeting</td><td>Skip routine internal meetings</td></tr>
+<tr><td>Numbers</td><td>5–7 metrics, each as a 7-day trend against the plan</td><td>Highlight only values outside the normal range</td></tr>
+<tr><td>All quiet</td><td>One line, e.g. “No incidents, no churn warnings, all data up to date”</td><td>A quiet day must be stated, not implied</td></tr>
+</tbody>
+</table>
+</div>
+<p>The last row matters. “Nothing to report” and “the CRM stopped syncing” look the same unless the report says which data it checked and how recent that data is.</p>
+
+<h3>How the four areas map onto it</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Area</th><th>The ongoing question</th><th>What goes in the daily report</th></tr></thead>
+<tbody>
+<tr><td>People</td><td>Do we have the right people, and can they get on with their work?</td><td>Job offers, candidates, someone stuck, someone likely to leave</td></tr>
+<tr><td>Strategy</td><td>Is what we're learning changing where we're heading?</td><td>Customer signals, competitor moves, why deals were lost</td></tr>
+<tr><td>Execution</td><td>Are we doing what we said, on time?</td><td>What shipped or slipped, promises coming due, incidents, meetings</td></tr>
+<tr><td>Cash</td><td>Will the money last until the next milestone?</td><td>Deals closed or lost, sales opportunities moving, unusual payments</td></tr>
+</tbody>
+</table>
+</div>
+<p>“Needs you” cuts across all four areas: it filters the report rather than being a fifth area.</p>
+
+<h3>The numbers</h3>
+<p>A handful, chosen for the company's stage:</p>
+<ul>
+<li>Net new ARR, split into new, expansion, contraction and churn</li>
+<li>New sales opportunities created or moved forward</li>
+<li>The share of new signups who reach the product's key moment (activation)</li>
+<li>Accounts using the core feature each week</li>
+<li>Support backlog and time to first response</li>
+<li>Uptime and incidents</li>
+<li>Cash and runway: weekly is fine, daily only if cash is tight</li>
+</ul>
+<p>Before the product has proven demand, lean toward learning: what users did, notable feedback, activation. After that, lean toward sales opportunities, reliability and hiring.</p>
+
+<h3>What to leave out</h3>
+<ul>
+<li>Status updates from every team. Those belong in the weekly review, and a daily version turns into box-ticking.</li>
+<li>Raw daily numbers with no trend or context.</li>
+<li>Anything the CEO can't act on today.</li>
+<li>Long lists. If everything is flagged, nothing is.</li>
+</ul>
+
+<h3>What goes daily, weekly, monthly</h3>
+<ul>
+<li><strong>Daily:</strong> exceptions, decisions, promises coming due, meetings, customer and deal changes.</li>
+<li><strong>Weekly:</strong> metric trends, sales opportunities, hiring progress, roadmap, spending.</li>
+<li><strong>Monthly:</strong> runway, customer retention, board metrics, strategy.</li>
+</ul>
+
+<h3>What makes it trustworthy</h3>
+<ul>
+<li><strong>Sources:</strong> every claim links to where it came from and its date.</li>
+<li><strong>Facts versus judgments:</strong> “usage down 38%” is a fact; “at risk” is a judgment, and the report keeps the two apart.</li>
+<li><strong>Data freshness:</strong> it shows how recent each data source is.</li>
+<li><strong>Flag sparingly:</strong> one wrong item in “Needs you” loses more trust than ten useful ones build.</li>
+<li><strong>Feedback:</strong> the CEO can mark any item “not useful”, so the report learns what they care about.</li>
+</ul>
+
+<h3>Example</h3>
+<p>The companies are made up.</p>
+<pre class="code">Mon 28 Sep · 06:00 · all sources fresh
+
+NEEDS YOU (4)
+1. Globex SLA — contractual, hard to reverse                              due Thu
+   A) 99.9% as asked   B) 99.5% + credits (recommended)   C) no SLA
+   90-day uptime is 99.7%.  [legal thread, Sep 25 · status page]
+2. Globex on-prem request — outside focus segment, ~6 eng-weeks from bet 1
+   A) decline   B) offer as paid services   C) accept, push bet 1 to Q1
+3. Bet 2 evidence: 3 of 4 trials wanted a sales call before paying  [CRM notes, Sep 24–27]
+   A) keep, watch 2 more weeks   B) test a sales-assisted tier   C) discuss Friday
+4. Onboarding revamp (shipped Sep 14) left activation unchanged; no owner
+   → assign: ____
+
+PROCEEDING UNLESS YOU OBJECT BY 15:00
+• Counter candidate at +4% equity (asked +8%). Reversible until signed.
+
+CHANGED
+• Closed Initech, $24k ARR. Lost Umbrella (competitor won on price).
+• Shipped SSO — promised to Acme for Oct 1, on time.
+
+AT RISK
+• Acme: usage down 38% over 14 days, champion's title changed, renewal Nov 12.
+• Audit-log export promised to Hooli "by end of Q3" — not started. Q3 ends Wed.
+
+STRATEGY &amp; EXECUTION
+• 22% of engineering time last week had no linked bet (up from 9%).
+
+MEETINGS
+• 10:00 Hooli CTO — likely to raise the audit-log export. Last call Sep 3.
+
+NUMBERS (7 days vs plan)
+Net new ARR +$31k (plan $25k) · Activation 41% (plan 45%) ▼ · No incidents</pre>
+
+<h2 id="strategy-execution">5. Tying strategy to execution</h2>
+<p>The link runs both ways, and most companies only check one:</p>
+<ul>
+<li><strong>Top-down:</strong> does the work we're doing serve the strategy?</li>
+<li><strong>Bottom-up:</strong> does what we learn while doing the work change the strategy?</li>
+</ul>
+<p>The deeper questions sit in the bottom-up direction and in the gap between the two.</p>
+
+<h3>Two frameworks built for this link</h3>
+<ul>
+<li><strong>Richard Rumelt, <em>Good Strategy Bad Strategy</em>.</strong> A real strategy has a <strong>diagnosis</strong> (what is the critical challenge?), a <strong>guiding policy</strong> (our overall approach to it) and <strong>coherent actions</strong> (concrete work where each piece supports the others). If the actions don't follow from the diagnosis, it's a list of goals, not a strategy.</li>
+<li><strong>Stephen Bungay, <em>The Art of Action</em>.</strong> Plans fail in three gaps: the <strong>knowledge gap</strong> (what we'd like to know versus what we know), the <strong>alignment gap</strong> (what we want people to do versus what they do) and the <strong>effects gap</strong> (what we expect our actions to achieve versus what they achieve). His answer: don't plan in more detail than you know, explain the goal and the reason rather than issuing instructions, and let people adjust how they reach it.</li>
+</ul>
+
+<h3>Deeper strategy questions</h3>
+<ul>
+<li><strong>Diagnosis.</strong> What is the one challenge that, if solved, unlocks most of the rest? Is it still the same one as last quarter? What do we believe about the market that most competitors don't?</li>
+<li><strong>Bets and assumptions.</strong> What are our three to five current bets, and what would have to be true for each to work (Roger Martin's phrase)? Which assumptions are we least sure of? Have we tested them since the last review, or only the easy ones?</li>
+<li><strong>The customer's job.</strong> What are customers actually “hiring” the product to do? Does our best-retained customers' usage match the story we tell?</li>
+<li><strong>Choices.</strong> Which customer types, use cases and features are we saying no to? Are we still saying no in practice? Check what sales signs and what engineering builds.</li>
+<li><strong>Durability.</strong> What gets harder for a competitor to copy the longer we operate? Hamilton Helmer's <em>7 Powers</em> lists the kinds of lasting advantage, such as switching costs, network effects and proprietary data. Is this quarter's work building that advantage, or just adding features? What outside change would break our assumptions?</li>
+<li><strong>Quitting in advance.</strong> What evidence would make us change or drop each bet? Did we write it down before we started, while we were still objective? Annie Duke calls these kill criteria.</li>
+</ul>
+
+<h3>Deeper execution questions</h3>
+<ul>
+<li><strong>Alignment gap.</strong> Can each team lead name the top priorities and the reasons for them, without looking? How is engineering time actually split between strategic bets, individual customer requests, maintenance and firefighting? Where the time goes shows the real strategy.</li>
+<li><strong>Knowledge gap.</strong> What have we learned since the last review, and did it reach whoever owns the bet? Are we planning in more detail than we know?</li>
+<li><strong>Effects gap.</strong> Did what we shipped have the effect we expected? What shipped with no measured result at all? How long does it take to get from “we think X” to evidence about X?</li>
+<li><strong>Coordination.</strong> Where are handoffs between teams failing? Research by Sull, Homkes and Sull found execution usually breaks down across teams, not up and down the hierarchy. Which decisions sit waiting, and for how long?</li>
+</ul>
+
+<h3>Questions that tie the two together</h3>
+<ol>
+<li><strong>Trace down.</strong> For each bet, what work is in progress, and is it resourced in proportion to the bet's importance? A bet with no work behind it is a wish.</li>
+<li><strong>Trace up.</strong> For each significant piece of work, which bet does it serve? Work that serves no bet is either wasted effort or a part of the strategy nobody wrote down.</li>
+<li><strong>Feedback.</strong> When did the strategy last change because of something learned on the ground? If the answer is “never”, learning isn't flowing up.</li>
+<li><strong>Stated versus actual strategy.</strong> Henry Mintzberg separates the strategy a company plans from the one that emerges from its decisions. Compare what we say with where time and money went.</li>
+<li><strong>Conflicts.</strong> Where are two priorities competing for the same people, with nobody having chosen between them?</li>
+<li><strong>Drift.</strong> Which promises to customers pull us away from the strategy? A string of custom deals can quietly turn a product company into a services firm.</li>
+</ol>
+<p>Most of these belong in weekly or monthly reviews. The daily report only flags events that touch a bet, as in the “Strategy and execution” section of the example.</p>
+
+<h2 id="ceo-answers">6. What the CEO answers from the report</h2>
+<p>The report collects what happened and puts it in context; the CEO decides. So every item in “Needs you” should end in a question the CEO can answer in one line. An item that doesn't is background information and belongs lower down. Nearly every item comes down to one of eight questions:</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Question</th><th>What the CEO is really doing</th><th>Example from the report</th></tr></thead>
+<tbody>
+<tr><td>Is this mine to decide?</td><td>Deciding it, handing it off, or ignoring it</td><td>Candidate asks for +8% equity: decide, or leave it to the hiring manager?</td></tr>
+<tr><td>Which option?</td><td>Choosing between options that each come with a cost</td><td>Globex uptime guarantee: 99.9%, 99.5% plus credits, or none</td></tr>
+<tr><td>Who owns it?</td><td>Assigning an owner</td><td>Onboarding revamp had no effect, and no one owns the follow-up</td></tr>
+<tr><td>What gives?</td><td>Settling a conflict between two priorities</td><td>Globex's on-premises request versus 6 engineer-weeks from bet 1</td></tr>
+<tr><td>Do we keep, change or decline this promise?</td><td>Managing commitments</td><td>The audit-log export promised to Hooli is due Wednesday and not started</td></tr>
+<tr><td>Does this change what we believe?</td><td>Keeping, adjusting or dropping a bet</td><td>3 of 4 trials asked for a sales call, which counts against “mid-market customers sign up on their own”</td></tr>
+<tr><td>Should I step in personally?</td><td>Spending the CEO's own time</td><td>Acme's usage is falling and the renewal is on Nov 12: call their CEO?</td></tr>
+<tr><td>Who needs to hear this?</td><td>Communicating</td><td>Does the board hear about the lost deal now or at the next meeting?</td></tr>
+</tbody>
+</table>
+</div>
+<p>Two ideas help with the first question. <strong>Jeff Bezos's one-way and two-way doors</strong>: decisions that are hard to undo (contracts, pricing, the data model, public promises) deserve the CEO's time; easily reversed ones should be made fast and low in the organisation. <strong>Andy Grove's task-relevant maturity</strong>: how closely to get involved depends on how experienced the owner is with this particular kind of task, not on how senior they are.</p>
+
+<h3>Rules for the report</h3>
+<ul>
+<li><strong>Every item ends in a question with options and a recommendation.</strong> The CEO can reply “B”, or “hand it to Maria”.</li>
+<li><strong>Label how reversible each decision is.</strong> Hard-to-undo items get more context. Easily reversed items get a default and a deadline, so the CEO's silence is safe and nothing gets stuck.</li>
+<li><strong>Track how long items wait.</strong> If items sit in “Needs you” for days, the CEO has become the bottleneck.</li>
+<li><strong>Turn repeat questions into rules.</strong> When the CEO answers the same kind of question three times, it should become a written rule someone else applies, e.g. “no custom features for deals under $50k”. The aim is to answer each type of question only once.</li>
+</ul>
+
+<h3>Questions the CEO should ask of the report itself</h3>
+<ul>
+<li><strong>What surprised me, and why didn't I know sooner?</strong> A surprise usually means information isn't flowing to the CEO. The fix is in the process, not the report.</li>
+<li><strong>What's missing?</strong> Which bet, customer or team hasn't appeared in weeks? Silence can mean “fine” or “nobody's looking”.</li>
+<li><strong>What did I decide last week that hasn't happened?</strong> Decisions need follow-through too.</li>
+<li><strong>Which past decisions turned out wrong, and was the decision bad or just unlucky?</strong> Judge a decision by what was known when it was made, not only by how it turned out (Annie Duke, <em>Thinking in Bets</em>).</li>
+</ul>
+
+<h2 id="decision-log">7. Decisions are the most valuable data</h2>
+<p>Each answer the CEO gives is a dated decision with a reason. Recorded well, it looks like this:</p>
+<pre class="code">Decision   Globex SLA → 99.5% + service credits
+By / when  CEO, 2026-09-28
+Why        90-day uptime is 99.7%; 99.9% needs multi-region (Q1 at earliest)
+Links      Commitment: Globex renewal · Bet 1 · Claim: uptime 99.7% (Sep 25, status page)
+Review on  2026-12-28 — did Globex renew? any credits paid out?</pre>
+<p>A log like this answers “why did we decide X?” months later. It flags when a later fact contradicts the reason given, for example uptime falling to 99.4%. And it supplies the review loop for judging past decisions. Without it the report only informs the CEO; with it, the CEO's decisions become part of the company's memory.</p>
+
+<h2 id="graph">8. Where a knowledge graph fits</h2>
+<p>Collecting data from the CRM, billing, analytics, support tool and calendar is the easy part. The hard part is connecting it. The Acme warning only exists because three facts from different tools were joined: a usage drop, a title change and a renewal date. The Hooli item only exists because something remembered a promise made on a call a month earlier.</p>
+<p>The frameworks in section 3 cover the company's own goals. None gives much room to promises made to specific customers, investors or partners in sales calls, emails and contracts, or to the link between strategic bets and the work actually being done. Project-management and analytics tools each see only one side of that link.</p>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 290" role="img" aria-label="A graph model. A diagnosis drives a bet. A bet rests on assumptions, which are tested by evidence in the form of dated claims. A bet is done by work items, whose result is a measured outcome. A bet is affected by commitments, which are made to customers or investors. A CEO decision changes a bet.">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+
+  <rect class="box" x="0" y="116" width="180" height="56" rx="8"/>
+  <text class="title" x="14" y="140">Diagnosis</text>
+  <text class="sub" x="14" y="160">the critical challenge</text>
+
+  <rect class="box-good" x="250" y="116" width="180" height="56" rx="8"/>
+  <text class="title" x="264" y="140">Bet</text>
+  <text class="sub" x="264" y="160">a strategic choice</text>
+
+  <rect class="box" x="0" y="216" width="180" height="56" rx="8"/>
+  <text class="title" x="14" y="240">CEO decision</text>
+  <text class="sub" x="14" y="260">dated, with reason</text>
+
+  <rect class="box" x="540" y="16" width="170" height="56" rx="8"/>
+  <text class="title" x="554" y="40">Assumption</text>
+  <text class="sub" x="554" y="60">what must be true</text>
+
+  <rect class="box" x="770" y="16" width="150" height="56" rx="8"/>
+  <text class="title" x="784" y="40">Evidence</text>
+  <text class="sub" x="784" y="60">dated claim</text>
+
+  <rect class="box" x="540" y="116" width="170" height="56" rx="8"/>
+  <text class="title" x="554" y="140">Work item</text>
+  <text class="sub" x="554" y="160">initiative or task</text>
+
+  <rect class="box" x="770" y="116" width="150" height="56" rx="8"/>
+  <text class="title" x="784" y="140">Outcome</text>
+  <text class="sub" x="784" y="160">measured? when?</text>
+
+  <rect class="box" x="540" y="216" width="170" height="56" rx="8"/>
+  <text class="title" x="554" y="240">Commitment</text>
+  <text class="sub" x="554" y="260">promise, due date</text>
+
+  <rect class="box" x="770" y="216" width="150" height="56" rx="8"/>
+  <text class="title" x="784" y="240">Customer,</text>
+  <text class="title" x="784" y="258">investor, board</text>
+
+  <path class="line" d="M180 144 H246" marker-end="url(#arr)"/>
+  <text class="edge" x="213" y="136" text-anchor="middle">drives</text>
+
+  <path class="line" d="M430 144 H536" marker-end="url(#arr)"/>
+  <path class="line" d="M460 144 V44 H536" marker-end="url(#arr)"/>
+  <path class="line" d="M460 144 V244 H536" marker-end="url(#arr)"/>
+  <text class="edge" x="498" y="36" text-anchor="middle">rests on</text>
+  <text class="edge" x="498" y="136" text-anchor="middle">done by</text>
+  <text class="edge" x="498" y="236" text-anchor="middle">affected by</text>
+
+  <path class="line" d="M710 44 H766" marker-end="url(#arr)"/>
+  <text class="edge" x="740" y="36" text-anchor="middle">tested by</text>
+  <path class="line" d="M710 144 H766" marker-end="url(#arr)"/>
+  <text class="edge" x="740" y="136" text-anchor="middle">result</text>
+  <path class="line" d="M710 244 H766" marker-end="url(#arr)"/>
+  <text class="edge" x="740" y="236" text-anchor="middle">made to</text>
+
+  <path class="line" d="M180 244 H300 V176" marker-end="url(#arr)"/>
+  <text class="edge" x="308" y="214">changes</text>
+</svg>
+</div>
+<figcaption>Each question on this page becomes a search over these links. A decision also links to the dated claims and commitments it relied on, so a later claim that contradicts its reason can reopen it.</figcaption>
+</figure>
+<div class="scroll">
+<table>
+<thead><tr><th>Pattern in the graph</th><th>What it means</th><th>Where it shows up</th></tr></thead>
+<tbody>
+<tr><td>A bet with no work items</td><td>Strategy that isn't being carried out</td><td>Strategy and execution</td></tr>
+<tr><td>A work item with no bet</td><td>Work that isn't strategic, or a part of the strategy nobody wrote down</td><td>Strategy and execution, as a share of time</td></tr>
+<tr><td>An assumption with no evidence in 30 days</td><td>An untested bet</td><td>Weekly review</td></tr>
+<tr><td>A new claim that contradicts an assumption</td><td>A strategy question for the CEO</td><td>Needs you</td></tr>
+<tr><td>Shipped work with no measured outcome</td><td>Bungay's effects gap</td><td>Strategy and execution</td></tr>
+<tr><td>A commitment that pulls against a bet</td><td>Drift</td><td>Needs you</td></tr>
+<tr><td>A commitment due soon with no work item</td><td>A promise about to be missed</td><td>At risk</td></tr>
+<tr><td>A decision whose reason a later claim contradicts</td><td>A decision to revisit</td><td>Needs you</td></tr>
+<tr><td>One customer with warning signs from several sources</td><td>An account at risk</td><td>At risk</td></tr>
+</tbody>
+</table>
+</div>
+<p>The “what did we promise?” section is probably the strongest demonstration, because a dashboard can't produce it: the promises live in calls, emails and contracts, not in any one tool's data.</p>
+
+<h2 id="sources">Sources</h2>
+<p>Cited from general knowledge, not rechecked against the texts for this page. Figures such as the Series A bar move with the market.</p>
+<ul class="method">
+<li>Fred Wilson, “What a CEO Does”, AVC blog, 2010.</li>
+<li>Verne Harnish, <em>Mastering the Rockefeller Habits</em> (2002) and <em>Scaling Up</em> (2014).</li>
+<li>Gino Wickman, <em>Traction</em> (2007).</li>
+<li>Robert Kaplan and David Norton, “The Balanced Scorecard: Measures That Drive Performance”, Harvard Business Review, 1992.</li>
+<li>Peter Drucker, <em>The Five Most Important Questions You Will Ever Ask About Your Organization</em> (1993).</li>
+<li>A. G. Lafley and Roger Martin, <em>Playing to Win</em> (2013).</li>
+<li>Ben Horowitz, <em>The Hard Thing About Hard Things</em> (2014).</li>
+<li>Carolyn Dewar, Scott Keller and Vikram Malhotra, <em>CEO Excellence</em> (2022).</li>
+<li>Andy Grove, <em>High Output Management</em> (1983).</li>
+<li>Colin Bryar and Bill Carr, <em>Working Backwards</em> (2021).</li>
+<li>Paul Graham, “Default Alive or Default Dead?”, 2015.</li>
+<li>David Sacks, “The Burn Multiple”, 2020.</li>
+<li>Richard Rumelt, <em>Good Strategy Bad Strategy</em> (2011).</li>
+<li>Stephen Bungay, <em>The Art of Action</em> (2011).</li>
+<li>Henry Mintzberg and James Waters, “Of Strategies, Deliberate and Emergent”, Strategic Management Journal, 1985.</li>
+<li>Hamilton Helmer, <em>7 Powers</em> (2016).</li>
+<li>Donald Sull, Rebecca Homkes and Charles Sull, “Why Strategy Execution Unravels—and What to Do About It”, Harvard Business Review, 2015.</li>
+<li>Clayton Christensen and others, <em>Competing Against Luck</em> (2016), on the jobs customers hire a product to do.</li>
+<li>Annie Duke, <em>Thinking in Bets</em> (2018) and <em>Quit</em> (2022).</li>
+<li>Jeff Bezos, Amazon letter to shareholders, 2015, on one-way and two-way doors.</li>
+</ul>
+</main>
+</body>
+</html>

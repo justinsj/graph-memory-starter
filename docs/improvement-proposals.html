@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Improvement Proposals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1;
+  --c-startup: #c9ced6; --c-hook: #1baf7a; --c-wait: #9ec5f4; --c-model: #2a78d6;
+  --c-answer: #184f95; --c-tool: #eb6834;
+  --n1: #d7dbe1; --n2: #b9c0c9; --q0: #2e343c; --q1: #7d8793; --q2: #c4cad2;
+  --zoom: rgba(27, 175, 122, 0.10);
+  --good: #0ca30c; --warn: #d99500; --none: #8a929d;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c;
+    --c-startup: #3b424c; --c-hook: #199e70; --c-wait: #1c5cab; --c-model: #3987e5;
+    --c-answer: #b7d3f6; --c-tool: #d95926;
+    --n1: #2c323b; --n2: #434b56; --q0: #e6e9ee; --q1: #99a2ad; --q2: #4b535e;
+    --zoom: rgba(25, 158, 112, 0.14);
+    --good: #0ca30c; --warn: #fab219; --none: #7d8692;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c;
+  --c-startup: #3b424c; --c-hook: #199e70; --c-wait: #1c5cab; --c-model: #3987e5;
+  --c-answer: #b7d3f6; --c-tool: #d95926;
+  --n1: #2c323b; --n2: #434b56; --q0: #e6e9ee; --q1: #99a2ad; --q2: #4b535e;
+  --zoom: rgba(25, 158, 112, 0.14);
+  --good: #0ca30c; --warn: #fab219; --none: #7d8692;
+}
+body { background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 880px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+h1 { font-size: clamp(32px, 5.5vw, 46px); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 8px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 24px; line-height: 1.25; margin: 56px 0 14px; font-weight: 650; text-wrap: balance; padding-top: 18px; border-top: 1px solid var(--hair); }
+h3 { font-size: 17px; margin: 32px 0 8px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 6px; }
+a { color: var(--c-model); }
+strong { font-weight: 650; }
+.byline { color: var(--muted); font: 13px var(--mono); margin-bottom: 28px; }
+code { font: 0.86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+pre { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0 0 18px; }
+pre code { background: none; border: 0; padding: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+pre.mermaid { text-align: center; font: 12px var(--mono); color: var(--ink-2); }
+blockquote { margin: 0 0 18px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; color: var(--ink-2); }
+blockquote p:last-child { margin-bottom: 0; }
+.scroll { overflow-x: auto; margin: 0 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+td code { white-space: nowrap; }
+.formula { font: 15px var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 14px 16px; max-width: none; }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } table { min-width: 640px; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+<h1>graph-memory-starter: improvement proposals</h1>
+<p class="byline">23 September 2026 · justinsj</p>
+<blockquote>
+<p><strong>Status in this repo, 25 September 2026.</strong> Exported from the Claude Doc of the same name; a historical record. Every proposal below has since been applied, some differently from written: the injection now carries claims with dates and the documents' own quotes, so it is larger than proposal 6's 400-token target, by choice (see <code>rereads-fix-results.html</code> and <code>rereads-fix-results-2.html</code>). Dated delegations became dated claims and links. The README describes the system as it is. The numbers below describe the code before any of it, at commit <code>496a6e9</code>.</p>
+</blockquote>
+<p>Eleven changes would keep graph-memory-starter's answers correct and fast as its graph grows. The three most urgent: rank recalled facts by relevance, read prompts as UTF-8 on Windows, and cap recall time. Each proposal below comes with the measurement behind it, taken on 22–23 September 2026.</p>
+<h2>How the system works</h2>
+<p>graph-memory-starter (<a href="https://github.com/Glitch-Cat-Club/graph-memory-starter">github.com/Glitch-Cat-Club/graph-memory-starter</a>) gives an AI assistant, mainly Claude Code, a memory it reads before it answers. It is Python and SQLite only: no server, no API key.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it does</th>
+<th>Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RAG layer</td>
+<td>Splits markdown notes at their headings. Searches them by keyword (SQLite FTS5) and by meaning (a local 67 MB embedding model, bge-small-en-v1.5), then merges the two rankings.</td>
+<td><code>rag/</code></td>
+</tr>
+<tr>
+<td>Graph layer</td>
+<td>Stores people, roles, policies, processes and documents as entities joined by typed links: <code>approved_by</code>, <code>held_by</code>, <code>delegates_to</code>, <code>part_of</code>, <code>references</code>. An LLM extracts them from the docs once, at write time.</td>
+<td><code>src/</code>, <code>extraction/</code>, <code>corpus/</code></td>
+</tr>
+<tr>
+<td>Digest</td>
+<td>When a Claude Code session ends, writes a summary entry into the notes, so the RAG layer can find it later.</td>
+<td><code>digest/</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Both memory layers plug into Claude Code through a <strong>UserPromptSubmit hook</strong>. That is a script Claude Code runs on every prompt, before the model sees it. Whatever the script prints is added to the model's context; this document calls that text <strong>the injection</strong>.</p>
+<p>The graph hook (<code>src/recall_hook.py</code>, which calls <code>src/recall.py</code>) builds its injection in four steps:</p>
+<pre class="mermaid">flowchart LR
+    P[&quot;Prompt&quot;] --&gt; S[&quot;Find names&lt;br/&gt;one regex per entity&quot;]
+    S --&gt; W[&quot;Walk links&lt;br/&gt;recursive SQL, 3 hops&quot;]
+    W --&gt; R[&quot;Sort by distance&lt;br/&gt;keep the first 8 facts&quot;]
+    R --&gt; D[&quot;Add descriptions&lt;br/&gt;amounts, dates&quot;]
+    D --&gt; I[&quot;Injection in&lt;br/&gt;the model's context&quot;]
+</pre>
+<p>Take the demo question “A customer wants an £800 refund in March. Who signs it off?”. The word “refund” matches the <em>Refund approvals</em> policy. The walk then follows Refund approvals → <code>approved_by</code> → Ops Manager → <code>held_by</code> → Sarah Chen → <code>delegates_to</code> → Marcus Webb.</p>
+<p>The conditions live in entity descriptions, not in the links: refunds over £500 need the Ops Manager, and Sarah Chen is on leave 1–31 March. The model reads the injected facts and answers Marcus Webb, with no searching of its own.</p>
+<p>The graph lives in three SQLite tables (<code>src/schema.sql</code>): <code>entities</code>, <code>relations</code> and <code>aliases</code>. <code>src/build_graph.py</code> rebuilds <code>graph.db</code> from <code>extraction/*.json</code>. The hook is wired through <code>hooks.json</code>.</p>
+<h2>What the measurements showed</h2>
+<p>At demo size the graph works as the README says: every test answer is right, and recall takes 2–3 ms. Three weaknesses appear once the graph grows, or when the model doubts what it was given.</p>
+<p>The README makes this claim, which the measurements tested:</p>
+<blockquote>
+<p>Retrieval: 2 ms per query. The ~400-token injection is fixed at any corpus size; search reads grow with it. Live terminal runs: 20 s of visible searching vs an answer that starts immediately after the 2 ms recall line.</p>
+</blockquote>
+<p>What was run:</p>
+<ul>
+<li>The README's 5 graph test questions and 4 RAG test questions. All matched their expected answers, and a new unit test file, <code>tests/test_graph.py</code>, now checks the 5 graph cases (<code>python -m unittest discover tests</code>).</li>
+<li>12 live <code>claude -p</code> runs of the README's comparison. In the <strong>search condition</strong> the model gets the 12 docs in <code>corpus-before/</code> and searches them with Grep, Read and Glob. In the <strong>graph condition</strong> the same setup adds the graph hook. Models: Sonnet 5 and Haiku 4.5.</li>
+<li>A growth test: made-up entities added to a copy of <code>graph.db</code>, then the refund question asked again.</li>
+</ul>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>recall()</code> time, demo graph (13 entities)</td>
+<td>2–3 ms on a first call, about 1 ms warm</td>
+</tr>
+<tr>
+<td>Graph hook as a whole, inside Claude Code</td>
+<td>130–154 ms, mostly starting Python</td>
+</tr>
+<tr>
+<td>Search condition, end to end (5 runs)</td>
+<td>10.3–15.9 s; the tools themselves ran 0.10–0.14 s; the model took 91–94%</td>
+</tr>
+<tr>
+<td>Graph condition, model uses the injected facts (5 runs)</td>
+<td>4.4–6.1 s, no tool calls; first answer word 2.5–4.0 s after the recall line</td>
+</tr>
+<tr>
+<td>Graph condition, prompt adds “Our company docs are in this folder.” (Sonnet 5, 2 runs)</td>
+<td>13.0–15.3 s: the model re-read the docs with 5 tool calls anyway</td>
+</tr>
+<tr>
+<td>Injection size, refund question</td>
+<td>1,608 characters = 459 input tokens on Haiku 4.5, 635 on Sonnet 5</td>
+</tr>
+<tr>
+<td>Injection size across the 5 test questions</td>
+<td>68–1,627 characters</td>
+</tr>
+<tr>
+<td>Graph grows with unrelated entities</td>
+<td>recall 89 ms at 3,013 entities, 929 ms at 30,013; answer still injected</td>
+</tr>
+<tr>
+<td>Graph grows around one node (policies all approved by the Ops Manager)</td>
+<td>recall 161 ms at 1,013 entities, 12.7 s at 10,013; answer no longer injected from 113 entities on</td>
+</tr>
+<tr>
+<td>Prompt encoding on Windows</td>
+<td>Both hooks decode the prompt as cp1252, so “£800” arrives as “Â£800”</td>
+</tr>
+</tbody>
+</table></div>
+<p>The weaknesses these numbers point to:</p>
+<ol>
+<li><strong>The 8-fact cap keeps the size fixed, not the content.</strong> Facts are sorted only by hop distance. A busy node near the question floods the list, and the answer falls outside the 8 that are sent.</li>
+<li><strong>Recall time grows with the graph.</strong> Name matching tries every entity in turn, and the walk slows sharply around busy nodes. Past the hook's 10 s timeout, Claude Code stops the hook and nothing is injected, silently.</li>
+<li><strong>The model must trust the injection.</strong> The time saving comes from skipping tool calls. When the prompt points at the docs, Sonnet 5 re-reads them and the saving disappears.</li>
+</ol>
+<h2>Proposals at a glance</h2>
+<p>Do the three correctness fixes and the test harness first; everything after them is measured against it. Effort is an estimate: Small is under a day, Medium one to three days, for someone who knows Python and SQL.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Proposal</th>
+<th>What it fixes</th>
+<th>Priority</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Rank facts by relevance and damp busy nodes</td>
+<td>The answer gets pushed out of the 8 facts sent</td>
+<td>Now</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Read hook input as UTF-8</td>
+<td>Non-ASCII prompts garbled on Windows; names like “José” never match</td>
+<td>Now</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Give recall a time budget</td>
+<td>A slow recall is killed at 10 s and injects nothing, with no warning</td>
+<td>Now</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Look names up through an index</td>
+<td>Name matching slows with every entity added</td>
+<td>Next</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Index the links and walk with capped neighbour queries</td>
+<td>The walk crawls around a node with thousands of links</td>
+<td>Next</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Compact the injection format</td>
+<td>Column padding and arrows spend tokens on layout</td>
+<td>Later</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Tell the model where facts come from and how fresh they are</td>
+<td>The model re-reads the docs and loses the time saving</td>
+<td>Later</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Fall back to the RAG layer when no names match</td>
+<td>Questions in everyday words get no memory at all</td>
+<td>Later</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Keep the measurements as tests and a benchmark</td>
+<td>README numbers drift from the code unnoticed</td>
+<td>Now</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Correct the README's numbers</td>
+<td>The ~400 tokens and 20 s don't match what was measured</td>
+<td>Next</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Smaller fixes</td>
+<td>RAG tie-break, dated delegations, name collisions, open connections, hook path, RAG hook speed</td>
+<td>Later</td>
+<td>Medium</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Correctness: right facts, readable prompts, no silent failures</h2>
+<p>These three change what the model receives, so they come first.</p>
+<h3>1. Rank facts by relevance and damp busy nodes</h3>
+<p><strong>Problem.</strong> The walk query in <code>src/recall.py</code> sorts candidate facts only by <code>near</code>: the smaller hop distance of a fact's two ends from a matched name. Ties keep table order. Then <code>recall()</code> keeps the first 8 (<code>top_k=8</code>).</p>
+<p>In the demo graph the answer fact, Sarah Chen → <code>delegates_to</code> → Marcus Webb, is 6th of 9 candidates: two places from the cut. Add 100 policies approved by the Ops Manager and 103 facts sit one hop away. The answer falls to 106th and is not sent, though the injection is still 8 facts.</p>
+<p><strong>Proposal.</strong> Three parts that can ship separately:</p>
+<ol>
+<li><strong>Score, then cut.</strong> Keep distance as the base, and boost a fact when it lies on a path from a matched name to a PERSON, or when an endpoint's description shares a word with the question. “March” in the question matches Sarah Chen's “On leave 1–31 March”. Break remaining ties on a stable key, such as source doc and names.</li>
+<li><strong>Damp busy nodes.</strong> When the walk expands a node, follow at most a few neighbours per link type (say 5). Prefer neighbours that were matched in the question or share its words. A node with 100 <code>approved_by</code> links then adds 5 candidates, not 100.</li>
+<li><strong>Keep whole chains.</strong> When a fact at depth 3 is kept, keep the facts that link it back to the matched name. The model never gets a delegation without the role it belongs to.</li>
+</ol>
+<p><strong>How to check.</strong> Add the growth case as a unit test: the demo graph plus 100 and 1,000 policies approved by the Ops Manager. Assert the Sarah Chen → Marcus Webb fact is in the refund question's injection. It fails today at 100; the 5 existing tests must keep passing. The prototype in the design section passes it at 100, 1,000 and 10,000.</p>
+<p><strong>Trade-off.</strong> The boosts are heuristics. The closed vocabulary, 5 entity types and 5 link types, keeps them few and testable.</p>
+<h3>2. Read hook input as UTF-8</h3>
+<p><strong>Problem.</strong> On Windows, Python decodes standard input with the system code page, cp1252. Claude Code sends hook input as UTF-8, so “£800” arrives as “Â£800”. The tests pass only because the demo's names are plain ASCII.</p>
+<p>A note about “José” would arrive as “JosÃ©”: the graph never matches the name and keyword search gets junk terms. Three hooks read input this way: <code>src/recall_hook.py</code>, <code>rag/recall_hook.py</code> and <code>digest/session_end.py</code>. The digest's input carries the session transcript's file path, so a non-ASCII folder name could stop it finding the transcript.</p>
+<p><strong>Proposal.</strong> In each hook, decode explicitly before parsing: <code>sys.stdin.reconfigure(encoding="utf-8")</code>, or <code>json.loads(sys.stdin.buffer.read().decode("utf-8"))</code>. <code>src/recall.py</code> already reconfigures its output the same way.</p>
+<p><strong>How to check.</strong> A test that sends <code>{"prompt": "What does José do?"}</code> to the hook as UTF-8 bytes, against a graph with an alias “José”, and expects that entity's facts back. It must run on Windows.</p>
+<h3>3. Give recall a time budget</h3>
+<p><strong>Problem.</strong> <code>hooks.json</code> gives the graph hook 10 s. In the growth test, recall took 12.7 s with 10,000 policies around the Ops Manager. Claude Code would stop the hook, the model would get no memory, and nobody would see why.</p>
+<p><strong>Proposal.</strong> Give <code>recall()</code> a budget, for example 500 ms, set in one place. Check the clock between steps, and let SQLite's <code>set_progress_handler</code> abort a query that runs long. On overrun, return what is ready plus one line: “memory: recall stopped at 500 ms; facts may be incomplete”. Keep the 10 s hook timeout as a backstop.</p>
+<p><strong>How to check.</strong> The 10,000-policy growth test returns within the budget and prints the notice.</p>
+<p><strong>Trade-off.</strong> A partial result can miss the answer. The notice tells the model to check before relying on it.</p>
+<h2>Speed at scale: keep recall in milliseconds</h2>
+<p>Recall's two slow steps each have a standard fix. Both leave the answers unchanged, so the existing tests guard them.</p>
+<h3>4. Look names up through an index</h3>
+<p><strong>Problem.</strong> <code>_seeds()</code> in <code>src/recall.py</code> loads every entity name and alias, then runs one regular expression per name against the question. The work grows with every entity. In the growth test this step took 0.3 ms at 13 entities, 87 ms at 3,013 and 873 ms at 30,013: almost all of recall's time when the graph grows away from the question.</p>
+<p><strong>Proposal.</strong> Have <code>src/build_graph.py</code> write a lookup table of normalised names and aliases, with an index. At query time, split the question into runs of 1 to 4 consecutive words, normalise them the same way, and look them all up in one <code>IN (…)</code> query. The cost then depends on the question's length, not the graph's size. Whole words still match whole words, as the regex rule does today.</p>
+<p><strong>How to check.</strong> The same names are found for the 5 test questions. The prototype in the design section does both, finding names in 0.08 ms at 30,013 entities.</p>
+<p><strong>Trade-off.</strong> Names with punctuation must be normalised identically at build and query time. One shared <code>normalise()</code> function covers both.</p>
+<h3>5. Index the links and walk with capped neighbour queries</h3>
+<p><strong>Problem.</strong> The <code>relations</code> table has no indexes. The walk joins on <code>w.entity_id IN (r.source_id, r.target_id)</code>, which scans every link at every step. Then each fact's distance comes from two subqueries over the whole walk, run per fact. With 10,000 policies linked to the Ops Manager, the walk took 12.2 s; at 1,000 it took 130 ms. Adding LIMIT 8 or indexes to this query changes nothing (see Alternatives considered).</p>
+<p><strong>Proposal.</strong></p>
+<ul>
+<li>Add indexes on <code>relations(source_id)</code> and <code>relations(target_id)</code> in <code>src/schema.sql</code>.</li>
+<li>Replace the recursive query with a short loop that runs one indexed neighbour query per node (design, step 3). SQLite cannot cap links per node inside a recursive query.</li>
+<li>In that query, keep at most 3 links per link type and direction, most relevant neighbours first, using <code>ROW_NUMBER()</code>.</li>
+<li>Track each entity's hop depth in the loop as it is reached, instead of recomputing distances per fact.</li>
+</ul>
+<p><strong>How to check.</strong> The 5 test questions keep their key facts. In the prototype the walk took 41 ms at 10,000 policies and the whole recall 43 ms, with the answer still among the 8 facts.</p>
+<p><strong>Trade-off.</strong> Indexes add some build time and file size, small at these sizes (see the design section). The loop is more code than one query, but each piece can be tested on its own.</p>
+<h2>Design: the access layer with full-text search</h2>
+<p>One design delivers proposals 1, 3, 4 and 5: three indexes built once, then four steps per prompt, all in SQLite. A prototype (not yet in the repo) passes the 5 test questions and keeps the answer at every growth size tested. It takes 0.9 ms at 30,013 entities and 43 ms with 10,000 policies on one node, against 929 ms and 12.7 s today.</p>
+<pre class="mermaid">flowchart LR
+    Q[&quot;Question&quot;] --&gt; N[&quot;1. Find names&lt;br/&gt;exact lookup, index&quot;]
+    N --&gt; R[&quot;2. Score relevance&lt;br/&gt;FTS5 + BM25&quot;]
+    R --&gt; W[&quot;3. Walk 3 hops&lt;br/&gt;3 links per type, best first&quot;]
+    W --&gt; K[&quot;4. Rank, keep chains&lt;br/&gt;top 8 facts&quot;]
+    K --&gt; I[&quot;Injection&quot;]
+</pre>
+<p>Full-text search does the job it is good at, scoring relevance. Finding names stays an exact indexed lookup, which is faster and never matches half a name.</p>
+<h3>Built once, after <code>build_graph.py</code></h3>
+<pre><code class="language-sql">-- 1. Every name and alias, lower-cased, behind an index: finds what the question mentions.
+CREATE TABLE names (norm TEXT NOT NULL, entity_id TEXT NOT NULL);
+INSERT INTO names SELECT lower(name), id FROM entities;
+INSERT INTO names SELECT lower(alias), entity_id FROM aliases;
+CREATE INDEX names_norm ON names(norm);
+
+-- 2. Both ends of every link behind an index: the walk reads neighbours without scanning.
+CREATE INDEX relations_source ON relations(source_id);
+CREATE INDEX relations_target ON relations(target_id);
+
+-- 3. Every entity's text in a full-text index: scores relevance; rarer words weigh more.
+CREATE VIRTUAL TABLE entity_fts USING fts5(
+    entity_id UNINDEXED, name, description, tokenize = 'porter unicode61');
+INSERT INTO entity_fts SELECT id, name, description FROM entities;
+</code></pre>
+<p>Building these took 63–294 ms across the test graphs.</p>
+<h3>Step 1: find the names the question mentions</h3>
+<p>Split the question into runs of 1 to 4 consecutive words: “refund”, “refund in”, “ops manager” and so on. Look them all up at once:</p>
+<pre><code class="language-sql">SELECT DISTINCT entity_id FROM names WHERE norm IN (?, ?, ?, …);  -- one ? per word run
+</code></pre>
+<p>The cost depends on the question's length, not the graph's size. No match means no memory, as today.</p>
+<h3>Step 2: score which entities the question is about</h3>
+<pre><code class="language-sql">SELECT entity_id, -bm25(entity_fts, 0.0, 2.0, 1.0) AS rel   -- name counts double
+FROM entity_fts WHERE entity_fts MATCH :terms              -- &quot;customer&quot; OR &quot;refund&quot; OR &quot;march&quot; …
+ORDER BY rel DESC LIMIT 200;
+</code></pre>
+<ul>
+<li>The question's words go in, minus the RAG layer's stopword list (<code>rag/search.py</code>).</li>
+<li>Porter stemming makes “signs” match “sign-offs”, with no alias needed.</li>
+<li>BM25 weighs rare words more, so “March”, found on 2 entities, outweighs “sign”, found on thousands. A LIKE search cannot tell them apart.</li>
+<li>Words found in more than 5% of entities are skipped, checked with a capped count query. Without that filter, scoring took 62 ms once 30,000 entities contained “sign-off”; with it, 0.55 ms.</li>
+</ul>
+<p>The scores go into a temporary table, <code>temp.rel</code>, which step 3 joins against.</p>
+<h3>Step 3: walk, reading capped neighbours per node</h3>
+<p>SQLite does not allow window functions inside a recursive query, so the walk is a short Python loop that runs one query per node:</p>
+<pre><code class="language-sql">WITH links AS (                         -- two branches, each uses its own index
+    SELECT rowid AS rid, source_id, predicate, target_id, source_doc,
+           target_id AS other, 'out' AS dir
+    FROM relations WHERE source_id = :node
+    UNION ALL
+    SELECT rowid, source_id, predicate, target_id, source_doc, source_id, 'in'
+    FROM relations WHERE target_id = :node),
+ranked AS (                             -- best neighbours first, per link type and direction
+    SELECT links.*, ROW_NUMBER() OVER (
+               PARTITION BY predicate, dir
+               ORDER BY COALESCE(rel.rel, 0) DESC, rid) AS rn
+    FROM links LEFT JOIN temp.rel AS rel ON rel.entity_id = links.other)
+SELECT r.rid, s.name, s.type, r.predicate, t.name, t.type, r.source_doc, r.other
+FROM ranked r
+JOIN entities s ON s.id = r.source_id
+JOIN entities t ON t.id = r.target_id
+WHERE r.rn &lt;= :cap;                     -- :cap = 3
+</code></pre>
+<pre><code class="language-python">depth, via, links = {s: 0 for s in seeds}, {}, {}
+frontier = list(seeds)
+for d in range(3):                                   # 3 hops
+    next_frontier = []
+    for node in frontier:
+        if elapsed_ms() &gt; budget_ms:                 # proposal 3: stop, say so
+            stopped = True
+            break
+        for link in db.execute(NEIGHBOURS, {&quot;node&quot;: node, &quot;cap&quot;: 3}):
+            links.setdefault(link.rid, (link, d))
+            if link.other not in depth:              # first time reached
+                depth[link.other], via[link.other] = d + 1, link.rid
+                next_frontier.append(link.other)
+    frontier = next_frontier
+</code></pre>
+<p>A node with 10,000 <code>approved_by</code> links contributes 3, the most relevant, not 10,000. <code>via</code> remembers which link first reached each entity, for step 4.</p>
+<h3>Step 4: rank the facts and keep whole chains</h3>
+<p class="formula">score = rel(source) / rel<sub>max</sub> + rel(target) / rel<sub>max</sub> + 0.5 · [an end is a PERSON] − 0.5 · <i>d</i></p>
+<p>Here d is the hop depth at which the fact was found. Take facts in score order; for each, add the facts that link it back to a named entity (via <code>via</code>); stop at 8. Descriptions are then fetched by entity id, and each fact prints as one compact line, for example <code>Sarah Chen delegates_to Marcus Webb [delegation-memo.md]</code>. The refund injection comes to 1,323 characters, against 1,608 today.</p>
+<h3>Prototype results</h3>
+<p>Times are milliseconds for the refund question: median of 15 calls, 5 at the largest size.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Graph</th>
+<th>Entities</th>
+<th>Find names</th>
+<th>Relevance</th>
+<th>Walk</th>
+<th>Rank and describe</th>
+<th>Total</th>
+<th>Answer in the 8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Demo</td>
+<td>13</td>
+<td>0.05</td>
+<td>0.19</td>
+<td>0.19</td>
+<td>0.05</td>
+<td>0.47</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>+1,000 elsewhere</td>
+<td>3,013</td>
+<td>0.06</td>
+<td>0.22</td>
+<td>0.22</td>
+<td>0.06</td>
+<td>0.55</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>+10,000 elsewhere</td>
+<td>30,013</td>
+<td>0.08</td>
+<td>0.55</td>
+<td>0.24</td>
+<td>0.06</td>
+<td>0.93</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>+100 on the Ops Manager</td>
+<td>113</td>
+<td>0.05</td>
+<td>0.18</td>
+<td>0.63</td>
+<td>0.05</td>
+<td>0.91</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>+1,000 on the Ops Manager</td>
+<td>1,013</td>
+<td>0.07</td>
+<td>0.21</td>
+<td>4.37</td>
+<td>0.07</td>
+<td>4.71</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>+10,000 on the Ops Manager</td>
+<td>10,013</td>
+<td>0.18</td>
+<td>0.96</td>
+<td>41.43</td>
+<td>0.09</td>
+<td>42.66</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table></div>
+<p>Limits of the prototype:</p>
+<ul>
+<li>The weights (0.5 and 0.5) were set by hand and checked on only the 5 test questions. More questions are needed before trusting them.</li>
+<li>The 41 ms walk at 10,000 is the busy node's 10,000 links being read to pick 3. A stored shortlist per node would cut that; not measured.</li>
+<li>Token cost was not re-measured, and the time budget was never reached in these runs.</li>
+</ul>
+<h2>Alternatives considered</h2>
+<p>A separate SQL server with LIKE searches and query limits was considered and tested piece by piece. None of it beats the design above, and no measured problem needs a server. Measurements used the 30,013-entity graph for names and the 10,000-policy graph for the walk.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Alternative</th>
+<th>What was measured</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A separate SQL server (Postgres, SQL Server, MySQL)</td>
+<td>Every measured slow step is fixed in-process in SQLite, the slowest case in 43 ms. The hook's largest fixed cost, about 70 ms of starting Python, would remain.</td>
+<td>Only worth it for a memory a team shares or several writers update at once. Then Postgres: full-text search, trigram indexes for <code>LIKE '%…%'</code>, recursive queries.</td>
+</tr>
+<tr>
+<td><code>question LIKE '%' || name || '%'</code></td>
+<td>5.8 ms, against 845 ms for today's regex in the same run. The query plan scans every name.</td>
+<td>A one-line stopgap: it still grows with the graph and ignores word boundaries (“ops” matches inside “stops”).</td>
+</tr>
+<tr>
+<td><code>name LIKE '%refund%'</code> with an index on the name</td>
+<td>The query plan scans: a pattern that starts with <code>%</code> cannot use an ordinary index, in SQLite, Postgres or SQL Server.</td>
+<td>Not usable, and it searches the wrong way round: the task is finding names inside the question.</td>
+</tr>
+<tr>
+<td>FTS5 match on names, then a whole-name check</td>
+<td>0.14 ms</td>
+<td>Works. The exact lookup is simpler and never matches half a name; revisit if stemmed names (“refunding”) matter.</td>
+</tr>
+<tr>
+<td><code>LIMIT 8</code> on today's recursive query</td>
+<td>11.9 s, against 11.7 s without</td>
+<td>No effect: the database must build and sort all 10,009 candidates before it can take 8. Limits belong inside the walk, per node.</td>
+</tr>
+<tr>
+<td>Indexes on both link ends, today's recursive query</td>
+<td>11.7 s</td>
+<td>No effect on their own. They pay off in the per-node loop of step 3.</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Tokens and trust: make the injection cheap and believable</h2>
+<p>The graph saves time only when the model answers from the injection instead of searching. These three make that more likely and cheaper.</p>
+<h3>6. Compact the injection format</h3>
+<p><strong>Problem.</strong> Each fact is padded to a common width so the columns line up, and links are drawn as <code>--[approved_by]--&gt;</code> arrows. The context also opens with the timing line, which the model doesn't need. The README estimates ~400 tokens by dividing characters by 4. The refund injection, 1,608 characters, actually cost 635 input tokens on Sonnet 5 and 459 on Haiku 4.5.</p>
+<p><strong>Proposal.</strong> One fact per line, no padding, source in brackets: <code>Refund approvals approved_by Ops Manager [refund-policy.md]</code>. Print each entity's description once, next to its first fact. Keep the timing line for the user's status message only. Keep today's aligned layout behind a <code>--pretty</code> flag on <code>python src/recall.py</code>, for people reading it.</p>
+<p><strong>How to check.</strong> Measure the first request's input tokens with and without the hook, as the benchmark in proposal 9 does. Target: under 400 tokens on Sonnet 5 for the refund question, with the same correct answers on both models.</p>
+<p><strong>Trade-off.</strong> None for the model. People lose the aligned view unless they ask for it.</p>
+<h3>7. Tell the model where facts come from and how fresh they are</h3>
+<p><strong>Problem.</strong> When the prompt said “Our company docs are in this folder.”, Sonnet 5 re-read the docs in both runs despite the injected answer: 5 tool calls, no faster than searching. Without that sentence, both models answered straight from the facts. The injection never says where the facts came from, when they were extracted, or whether the docs changed since.</p>
+<p><strong>Proposal.</strong></p>
+<ul>
+<li>Open the injection with one provenance line: “Facts extracted from your docs on 23 Sep 2026; source doc per fact.”</li>
+<li>Record the build time in <code>graph.db</code>. At recall, compare it with each source doc's modification time, and mark facts from changed docs: “refund-policy.md changed after extraction; check it.”</li>
+<li>Add one line of guidance: “Answer from these facts unless they are marked as changed or don't cover the question.”</li>
+</ul>
+<p><strong>How to check.</strong> Rerun the hint prompt on Sonnet 5 through the benchmark. Target: no tool calls, 4–6 s, correct answer. Then edit one source doc without rebuilding, and confirm the model reads that doc and only that doc.</p>
+<p><strong>Trade-off.</strong> Telling the model to trust the memory makes a wrong or stale extraction costlier. The freshness check is what makes that trust safe, so ship the two together.</p>
+<h3>8. Fall back to the RAG layer when no names match</h3>
+<p><strong>Problem.</strong> The graph answers only when the question names an entity or an alias. “Who is in charge when the boss is away?” names none, so the hook injects “(no memory matches for this prompt)”. The README treats this as intended: it fails loudly rather than guess.</p>
+<p>The RAG layer does find the answer's source. For that question its top hit is the distilled out-of-office note from Sarah Chen, then the team page. But the two layers run as separate hooks that never consult each other.</p>
+<p><strong>Proposal.</strong> One combined hook. Run the graph first; when no names match, run the RAG search and inject its top hits, labelled as passages to check, not facts. Keep the loud line when both come back empty.</p>
+<p><strong>How to check.</strong> The boss question gets the out-of-office note. The 5 graph test cases inject exactly what they do today.</p>
+<p><strong>Trade-off.</strong> The RAG hook loads its embedding model every time, which took 1.4 s per prompt in testing. The combined hook pays that only when the graph misses.</p>
+<h2>Tests, docs and smaller fixes</h2>
+<p>The repo's claims should be re-checkable with one command. Today they rest on one-off runs.</p>
+<h3>9. Keep the measurements as tests and a benchmark</h3>
+<p><strong>Problem.</strong> Until this review the repo had no automated tests; its README tables were checked by hand. The one test file added during the review, <code>tests/test_graph.py</code>, is not yet committed and covers only the 5 graph questions. Nothing re-checks the timing or token claims when the code changes.</p>
+<p><strong>Proposal.</strong></p>
+<ul>
+<li><strong>Regression tests</strong> in <code>tests/</code>: the growth cases (the answer survives 100 and 1,000 policies on one node; recall stays within budget at 10,000), the hook's JSON output shape, UTF-8 input, and the 4 RAG test questions, skipped when fastembed is missing.</li>
+<li><strong>A <code>bench/</code> folder</strong> with two scripts. One times recall offline: its steps, the hook process, injection sizes and the growth curve. The other runs the live comparison through <code>claude -p --output-format stream-json</code>, timestamps every event, and splits each run into start-up, hook, model and tool time. Both write a markdown report.</li>
+<li>Standard library only, as now, so “the graph half needs nothing installed” stays true.</li>
+</ul>
+<p><strong>How to check.</strong> <code>python -m unittest discover tests</code> passes, and the benchmark reproduces this document's numbers within run-to-run noise.</p>
+<p><strong>Trade-off.</strong> The live benchmark spends model usage (about $0.40 for the 12 runs here) and needs <code>claude</code> on the PATH. Keep it a manual step, not part of every test run.</p>
+<h3>10. Correct the README's numbers</h3>
+<p><strong>Problem.</strong> Measured against the README: the injection is 459–635 tokens, not ~400. Search took 10.3–15.9 s headless, not 20 s. “2 ms” is <code>recall()</code> alone, inside a 130–154 ms hook step. “Fixed at any corpus size” holds for the number of facts, not for which facts. The README's eval also shows Haiku failing by searching; here Haiku 4.5 found the answer in both search runs.</p>
+<p><strong>Proposal.</strong> Once proposals 1–7 land, rerun the benchmark and restate each claim with its measured number, model versions, date, and headless or interactive. Say in one line what “2 ms” covers.</p>
+<p><strong>How to check.</strong> Every number in the README traces to a benchmark report committed in the repo.</p>
+<h3>11. Smaller fixes</h3>
+<p>Each is a local change with its own test.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Fix</th>
+<th>Where</th>
+<th>Problem</th>
+<th>Change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Break RAG ties</td>
+<td><code>rag/search.py</code>, <code>fuse()</code></td>
+<td>Equal fusion scores keep insertion order, so keyword hits win ties. “How do we talk to customers in writing” puts the wrong doc, <code>it-setup.md</code>, first on a tie.</td>
+<td>Break ties by the other search's rank or by meaning score.</td>
+</tr>
+<tr>
+<td>Dated delegations</td>
+<td><code>src/schema.sql</code>, extraction prompt</td>
+<td>Sarah Chen → Marcus Webb holds only in March, but the link has no dates; the model must infer it from descriptions.</td>
+<td>Add valid-from and valid-to dates to links, and drop out-of-date links when the question names a date.</td>
+</tr>
+<tr>
+<td>Same name, different type</td>
+<td><code>src/build_graph.py</code></td>
+<td>Link ends are resolved by name alone. Two entities sharing a name, say a document and a process, would silently share links.</td>
+<td>Resolve by type and name, or stop the build with a clear error.</td>
+</tr>
+<tr>
+<td>Close connections</td>
+<td><code>src/recall.py</code></td>
+<td>The SQLite connection is never closed. On Windows the file stays locked until garbage collection; the unit tests need <code>gc.collect()</code>.</td>
+<td>Open it with <code>contextlib.closing</code>.</td>
+</tr>
+<tr>
+<td>Hook path</td>
+<td><code>hooks.json</code></td>
+<td><code>python src/recall_hook.py</code> is relative and works only when Claude Code starts in the repo folder.</td>
+<td>Use <code>${CLAUDE_PROJECT_DIR}</code>, as the RAG and digest hooks do.</td>
+</tr>
+<tr>
+<td>RAG hook speed</td>
+<td><code>rag/recall_hook.py</code></td>
+<td>The embedding model loads on every prompt (see proposal 8); the README says about 0.9 s.</td>
+<td>Skip the meaning search for very short prompts; offer an opt-in warm process started at session start.</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Suggested order</h2>
+<p>Six steps, each leaving the tests passing, so the work can stop after any of them. The test harness comes second so every later change is measured against today's numbers.</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Proposals</th>
+<th>Done when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Quick fixes</td>
+<td>2; from 11: close connections, hook path</td>
+<td>A UTF-8 prompt with “José” matches on Windows; the graph hook runs from any folder.</td>
+</tr>
+<tr>
+<td>2. Lock in today's behaviour</td>
+<td>9</td>
+<td>Tests pass, with the growth test marked as an expected failure; the benchmark reproduces this document's numbers.</td>
+</tr>
+<tr>
+<td>3. Right facts as the graph grows</td>
+<td>1, 3</td>
+<td>The growth test passes at 100 and 1,000 policies; at 10,000, recall returns within budget and says so.</td>
+</tr>
+<tr>
+<td>4. Speed</td>
+<td>4, 5</td>
+<td>The 5 test questions keep their key facts; recall matches the prototype: about 1 ms at 30,013 entities, under 50 ms at 10,000 policies.</td>
+</tr>
+<tr>
+<td>5. Tokens and trust</td>
+<td>6, 7, 8</td>
+<td>The refund injection is under 400 tokens on Sonnet 5; the hint prompt is answered without tool calls; the boss question gets the out-of-office note.</td>
+</tr>
+<tr>
+<td>6. Docs and the rest</td>
+<td>10; the rest of 11</td>
+<td>Every README number traces to a committed benchmark report.</td>
+</tr>
+</tbody>
+</table></div>
+<h2>Appendix: how the numbers were measured</h2>
+<p>All figures come from the repo at commit <code>496a6e9</code>, run on Windows 11 with Python 3.12.7, SQLite 3.45.3, fastembed 0.8.1 and Claude Code 2.1.280.</p>
+<ul>
+<li><strong>Live runs.</strong> <code>claude -p</code> with <code>--output-format stream-json --verbose --include-partial-messages --include-hook-events</code>. Tools were limited to Grep, Read and Glob, with user and project settings and MCP servers off (<code>--setting-sources local --strict-mcp-config</code>). Each condition ran in its own folder holding a copy of the 12 files in <code>corpus-before/</code>; the graph condition added the hook through <code>--settings</code>. Models: <code>claude-sonnet-5</code> and <code>claude-haiku-4-5-20251001</code>.</li>
+<li><strong>Prompt.</strong> “A customer wants an £800 refund in March. Who signs it off?”. Hint runs open with “Our company docs are in this folder.”.</li>
+<li><strong>Timing.</strong> Every stream event was timestamped on arrival. Recall line = the hook's response event. First answer word = the first streamed text of the final model turn. Tool time = from a tool call to its result.</li>
+<li><strong>Tokens.</strong> The difference in the first request's input tokens between the two conditions, with the same prompt and tools. It includes the few words Claude Code wraps around the injection.</li>
+<li><strong>Offline timings.</strong> Medians of 300 warm <code>recall()</code> calls and of 25–30 process launches.</li>
+<li><strong>Growth test.</strong> A copy of <code>graph.db</code> plus made-up entities: separate three-entity clusters, or policies each approved by the Ops Manager. Medians of 15 warm calls, 3 at the largest sizes.</li>
+<li><strong>Limits.</strong> 1–3 runs per setup, headless rather than the interactive terminal the README used, and two models. The timings are indicative, not statistics.</li>
+</ul>
+<p>Per-run figures (times in seconds from the start of the run):</p>
+<div class="scroll"><table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Condition</th>
+<th>Answer</th>
+<th>Tool calls</th>
+<th>Recall line</th>
+<th>First answer word</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sonnet 5, no hint</td>
+<td>Search</td>
+<td>Marcus Webb</td>
+<td>6</td>
+<td>—</td>
+<td>14.32</td>
+<td>15.85</td>
+</tr>
+<tr>
+<td>Sonnet 5, hint, run 1</td>
+<td>Search</td>
+<td>Marcus Webb</td>
+<td>5</td>
+<td>—</td>
+<td>10.96</td>
+<td>13.07</td>
+</tr>
+<tr>
+<td>Sonnet 5, hint, run 2</td>
+<td>Search</td>
+<td>Marcus Webb</td>
+<td>5</td>
+<td>—</td>
+<td>9.09</td>
+<td>10.32</td>
+</tr>
+<tr>
+<td>Haiku 4.5, hint, run 2</td>
+<td>Search</td>
+<td>Marcus Webb</td>
+<td>5</td>
+<td>—</td>
+<td>11.45</td>
+<td>12.93</td>
+</tr>
+<tr>
+<td>Haiku 4.5, hint, run 3</td>
+<td>Search</td>
+<td>Marcus Webb</td>
+<td>5</td>
+<td>—</td>
+<td>12.12</td>
+<td>13.55</td>
+</tr>
+<tr>
+<td>Haiku 4.5, no hint</td>
+<td>Search</td>
+<td>Asked for the docs</td>
+<td>0</td>
+<td>—</td>
+<td>4.13</td>
+<td>5.89</td>
+</tr>
+<tr>
+<td>Sonnet 5, no hint</td>
+<td>Graph</td>
+<td>Marcus Webb</td>
+<td>0</td>
+<td>0.99</td>
+<td>3.49</td>
+<td>4.35</td>
+</tr>
+<tr>
+<td>Haiku 4.5, no hint</td>
+<td>Graph</td>
+<td>Marcus Webb</td>
+<td>0</td>
+<td>0.94</td>
+<td>3.97</td>
+<td>4.86</td>
+</tr>
+<tr>
+<td>Haiku 4.5, hint, run 1</td>
+<td>Graph</td>
+<td>Marcus Webb</td>
+<td>0</td>
+<td>0.99</td>
+<td>4.62</td>
+<td>5.64</td>
+</tr>
+<tr>
+<td>Haiku 4.5, hint, run 2</td>
+<td>Graph</td>
+<td>Marcus Webb</td>
+<td>0</td>
+<td>1.01</td>
+<td>5.04</td>
+<td>6.11</td>
+</tr>
+<tr>
+<td>Haiku 4.5, hint, run 3</td>
+<td>Graph</td>
+<td>Marcus Webb</td>
+<td>0</td>
+<td>1.08</td>
+<td>3.93</td>
+<td>5.18</td>
+</tr>
+<tr>
+<td>Sonnet 5, hint, run 1</td>
+<td>Graph, re-read docs</td>
+<td>Marcus Webb</td>
+<td>5</td>
+<td>1.00</td>
+<td>13.18</td>
+<td>15.33</td>
+</tr>
+<tr>
+<td>Sonnet 5, hint, run 2</td>
+<td>Graph, re-read docs</td>
+<td>Marcus Webb</td>
+<td>5</td>
+<td>0.90</td>
+<td>10.32</td>
+<td>13.00</td>
+</tr>
+</tbody>
+</table></div>
+<p>One more run, Haiku 4.5 hint run 1 in the search condition, was left out. Its response stalled for 857 s mid-stream on the API connection, so it measured the network, not search; run 3 replaced it.</p>
+<p>Charts of these runs are on a companion page, <a href="claim-check.html">2 ms vs 20 s</a>.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+if (window.mermaid) mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'neutral' });
+</script>
+</body>
+</html>

@@ -55,6 +55,19 @@ def main(staged):
         distil.run(notes, paths=[log], rebuild=False)
         distil.rebuild_index(notes)
 
+    if cfg.get("projects"):
+        # proposals only: they wait in projects/pending/ for you to review
+        try:
+            sys.path.insert(0, str(HERE.parent / "projects"))
+            import ingest
+
+            result = ingest.stage(common.session_input(entry), kind="session")
+            if "diff" in result:
+                print(f"projects: {len(result['diff']['changes'])} changes proposed, "
+                      f"in {result['pending'].name}")
+        except Exception as exc:  # the session is written up either way
+            common.note_failure("headless_run", f"projects: {type(exc).__name__} {exc}")
+
 
 if __name__ == "__main__":
     distil.utf8_out()

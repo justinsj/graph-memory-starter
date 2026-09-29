@@ -51,6 +51,7 @@ REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.DOTALL)
 
 def read_stdin():
     """The hook payload. Windows can hand us lone backslashes in a path."""
+    sys.stdin.reconfigure(encoding="utf-8")  # Claude Code sends UTF-8; Windows would read cp1252
     raw = sys.stdin.read()
     try:
         return json.loads(raw)

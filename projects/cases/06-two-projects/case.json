@@ -1,0 +1,23 @@
+{
+ "title": "One meeting moves two projects",
+ "tests": "Updating two projects from one meeting, each by its id: the helpdesk migration unblocked (blocked → active) with step 3 done and step 4 started, and an owner named for the refunds dashboard. Nothing new is created.",
+ "state": "Both projects, as after cases 04 and 05: the helpdesk migration blocked on the contract, the refunds dashboard proposed.",
+ "input": "inputs/2026-09-27-ops-catch-up.md",
+ "kind": "transcript",
+ "on": "2026-09-27",
+ "expect": {
+  "created": 0,
+  "projects": {
+   "helpdesk-migration": {
+    "status": "active",
+    "steps": {
+     "3": "done",
+     "4": "doing"
+    }
+   },
+   "refunds-dashboard": {
+    "owner": "Marcus Webb"
+   }
+  }
+ }
+}

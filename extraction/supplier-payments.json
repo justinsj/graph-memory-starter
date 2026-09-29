@@ -1,9 +1,19 @@
 {
   "source_doc": "supplier-payments.md",
   "nodes": [
-    {"name": "Supplier payments", "type": "POLICY",
-     "description": "30-day terms; payments over £2,000 need Founder sign-off; new suppliers registered in tooling inventory first"},
-    {"name": "Founder", "type": "ROLE", "description": "Signs off supplier payments over £2,000"}
+    {"name": "Supplier payments", "type": "POLICY", "claims": [
+      {"kind": "deadline", "text": "Supplier invoices are paid on 30-day terms",
+       "quote": "Supplier invoices are paid on 30-day terms."},
+      {"kind": "threshold", "text": "Payments over £2,000 need Founder sign-off before they are scheduled",
+       "amount": 2000, "unit": "GBP",
+       "quote": "Any payment over £2,000 requires Founder sign-off before it is scheduled."},
+      {"kind": "rule", "text": "New suppliers are added to the tooling inventory before their first invoice",
+       "quote": "New suppliers must be added to the tooling inventory before their first invoice."}
+    ]},
+    {"name": "Founder", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Signs off supplier payments over £2,000",
+       "quote": "Any payment over £2,000 requires Founder sign-off before it is scheduled."}
+    ]}
   ],
   "edges": [
     {"source": "Supplier payments", "predicate": "approved_by", "target": "Founder"},

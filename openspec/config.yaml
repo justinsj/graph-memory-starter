@@ -1,0 +1,10 @@
+# OpenSpec for the knowledge layer service (kl/). Written by hand in OpenSpec's format; checked by
+# tests/test_kl_specs.py: every requirement says SHALL or MUST, every scenario has WHEN and THEN, and
+# every scenario is verified by a test of the same name in tests/test_kl_*.py.
+schema: spec-driven
+context: |
+  Python 3.12, FastAPI, SQLAlchemy Core on Postgres (row-level security) or SQLite, MCP over streamable HTTP.
+  The graph is src/build_graph.py's; projects/model.py is the change-set engine; kl/ is the service.
+rules:
+  - Every task names its test.
+  - A scenario's name is its test's name.

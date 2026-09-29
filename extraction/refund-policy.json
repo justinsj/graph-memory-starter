@@ -1,13 +1,25 @@
 {
   "source_doc": "refund-policy.md",
   "nodes": [
-    {"name": "Refund approvals", "type": "POLICY",
-     "description": "Refunds over £500 need Ops Manager sign-off; under £500 any agent processes within 48h, original payment method only"},
-    {"name": "Ops Manager", "type": "ROLE",
-     "description": "Approves refunds over £500"}
+    {"name": "Refund approvals", "type": "POLICY", "claims": [
+      {"kind": "threshold", "text": "Refunds over £500 need Ops Manager approval before payment is released",
+       "amount": 500, "unit": "GBP", "valid_from": "2026-01-01",
+       "quote": "Refunds over £500 require approval by the Ops Manager before payment is released."},
+      {"kind": "deadline", "text": "Refunds under £500 are processed by any support agent within 48 hours",
+       "valid_from": "2026-01-01",
+       "quote": "Standard refunds under £500 are processed by any support agent within 48 hours."},
+      {"kind": "rule", "text": "Approved refunds are paid back to the original payment method only",
+       "valid_from": "2026-01-01",
+       "quote": "Approved refunds are paid back to the original payment method only."}
+    ]},
+    {"name": "Ops Manager", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Approves refunds over £500", "valid_from": "2026-01-01",
+       "quote": "Refunds over £500 require approval by the Ops Manager before payment is released."}
+    ]}
   ],
   "edges": [
-    {"source": "Refund approvals", "predicate": "approved_by", "target": "Ops Manager"}
+    {"source": "Refund approvals", "predicate": "approved_by", "target": "Ops Manager",
+     "valid_from": "2026-01-01"}
   ],
   "aliases": [
     {"entity": "Refund approvals", "alias": "refund"},

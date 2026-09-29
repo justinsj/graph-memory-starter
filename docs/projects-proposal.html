@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Projects and Statuses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; }
+blockquote p { margin: 0; font-size: 15px; }
+blockquote footer { margin-top: 6px; font: 12px var(--mono); color: var(--muted); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 650; border-top: 2px solid var(--hair); }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .lane { fill: var(--ink-2); font-weight: 600; font-size: 13px; }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+svg .box-good { fill: var(--good-bg); stroke: var(--good); stroke-width: 1.5; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } figure { padding: 12px; } }
+
+figure { overflow-x: auto; }
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+table.fields td:first-child, table.vals td:first-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+table.steps td:first-child { font: 700 15px var(--mono); white-space: nowrap; }
+.pill { display: inline-block; font: 600 11.5px/1.6 var(--mono); padding: 0 7px; border-radius: 999px;
+  border: 1px solid var(--base); color: var(--ink-2); white-space: nowrap; }
+.chat { display: grid; gap: 10px; margin: 0 0 16px; }
+.chat div { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 10px 14px; font-size: 15px; }
+.chat div b { display: block; font: 600 11.5px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.chat .you { border-left: 3px solid var(--accent); }
+.toc { columns: 2 16em; font-size: 15px; }
+.toc li { break-inside: avoid; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · proposal, 26 September 2026</div>
+<h1>Projects and statuses in the memory graph</h1>
+<p class="lede">How the starter could turn requests and meeting transcripts into projects with a status, owner,
+dependencies, deliverables, sources and a plan agreed with you, and answer questions about them the way it answers
+questions about policies today: from checked facts, before the model starts.</p>
+
+<div class="answer">
+<p><strong>Status, 28 September 2026: built.</strong> What was built, how it was tested and what the tests found is
+in <a href="projects-results.html">projects-results.html</a>; how to use it, in <code>projects/README.md</code>. Some
+details moved during the build: the change set names a new project <code>project</code> like every other operation,
+a plan is the <code>agree_plan</code> operation of a discussion's change set, and a refused answer gets one repair
+round. This page is kept as the design it started from.</p>
+<p><strong>The proposal in five lines.</strong></p>
+<ul>
+<li><strong>A project is a file</strong>, <code>projects/records/&lt;id&gt;.json</code>, with an append-only history beside
+it. The database is rebuilt from it, as it is from <code>extraction/</code> today.</li>
+<li><strong>Claude reads each input once</strong> (a request, a transcript, a session entry) and proposes a change set.
+Code checks every quote against the input and every name against the graph. You confirm before anything is applied.</li>
+<li><strong>The plan comes only from a discussion with you</strong>: a slash command asks the open questions, drafts the
+steps, and records the plan as agreed only when you say so.</li>
+<li><strong>A project joins the graph as an entity</strong>, so the walk chains from it to what the graph already
+knows. “Who signs off the helpdesk contract?” reaches Alex Doyle through the supplier payments policy.</li>
+<li><strong>Status is dated, like claims</strong>: one at a time, with history. “What was its status on 14 September?”
+and “What changed last week?” work the same way date questions work now.</li>
+</ul>
+<p>Nine implementation steps, each with its own tests. The decisions that need you are at the end.</p>
+</div>
+
+<ol class="toc">
+<li><a href="#today">Where the system is today</a></li>
+<li><a href="#needs">What a project needs</a></li>
+<li><a href="#principles">Six rules carried over</a></li>
+<li><a href="#flow">How it fits together</a></li>
+<li><a href="#example">A worked example</a></li>
+<li><a href="#record">The project record</a></li>
+<li><a href="#schema">Schema and vocabulary</a></li>
+<li><a href="#recall">Answering questions</a></li>
+<li><a href="#ingest">Ingest, review and the plan</a></li>
+<li><a href="#checks">Keeping it true</a></li>
+<li><a href="#steps">Step by step</a></li>
+<li><a href="#risks">Risks, decisions, later</a></li>
+</ol>
+
+<h2 id="today">Where the system is today</h2>
+<p>graph-memory-starter gives Claude Code a memory of a company's documents. At write time, a strong model reads each
+document once, following <code>extract-prompt.md</code>, and writes a JSON file to <code>extraction/</code>. It holds
+entities (PERSON, ROLE, POLICY, PROCESS, DOCUMENT), relations (approved_by, held_by, delegates_to, part_of, references),
+and claims: one sentence each, with the document's own words as a quote and the dates the claim holds for.
+<code>src/build_graph.py</code> checks every quote against its document and builds a SQLite graph (<code>graph.db</code>)
+with name, full-text and relation indexes.</p>
+<p>At question time a hook runs before every prompt. <code>src/recall.py</code> finds what the question names, walks up
+to three hops, ranks the facts, and injects the top 8 with their quotes, checked against the files as they are now. The
+model answers from that and does no searching of its own. With the rule in <code>claude-md-snippet.md</code>, Sonnet 5
+searched in 2 of 11 live runs, against 9 of 11 before (<a href="rereads-fix-results-2.html">rereads-fix-results-2.html</a>).
+Beside it, <code>rag/</code> indexes loose notes for search, and <code>digest/</code> writes each finished session into
+a daily log.</p>
+<p><strong>What it cannot do.</strong> Everything it knows comes from fixed documents. There is no notion of a project, a
+plan, a deliverable or progress, and nothing records state that changes as work goes on. It never asks you anything:
+there is no way to turn a conversation into agreed facts. Notes search can find the meeting line where a shortlist was
+promised, but not tell you that it has since been delivered, what comes next, or who has to sign off.</p>
+
+<h2 id="needs">What a project needs</h2>
+<p>At least the fields asked for, plus four that make them trustworthy: status history, questions, decisions and the
+change history.</p>
+<div class="scroll"><table class="fields"><thead><tr><th>Field</th><th>What it holds</th><th>Comes from</th><th>In the example</th></tr></thead><tbody><tr><td>id, title, aliases</td><td>A stable slug, the name people use, and other names for it. A retitle keeps the old title as an alias.</td><td>The first input; aliases from any input</td><td>helpdesk-migration, “new helpdesk”</td></tr><tr><td>description</td><td>One or two sentences on what the project is for, with its quote.</td><td>The first input</td><td>“I want us on a new helpdesk before the January peak.”</td></tr><tr><td>status</td><td>One at a time, with dates and history: proposed, planning, active, blocked, on_hold, done, cancelled.</td><td>Inputs and you; done and cancelled need your confirmation</td><td>planning from 14 Sep, active from 15 Sep</td></tr><tr><td>owner, requested_by</td><td>Graph entities (a person or a role), so they link to what the graph already knows.</td><td>Inputs or the plan discussion</td><td>Priya Patel, both</td></tr><tr><td>due</td><td>A date only when one was stated, and the words used, like “before the January peak”.</td><td>Inputs or the plan discussion</td><td>2027-01-04</td></tr><tr><td>dependencies</td><td>What the project needs: another project, or any entity (a document, a policy, a role). Kind: needs, subject_to, blocked_by.</td><td>Inputs</td><td>needs Tooling inventory; subject to Supplier payments</td></tr><tr><td>deliverables</td><td>What it produces: key, title, owner, due, status (planned, in_progress, delivered, accepted, dropped).</td><td>Inputs or the plan discussion</td><td>D1 shortlist, D2 migration plan, D3 live helpdesk</td></tr><tr><td>plan</td><td>Ordered steps with owner, due, status (todo, doing, done, blocked, skipped), what each waits for and delivers. State: none, draft, agreed; a version number.</td><td><b>Only the plan discussion with you</b></td><td>6 steps, v1 agreed 15 Sep</td></tr><tr><td>questions</td><td>What is still open, as questions the plan discussion asks. They become unknown claims, as now.</td><td>Inputs and the validator</td><td>“Does the old helpdesk stay read-only?”</td></tr><tr><td>decisions</td><td>What was decided, dated, with its quote.</td><td>Inputs or the plan discussion</td><td>read-only for 90 days</td></tr><tr><td>sources</td><td>Every input read to create or update the project: path, kind, date read, sha256, and what it was used for.</td><td>Written by ingest and plan</td><td>3 sources</td></tr><tr><td>history</td><td>Every change: date, field, old, new, by (ingest, plan, you), source and quote. Append-only.</td><td>Written on every apply</td><td>4 events</td></tr></tbody></table></div>
+<p>Statuses move only along these lines. The validator refuses anything else.</p>
+<div class="scroll"><table class=""><thead><tr><th>From</th><th>Can move to</th><th>Needs your confirmation</th></tr></thead><tbody><tr><td><span class="pill">proposed</span></td><td>planning, cancelled</td><td>cancelled</td></tr><tr><td><span class="pill">planning</span></td><td>active (only with an agreed plan), on_hold, cancelled</td><td>cancelled</td></tr><tr><td><span class="pill">active</span></td><td>blocked, on_hold, done, cancelled</td><td>done, cancelled</td></tr><tr><td><span class="pill">blocked</span></td><td>active, on_hold, cancelled</td><td>cancelled</td></tr><tr><td><span class="pill">on_hold</span></td><td>planning, active, cancelled</td><td>cancelled</td></tr><tr><td><span class="pill">done</span></td><td>active (reopened, with a reason)</td><td>always</td></tr><tr><td><span class="pill">cancelled</span></td><td>planning (revived, with a reason)</td><td>always</td></tr></tbody></table></div>
+
+<h2 id="principles">Six rules carried over</h2>
+<ol>
+<li><strong>Files stay the truth.</strong> Records and inputs are files; <code>graph.db</code> is rebuilt from them and can
+be deleted at any time. Records diff cleanly in git.</li>
+<li><strong>Every fact carries its source.</strong> A quote from an input, checked word for word at build and again at
+question time, or your dated confirmation in a saved discussion.</li>
+<li><strong>Proposed is not confirmed.</strong> What Claude extracts lands in <code>projects/pending/</code>. A plan is
+agreed only by you.</li>
+<li><strong>Status is dated.</strong> One status at a time, with valid_from and valid_to like claims, so past questions have
+past answers.</li>
+<li><strong>Projects join the graph.</strong> Owners, dependencies and approvals are relations to existing entities, so one
+walk connects a project to people, roles and policies.</li>
+<li><strong>Intelligence at write time.</strong> Claude reads an input once, when it arrives. Answering stays indexed SQL,
+in milliseconds, before the model starts.</li>
+</ol>
+
+<h2 id="flow">How it fits together</h2>
+<figure>
+<svg viewBox="0 0 880 560" role="img" aria-label="How a project flows from inputs to the injection"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="head" d="M0,0 L10,5 L0,10 z"/></marker></defs><text class="lane" x="12" y="56">Inputs</text><text class="lane" x="12" y="160">Write time</text><text class="lane" x="12" y="176">Claude, once</text><text class="lane" x="12" y="270">Files</text><text class="sub" x="12" y="286">the truth</text><text class="lane" x="12" y="372">Build</text><text class="sub" x="12" y="388">code only</text><text class="lane" x="12" y="480">Question time</text><text class="sub" x="12" y="496">no model</text><rect class="box" x="140" y="30" width="170" height="52" rx="8"/><text x="152" y="52">Text request</text><text class="sub" x="152" y="70">/project-new</text><rect class="box" x="320" y="30" width="170" height="52" rx="8"/><text x="332" y="52">Meeting transcript</text><text class="sub" x="332" y="70">inputs/*.md</text><rect class="box" x="500" y="30" width="170" height="52" rx="8"/><text x="512" y="52">Session entry</text><text class="sub" x="512" y="70">the digest</text><rect class="box-good" x="680" y="30" width="180" height="52" rx="8"/><text x="692" y="52">Plan discussion</text><text class="sub" x="692" y="70">/project-plan</text><rect class="box" x="140" y="135" width="170" height="58" rx="8"/><text x="152" y="157">ingest.py</text><text class="sub" x="152" y="175">claude -p, reads once</text><rect class="box" x="320" y="135" width="170" height="58" rx="8"/><text x="332" y="157">Change set</text><text class="sub" x="332" y="175">projects/pending/</text><rect class="box" x="500" y="135" width="170" height="58" rx="8"/><text x="512" y="157">Validate</text><text class="sub" x="512" y="175">quotes, names, cycles</text><rect class="box-warn" x="680" y="135" width="180" height="58" rx="8"/><text x="692" y="157">Review</text><text class="sub" x="692" y="175">you confirm</text><rect class="box" x="140" y="245" width="360" height="58" rx="8"/><text x="152" y="267">projects/records/&lt;id&gt;.json</text><text class="sub" x="152" y="285">the project, plus its .log.jsonl history</text><rect class="box" x="510" y="245" width="350" height="58" rx="8"/><text x="522" y="267">inputs/</text><text class="sub" x="522" y="285">every source, kept so quotes can be checked</text><rect class="box" x="140" y="350" width="720" height="58" rx="8"/><text x="152" y="372">build_graph.py → graph.db</text><text class="sub" x="152" y="390">entities, claims, relations  +  projects, deliverables, steps, sources, events</text><rect class="box" x="140" y="455" width="720" height="58" rx="8"/><text x="152" y="477">recall hook → the injection</text><text class="sub" x="152" y="495">project card: status, owner, progress, next steps, blockers, quotes</text><path class="line" d="M225,82 L225,133" marker-end="url(#ah)"/><path class="line" d="M405,82 L270,133" marker-end="url(#ah)"/><path class="line" d="M585,82 L290,133" marker-end="url(#ah)"/><path class="line" d="M770,82 L590,133" marker-end="url(#ah)"/><text class="edge" x="700" y="112">plan.py</text><path class="line" d="M310,164 L318,164" marker-end="url(#ah)"/><path class="line" d="M490,164 L498,164" marker-end="url(#ah)"/><path class="line" d="M670,164 L678,164" marker-end="url(#ah)"/><path class="line" d="M770,193 L770,222 L320,222 L320,243" marker-end="url(#ah)"/><text class="edge" x="560" y="216">apply, with its history</text><path class="line" d="M320,303 L320,348" marker-end="url(#ah)"/><path class="line" d="M685,303 L685,348" marker-end="url(#ah)"/><path class="line" d="M500,408 L500,453" marker-end="url(#ah)"/></svg>
+<figcaption>Every input is saved to <code>inputs/</code> first, so its quotes can be checked. Ingest proposes; code
+validates; you confirm; the record is written with its history; the build loads it; the hook answers from it. The plan
+discussion skips ingest: <code>plan.py</code> validates what you agreed and writes it.</figcaption>
+</figure>
+
+<h2 id="example">A worked example</h2>
+<p>The company in the repo's sample documents: Alex Doyle is the Founder, Sarah Chen the Ops Manager, Priya Patel the
+Support Lead, Marcus Webb an operations analyst. The graph already knows that any payment over £2,000 needs the Founder's
+sign-off.</p>
+
+<h3>1. A meeting transcript arrives</h3>
+<p>Saved as <code>inputs/2026-09-14-support-tooling-review.md</code>, then <code>python projects/ingest.py</code> on it.</p>
+<pre class="code"># Support tooling review, 14 September 2026
+Attendees: Sarah Chen, Priya Patel, Marcus Webb
+
+Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.
+Sarah: Agreed. Marcus, can you shortlist three options by 23 September?
+Marcus: Yes. I&#x27;ll need the current tooling inventory to see what integrates.
+Sarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.
+Priya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.
+Sarah: We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.</pre>
+
+<h3>2. Claude proposes a change set</h3>
+<p>One <code>claude -p</code> call, with <code>projects/ingest-prompt.md</code>, the transcript and the existing projects
+it might belong to (none yet). Every change quotes the transcript.</p>
+<pre class="code">{&quot;input&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;, &quot;kind&quot;: &quot;transcript&quot;,
+ &quot;changes&quot;: [
+  {&quot;op&quot;: &quot;create_project&quot;, &quot;id&quot;: &quot;helpdesk-migration&quot;, &quot;title&quot;: &quot;Helpdesk migration&quot;,
+   &quot;aliases&quot;: [&quot;new helpdesk&quot;],
+   &quot;description&quot;: {&quot;text&quot;: &quot;Move support to a new helpdesk before the January peak&quot;,
+                   &quot;quote&quot;: &quot;I want us on a new helpdesk before the January peak.&quot;},
+   &quot;requested_by&quot;: {&quot;entity&quot;: &quot;Priya Patel&quot;,
+                    &quot;quote&quot;: &quot;I want us on a new helpdesk before the January peak.&quot;},
+   &quot;status&quot;: {&quot;value&quot;: &quot;planning&quot;, &quot;from&quot;: &quot;2026-09-14&quot;,
+              &quot;quote&quot;: &quot;Agreed. Marcus, can you shortlist three options by 23 September?&quot;},
+   &quot;due&quot;: {&quot;text&quot;: &quot;before the January peak&quot;, &quot;quote&quot;: &quot;before the January peak&quot;}},
+  {&quot;op&quot;: &quot;add_dependency&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;, &quot;on&quot;: &quot;Tooling inventory&quot;, &quot;kind&quot;: &quot;needs&quot;,
+   &quot;quote&quot;: &quot;I&#x27;ll need the current tooling inventory to see what integrates.&quot;},
+  {&quot;op&quot;: &quot;add_dependency&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;, &quot;on&quot;: &quot;Supplier payments&quot;, &quot;kind&quot;: &quot;subject_to&quot;,
+   &quot;quote&quot;: &quot;The annual contract will be over £2,000, so it goes to Alex for sign-off.&quot;},
+  {&quot;op&quot;: &quot;add_deliverable&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;, &quot;key&quot;: &quot;D1&quot;,
+   &quot;title&quot;: &quot;Shortlist of three helpdesks&quot;, &quot;owner&quot;: &quot;Marcus Webb&quot;, &quot;due&quot;: &quot;2026-09-23&quot;,
+   &quot;quote&quot;: &quot;Marcus, can you shortlist three options by 23 September?&quot;},
+  {&quot;op&quot;: &quot;add_deliverable&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;, &quot;key&quot;: &quot;D2&quot;, &quot;title&quot;: &quot;Migration plan&quot;,
+   &quot;quote&quot;: &quot;a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.&quot;},
+  {&quot;op&quot;: &quot;add_deliverable&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;, &quot;key&quot;: &quot;D3&quot;,
+   &quot;title&quot;: &quot;New helpdesk live with ticket history imported&quot;,
+   &quot;quote&quot;: &quot;a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.&quot;},
+  {&quot;op&quot;: &quot;add_question&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;,
+   &quot;text&quot;: &quot;Does the old helpdesk stay read-only after the move?&quot;,
+   &quot;quote&quot;: &quot;We haven&#x27;t decided whether to keep the old system read-only afterwards.&quot;},
+  {&quot;op&quot;: &quot;add_question&quot;, &quot;project&quot;: &quot;helpdesk-migration&quot;,
+   &quot;text&quot;: &quot;What date does the January peak start?&quot;, &quot;quote&quot;: &quot;before the January peak&quot;}
+ ]}</pre>
+
+<h3>3. Code checks it</h3>
+<ul>
+<li>9 quotes, all found word for word in the input.</li>
+<li>Priya Patel, Marcus Webb, Tooling inventory and Supplier payments all resolve in the graph's names. A new name would
+be offered to you as a new entity.</li>
+<li>“before the January peak” states no date, so <code>due.date</code> stays empty and a question is asked instead.</li>
+<li>A new project may start as proposed or planning. No plan is set: ingest can never set one.</li>
+<li>No owner is named, so the validator adds that gap as a question.</li>
+</ul>
+
+<h3>4. You review it</h3>
+<pre class="code">inputs/2026-09-14-support-tooling-review.md  →  1 new project, 8 changes, all quotes found
+
++ project      Helpdesk migration (helpdesk-migration)   planning, from 2026-09-14
++ needs        Tooling inventory
++ subject to   Supplier payments   (over £2,000 → Founder → Alex Doyle, from the graph)
++ deliverable  D1 Shortlist of three helpdesks   Marcus Webb, due 2026-09-23
++ deliverable  D2 Migration plan
++ deliverable  D3 New helpdesk live with ticket history imported
+? question     Does the old helpdesk stay read-only after the move?
+? question     What date does the January peak start?
+? gap          No owner named                                  (added by the validator)
+
+python projects/review.py --apply 2026-09-14-support-tooling-review</pre>
+
+<h3>5. The plan, discussed with you</h3>
+<div class="chat">
+<div class="you"><b>You</b>/project-plan helpdesk-migration</div>
+<div><b>Claude</b>Helpdesk migration is in planning, with 3 deliverables and 3 open questions. Before I draft a plan:
+who owns it end to end? What date does the January peak start? Should the old helpdesk stay read-only after the move,
+and for how long?</div>
+<div class="you"><b>You</b>Priya owns it end to end. The peak starts on 4 January. Keep the old one read-only for 90 days.</div>
+<div><b>Claude</b>Draft, 6 steps: 1 shortlist three helpdesks (Marcus, by 23 Sep, D1); 2 check each against the tooling
+inventory (Marcus); 3 Founder signs the contract (Alex, over £2,000); 4 write the migration plan (Priya, D2); 5 import
+ticket history and go live (Priya, by 4 Jan, D3); 6 keep the old helpdesk read-only for 90 days. Shall I record this as
+the agreed plan and set the project active?</div>
+<div class="you"><b>You</b>Plan agreed, go ahead.</div>
+</div>
+<p>The command saves the questions and your answers, word for word, as
+<code>inputs/discussions/2026-09-15-helpdesk-migration.md</code>. Then <code>projects/plan.py</code> checks the plan
+(quotes, owners, step order, deliverables) and writes it as v1, agreed on 15 September, with the status moved to active.</p>
+
+<h3>6. A later meeting updates it</h3>
+<p>On 24 September a support sync transcript says “Shortlist's done, three options in the shared drive.” and
+“I'm checking integrations against the inventory next, done by 2 October.” Ingest proposes: step 1 done, D1 delivered,
+step 2 doing with a due date. Each is quoted, and you confirm with one command.</p>
+
+<h3>7. Questions it then answers</h3>
+<p>“What's the status of the helpdesk migration?”</p>
+<pre class="code">memory: 7 facts, as of 2026-09-26
+These facts come from your documents (9) and project records (1, updated 2026-09-24). Quoted lines are the sources&#x27; own words, checked against the files just now: answer from them, and open a file only if its line says it changed or is missing.
+Helpdesk migration owned_by Priya Patel [2026-09-15-helpdesk-migration.md]
+Helpdesk migration depends_on Tooling inventory [2026-09-14-support-tooling-review.md]
+Helpdesk migration subject_to Supplier payments [2026-09-14-support-tooling-review.md]
+Supplier payments approved_by Founder [supplier-payments.md]
+Founder held_by Alex Doyle [org-chart.md]
+where:
+Helpdesk migration: status active: &quot;Plan agreed, go ahead.&quot; [2026-09-15-helpdesk-migration.md] (from 2026-09-15)
+Helpdesk migration: plan v1 agreed 2026-09-15; 1 of 6 steps done; due 2027-01-04
+Helpdesk migration: doing: step 2, check each option against the tooling inventory (Marcus Webb, due 2026-10-02)
+Helpdesk migration: next: step 3, Founder signs the contract (Alex Doyle), after step 2
+Helpdesk migration: &quot;Shortlist&#x27;s done, three options in the shared drive.&quot; [2026-09-24-support-sync.md] (step 1 and D1, 2026-09-24)
+Helpdesk migration: no open questions</pre>
+<p>“Who has to sign off the helpdesk contract?” The walk goes from the project through the policy to the person:</p>
+<pre class="code">memory: 4 facts, as of 2026-09-26
+...
+Helpdesk migration subject_to Supplier payments [2026-09-14-support-tooling-review.md]
+Supplier payments approved_by Founder [supplier-payments.md]
+Founder held_by Alex Doyle [org-chart.md]
+Helpdesk migration owned_by Priya Patel [2026-09-15-helpdesk-migration.md]
+where:
+Helpdesk migration: &quot;The annual contract will be over £2,000, so it goes to Alex for sign-off.&quot; [2026-09-14-support-tooling-review.md]
+Supplier payments: &quot;Any payment over £2,000 requires Founder sign-off before it is scheduled.&quot; [supplier-payments.md]
+Founder: &quot;Founder: Alex Doyle. Sets pricing, signs anything customer-facing.&quot; [org-chart.md]
+Helpdesk migration: next: step 3, Founder signs the contract (Alex Doyle), after step 2</pre>
+<p>“Is anything blocked?” No project is named, so the hook answers from the projects table:</p>
+<pre class="code">memory: projects, as of 2026-09-26
+blocked: none
+overdue: none
+active (1): Helpdesk migration — Priya Patel; step 2 of 6, due 2026-10-02 (Marcus Webb); project due 2027-01-04
+planning (0), on hold (0)</pre>
+
+<h2 id="record">The project record</h2>
+<p><code>projects/records/helpdesk-migration.json</code> after step 6. Machine-written, human-readable, and safe to edit
+by hand: the build validates it. Every value that came from an input has its source and quote.</p>
+<pre class="code">{
+ &quot;id&quot;: &quot;helpdesk-migration&quot;,
+ &quot;title&quot;: &quot;Helpdesk migration&quot;,
+ &quot;aliases&quot;: [&quot;new helpdesk&quot;],
+ &quot;description&quot;: {&quot;text&quot;: &quot;Move support to a new helpdesk before the January peak&quot;,
+                 &quot;source&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;,
+                 &quot;quote&quot;: &quot;I want us on a new helpdesk before the January peak.&quot;},
+ &quot;requested_by&quot;: {&quot;entity&quot;: &quot;Priya Patel&quot;, &quot;source&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;,
+                  &quot;quote&quot;: &quot;I want us on a new helpdesk before the January peak.&quot;},
+ &quot;owner&quot;: {&quot;entity&quot;: &quot;Priya Patel&quot;, &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;,
+           &quot;quote&quot;: &quot;Priya owns it end to end.&quot;},
+ &quot;status&quot;: [
+  {&quot;value&quot;: &quot;planning&quot;, &quot;from&quot;: &quot;2026-09-14&quot;, &quot;source&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;,
+   &quot;quote&quot;: &quot;Agreed. Marcus, can you shortlist three options by 23 September?&quot;},
+  {&quot;value&quot;: &quot;active&quot;, &quot;from&quot;: &quot;2026-09-15&quot;, &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;,
+   &quot;quote&quot;: &quot;Plan agreed, go ahead.&quot;, &quot;confirmed&quot;: true}
+ ],
+ &quot;due&quot;: {&quot;date&quot;: &quot;2027-01-04&quot;, &quot;text&quot;: &quot;before the January peak&quot;,
+         &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;,
+         &quot;quote&quot;: &quot;The peak starts on 4 January.&quot;},
+ &quot;dependencies&quot;: [
+  {&quot;on&quot;: &quot;Tooling inventory&quot;, &quot;kind&quot;: &quot;needs&quot;, &quot;source&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;,
+   &quot;quote&quot;: &quot;I&#x27;ll need the current tooling inventory to see what integrates.&quot;},
+  {&quot;on&quot;: &quot;Supplier payments&quot;, &quot;kind&quot;: &quot;subject_to&quot;, &quot;source&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;,
+   &quot;quote&quot;: &quot;The annual contract will be over £2,000, so it goes to Alex for sign-off.&quot;}
+ ],
+ &quot;deliverables&quot;: [
+  {&quot;key&quot;: &quot;D1&quot;, &quot;title&quot;: &quot;Shortlist of three helpdesks&quot;, &quot;owner&quot;: &quot;Marcus Webb&quot;, &quot;due&quot;: &quot;2026-09-23&quot;,
+   &quot;status&quot;: &quot;delivered&quot;, &quot;on&quot;: &quot;2026-09-24&quot;, &quot;source&quot;: &quot;inputs/2026-09-24-support-sync.md&quot;,
+   &quot;quote&quot;: &quot;Shortlist&#x27;s done, three options in the shared drive.&quot;},
+  {&quot;key&quot;: &quot;D2&quot;, &quot;title&quot;: &quot;Migration plan&quot;, &quot;owner&quot;: &quot;Priya Patel&quot;, &quot;status&quot;: &quot;planned&quot;},
+  {&quot;key&quot;: &quot;D3&quot;, &quot;title&quot;: &quot;New helpdesk live with ticket history imported&quot;, &quot;owner&quot;: &quot;Priya Patel&quot;,
+   &quot;due&quot;: &quot;2027-01-04&quot;, &quot;status&quot;: &quot;planned&quot;}
+ ],
+ &quot;plan&quot;: {
+  &quot;state&quot;: &quot;agreed&quot;, &quot;version&quot;: 1, &quot;agreed_on&quot;: &quot;2026-09-15&quot;,
+  &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;,
+  &quot;steps&quot;: [
+   {&quot;n&quot;: 1, &quot;title&quot;: &quot;Shortlist three helpdesks&quot;, &quot;owner&quot;: &quot;Marcus Webb&quot;, &quot;due&quot;: &quot;2026-09-23&quot;,
+    &quot;delivers&quot;: &quot;D1&quot;, &quot;status&quot;: &quot;done&quot;, &quot;on&quot;: &quot;2026-09-24&quot;},
+   {&quot;n&quot;: 2, &quot;title&quot;: &quot;Check each option against the tooling inventory&quot;, &quot;owner&quot;: &quot;Marcus Webb&quot;,
+    &quot;due&quot;: &quot;2026-10-02&quot;, &quot;after&quot;: [1], &quot;status&quot;: &quot;doing&quot;},
+   {&quot;n&quot;: 3, &quot;title&quot;: &quot;Founder signs the contract&quot;, &quot;owner&quot;: &quot;Alex Doyle&quot;, &quot;after&quot;: [2], &quot;status&quot;: &quot;todo&quot;},
+   {&quot;n&quot;: 4, &quot;title&quot;: &quot;Write the migration plan&quot;, &quot;owner&quot;: &quot;Priya Patel&quot;, &quot;after&quot;: [3],
+    &quot;delivers&quot;: &quot;D2&quot;, &quot;status&quot;: &quot;todo&quot;},
+   {&quot;n&quot;: 5, &quot;title&quot;: &quot;Import ticket history and go live&quot;, &quot;owner&quot;: &quot;Priya Patel&quot;, &quot;due&quot;: &quot;2027-01-04&quot;,
+    &quot;after&quot;: [4], &quot;delivers&quot;: &quot;D3&quot;, &quot;status&quot;: &quot;todo&quot;},
+   {&quot;n&quot;: 6, &quot;title&quot;: &quot;Keep the old helpdesk read-only for 90 days&quot;, &quot;owner&quot;: &quot;Priya Patel&quot;,
+    &quot;after&quot;: [5], &quot;status&quot;: &quot;todo&quot;}
+  ]
+ },
+ &quot;questions&quot;: [],
+ &quot;decisions&quot;: [
+  {&quot;text&quot;: &quot;The old helpdesk stays read-only for 90 days after go-live&quot;, &quot;on&quot;: &quot;2026-09-15&quot;,
+   &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;,
+   &quot;quote&quot;: &quot;Keep the old one read-only for 90 days.&quot;}
+ ],
+ &quot;sources&quot;: [
+  {&quot;doc&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;, &quot;kind&quot;: &quot;transcript&quot;, &quot;read_on&quot;: &quot;2026-09-14&quot;,
+   &quot;sha256&quot;: &quot;9f2c…&quot;, &quot;used_for&quot;: [&quot;created&quot;, &quot;description&quot;, &quot;dependencies&quot;, &quot;deliverables&quot;, &quot;questions&quot;]},
+  {&quot;doc&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;, &quot;kind&quot;: &quot;discussion&quot;,
+   &quot;read_on&quot;: &quot;2026-09-15&quot;, &quot;sha256&quot;: &quot;41ab…&quot;, &quot;used_for&quot;: [&quot;owner&quot;, &quot;due&quot;, &quot;plan&quot;, &quot;decisions&quot;, &quot;status&quot;]},
+  {&quot;doc&quot;: &quot;inputs/2026-09-24-support-sync.md&quot;, &quot;kind&quot;: &quot;transcript&quot;, &quot;read_on&quot;: &quot;2026-09-24&quot;,
+   &quot;sha256&quot;: &quot;c07e…&quot;, &quot;used_for&quot;: [&quot;step 1 done&quot;, &quot;D1 delivered&quot;, &quot;step 2 doing&quot;]}
+ ]
+}</pre>
+<p>Its history, <code>projects/records/helpdesk-migration.log.jsonl</code>, one line per applied change and never
+rewritten:</p>
+<pre class="code">{&quot;on&quot;: &quot;2026-09-14&quot;, &quot;op&quot;: &quot;create_project&quot;, &quot;by&quot;: &quot;ingest&quot;, &quot;confirmed&quot;: &quot;2026-09-14&quot;, &quot;source&quot;: &quot;inputs/2026-09-14-support-tooling-review.md&quot;}
+{&quot;on&quot;: &quot;2026-09-15&quot;, &quot;op&quot;: &quot;set_status&quot;, &quot;old&quot;: &quot;planning&quot;, &quot;new&quot;: &quot;active&quot;, &quot;by&quot;: &quot;plan&quot;, &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;, &quot;quote&quot;: &quot;Plan agreed, go ahead.&quot;}
+{&quot;on&quot;: &quot;2026-09-15&quot;, &quot;op&quot;: &quot;agree_plan&quot;, &quot;new&quot;: &quot;v1, 6 steps&quot;, &quot;by&quot;: &quot;plan&quot;, &quot;source&quot;: &quot;inputs/discussions/2026-09-15-helpdesk-migration.md&quot;}
+{&quot;on&quot;: &quot;2026-09-24&quot;, &quot;op&quot;: &quot;set_step&quot;, &quot;step&quot;: 1, &quot;old&quot;: &quot;doing&quot;, &quot;new&quot;: &quot;done&quot;, &quot;by&quot;: &quot;ingest&quot;, &quot;confirmed&quot;: &quot;2026-09-24&quot;, &quot;source&quot;: &quot;inputs/2026-09-24-support-sync.md&quot;, &quot;quote&quot;: &quot;Shortlist&#x27;s done, three options in the shared drive.&quot;}</pre>
+
+<h2 id="schema">Schema and vocabulary</h2>
+<p>New in the closed vocabulary. Entity types: <b>PROJECT</b>, <b>DELIVERABLE</b>. Relations: <b>depends_on</b>,
+<b>subject_to</b>, <b>blocked_by</b>, <b>owned_by</b>, <b>requested_by</b>, <b>delivers</b>. Claim kinds: <b>status</b>
+(one at a time, like threshold), <b>decision</b>. Open questions reuse <b>unknown</b>, and due dates reuse
+<b>deadline</b>.</p>
+<p>A project's identity is uuid5 of PROJECT and its slug, not its title, so renaming a project does not break its links.
+The old title becomes an alias, so old transcripts still find it. A deliverable's identity is its project slug and key.</p>
+<p>The existing tables do most of the work: the project, its deliverables and dependencies are entities and relations;
+status, decisions, questions and due dates are claims. These new tables hold only what needs order, state or
+provenance:</p>
+<pre class="code">-- A project is an entity (type PROJECT), so names, full-text search and the walk
+-- all find it. These tables hold only what a project has and an entity does not.
+CREATE TABLE projects     (entity_id TEXT PRIMARY KEY REFERENCES entities(id),
+                           slug TEXT NOT NULL UNIQUE,     -- the record&#x27;s id, stable
+                           status TEXT NOT NULL,          -- current: the open status claim
+                           plan_state TEXT NOT NULL,      -- none | draft | agreed
+                           plan_version INTEGER NOT NULL DEFAULT 0,
+                           plan_agreed_on TEXT,
+                           created TEXT NOT NULL, updated TEXT NOT NULL,
+                           due TEXT, due_text TEXT);      -- a date only when one was stated
+CREATE TABLE deliverables (entity_id TEXT PRIMARY KEY REFERENCES entities(id),  -- type DELIVERABLE
+                           project_id TEXT NOT NULL REFERENCES projects(entity_id),
+                           key TEXT NOT NULL, status TEXT NOT NULL, due TEXT, on_date TEXT,
+                           owner_id TEXT REFERENCES entities(id),
+                           source_doc TEXT, quote TEXT, UNIQUE (project_id, key));
+CREATE TABLE steps        (id INTEGER PRIMARY KEY,
+                           project_id TEXT NOT NULL REFERENCES projects(entity_id),
+                           n INTEGER NOT NULL, title TEXT NOT NULL, detail TEXT,
+                           status TEXT NOT NULL, due TEXT, on_date TEXT,
+                           owner_id TEXT REFERENCES entities(id),
+                           deliverable_id TEXT REFERENCES deliverables(entity_id),
+                           source_doc TEXT, quote TEXT, UNIQUE (project_id, n));
+CREATE TABLE step_after   (step_id INTEGER NOT NULL REFERENCES steps(id),
+                           after_id INTEGER NOT NULL REFERENCES steps(id));
+CREATE TABLE sources      (project_id TEXT NOT NULL REFERENCES projects(entity_id),
+                           doc TEXT NOT NULL, kind TEXT NOT NULL,  -- request, transcript,
+                           read_on TEXT NOT NULL, sha256 TEXT NOT NULL,  -- discussion, session, doc
+                           used_for TEXT NOT NULL, PRIMARY KEY (project_id, doc, sha256));
+CREATE TABLE events       (id INTEGER PRIMARY KEY,                 -- the .log.jsonl, loaded
+                           project_id TEXT NOT NULL REFERENCES projects(entity_id),
+                           on_date TEXT NOT NULL, op TEXT NOT NULL, old TEXT, new TEXT,
+                           by TEXT NOT NULL, source_doc TEXT, quote TEXT);
+CREATE INDEX projects_status ON projects(status, due);   -- &quot;what is blocked&quot;, &quot;due this month&quot;
+CREATE INDEX steps_project  ON steps(project_id, n);
+CREATE INDEX events_project ON events(project_id, on_date);
+CREATE INDEX sources_doc    ON sources(doc);             -- &quot;which projects came from this meeting&quot;</pre>
+<p><code>projects.status</code> is filled by the build from the open status claim, so there is one truth. It is kept as a
+column only so “what is blocked” is one indexed query. Quotes from inputs resolve against a second root,
+<code>inputs/</code>, next to the documents root, both at build and in the freshness check at question time.</p>
+
+<h2 id="recall">Answering questions</h2>
+<ul>
+<li><strong>Names.</strong> Project titles and aliases go into <code>names</code>, so “the helpdesk migration” or “the
+new helpdesk” finds it, as “Priya” finds Priya Patel today.</li>
+<li><strong>Status first.</strong> The status claim ranks first among a project's claims, with its date and quote.</li>
+<li><strong>A plan line.</strong> From the steps table: progress, the step being done, the next step. Overdue items are
+marked. The whole plan, the deliverables or the history are shown only when the question asks for them (plan, steps,
+deliverables, changed, since).</li>
+<li><strong>Portfolio questions.</strong> A question that names no project but asks about projects or a status
+(“what's blocked”, “what's due this month”, “which projects is Marcus on”) reads the projects table: up to 3 in full,
+then a count.</li>
+<li><strong>Dates.</strong> The period parser already turns “in September” or “last week” into dates. Status claims
+answer “status on 14 September”, and events in the period answer “what changed last week”.</li>
+<li><strong>Budget.</strong> Project lines share the 8 facts and the 2,000 characters of quotes. They are not added on
+top.</li>
+</ul>
+<p>What stays the same: no model at question time, the hook's 500 ms stop, the quotes checked against the files on
+every prompt, and the loud line when nothing matches.</p>
+
+<h2 id="ingest">Ingest, review and the plan</h2>
+<h3>Ingest</h3>
+<ol>
+<li>Save the input under <code>inputs/</code> (a typed request becomes <code>inputs/requests/&lt;date&gt;-&lt;slug&gt;.md</code>)
+and hash it. An input already read, unchanged, is skipped.</li>
+<li>Find candidate projects: names and full-text search over the input, up to 5, each sent as a compact card with its id.</li>
+<li>One <code>claude -p</code> call with <code>projects/ingest-prompt.md</code>. It gets the vocabulary, the statuses, the
+rules (quote everything; dates only when stated; never set a plan; prefer updating a candidate to creating a duplicate)
+and the output format.</li>
+<li>Validate. Quotes, names, allowed values, transitions, cycles and required fields. Gaps become questions.</li>
+<li>Write <code>projects/pending/&lt;input&gt;.json</code> and print the review.</li>
+</ol>
+<h3>Review and apply</h3>
+<div class="scroll"><table class=""><thead><tr><th>Change</th><th>Applied when</th><th>Why</th></tr></thead><tbody><tr><td>New project, new deliverable, dependency, question, decision, source</td><td>You confirm the change set (or on its own, in auto mode)</td><td>Adds evidence; nothing is lost</td></tr><tr><td>Status to blocked or active, step to doing or done, deliverable delivered</td><td>You confirm (or auto mode, with a quote)</td><td>Common, quoted, easy to reverse</td></tr><tr><td>Status to done or cancelled, reopening, a changed due date or owner</td><td>Always your confirmation</td><td>Hard to notice when wrong</td></tr><tr><td>Anything touching an agreed plan: add, drop or reorder steps</td><td>Always your confirmation; the plan version goes up</td><td>The plan is yours</td></tr><tr><td>A date, owner or person the input does not state</td><td>Never: the validator refuses it</td><td>No invented facts</td></tr></tbody></table></div>
+<h3>The plan discussion</h3>
+<p><code>commands/project-plan.md</code> is a slash command to copy into <code>.claude/commands/</code>. It tells Claude
+to load the project card, ask every open question in one message, draft steps with owners, due dates, order and
+deliverables, and ask for explicit approval. Only then does it save the discussion as an input and run
+<code>projects/plan.py</code>. Changing an agreed plan goes the same way and makes a new version. The old one stays in
+the history.</p>
+<h3>Three ways status changes</h3>
+<ul>
+<li><strong>A new input</strong>: a later transcript or request, through ingest and review.</li>
+<li><strong>You, directly</strong>: <code>python projects/status.py helpdesk-migration blocked "waiting on the supplier's
+quote"</code>. Your words are saved as the source.</li>
+<li><strong>A session</strong>: when the digest writes up a session, it offers the entry to ingest. The changes wait in
+pending, and the next session start says “2 project updates to review”.</li>
+</ul>
+
+<h2 id="checks">Keeping it true</h2>
+<p>Run by the build, like the coverage check today, and shown on the injection line where it matters:</p>
+<div class="scroll"><table class="vals"><thead><tr><th>Check</th><th>Value</th><th>Shown as</th></tr></thead><tbody><tr><td>STALE_DAYS</td><td>14</td><td>active project with no event for 14 days: “no update since …”</td></tr><tr><td>QUESTION_DAYS</td><td>7</td><td>a question open 7 days: named at the next /project-plan and in the build output</td></tr><tr><td>overdue</td><td>—</td><td>a step, deliverable or project past its due date and not done: “overdue since …” on its line</td></tr><tr><td>source changed</td><td>sha256</td><td>an input edited after it was read: “changed since read: re-ingest”</td></tr><tr><td>active without a plan</td><td>—</td><td>a warning; planning → active is refused without an agreed plan</td></tr><tr><td>owner not in the graph</td><td>—</td><td>a warning naming the step; the review offers to add the person</td></tr><tr><td>depends on a done or cancelled project</td><td>—</td><td>a note: the dependency may be over</td></tr><tr><td>cycles</td><td>—</td><td>refused: projects that depend on each other in a ring, or steps that wait on each other</td></tr></tbody></table></div>
+<h3>Recommended values</h3>
+<div class="scroll"><table class="vals"><thead><tr><th>Setting</th><th>Value</th><th>Why</th></tr></thead><tbody><tr><td>MAX_PROJECT_CARDS</td><td>3</td><td>Portfolio questions show three projects in full, then “and N more”, like TOP_K for facts</td></tr><tr><td>CARD_NEXT_STEPS</td><td>2</td><td>Doing and next: enough to answer “what's next” without the whole plan</td></tr><tr><td>PLAN_LINES</td><td>8</td><td>The whole plan is shown only when the question asks for it (“plan”, “steps”)</td></tr><tr><td>MAX_STEPS</td><td>25</td><td>More steps than this is two projects; the validator says so</td></tr><tr><td>MAX_DELIVERABLES</td><td>12</td><td>The same reason</td></tr><tr><td>INGEST_CANDIDATES</td><td>5</td><td>Existing projects offered to the model to match an input against</td></tr><tr><td>MAX_INPUT_CHARS</td><td>60,000</td><td>About an hour of transcript per call; longer inputs are split at speaker turns or headings</td></tr><tr><td>MAX_QUOTE</td><td>300</td><td>As now: any one sentence fits</td></tr><tr><td>EVENTS_SHOWN</td><td>8</td><td>“What changed since …” shows the newest 8 events in the period</td></tr><tr><td>STALE_DAYS, QUESTION_DAYS</td><td>14, 7</td><td>See the checks above</td></tr></tbody></table></div>
+
+<h2 id="steps">Step by step</h2>
+<p>Each step leaves the suite passing and the starter usable. Steps 1–3 give question answering over hand-written
+records. Steps 4–6 add the model-driven intake and the plan. Steps 7–9 keep it current and measured.</p>
+<div class="scroll"><table class="steps"><thead><tr><th>Step</th><th>What</th><th>Files</th><th>Tests</th><th>Size</th></tr></thead><tbody><tr><td>1</td><td><b>The record and its rules.</b> The project record format, the vocabulary (PROJECT, DELIVERABLE; depends_on, subject_to, owned_by, requested_by, delivers; claim kinds status and decision), status transitions, cycle checks, quote checks against inputs. One sample record and its inputs.</td><td>new <code>projects/model.py</code>, <code>projects/README.md</code>, <code>projects/records/helpdesk-migration.json</code>, <code>inputs/*.md</code></td><td><code>test_projects.py</code>: a valid record loads; a paraphrased quote, an unstated date, a bad transition, a step cycle and an unknown owner are each refused with a named problem</td><td>M</td></tr><tr><td>2</td><td><b>Schema and build.</b> The new tables; the build loads records and logs, adds the project, deliverables, dependencies, owners as entities and relations, status and decisions as dated claims, questions as unknown claims, and fills projects, steps, sources and events. Inputs become a second quote root beside the documents.</td><td><code>src/schema.sql</code>, <code>src/build_graph.py</code></td><td><code>test_build.py</code>: counts, rows per table, a project found by its title and alias, the status history as dated claims, rebuild is deterministic</td><td>M</td></tr><tr><td>3</td><td><b>Recall: project cards.</b> Status first in the claims; a plan line (progress, doing, next) from the steps table; the full plan, deliverables or history only when the question asks; portfolio questions with no project named; status and history for a period (“status in September”, “what changed last week”); the provenance line counts project records.</td><td><code>src/recall.py</code></td><td><code>test_projects_recall.py</code>: status, next step, sign-off chain to Alex Doyle, “what's blocked”, “status on 14 September” is planning, an unagreed plan is never shown as agreed; <code>bench/recall_bench.py</code> stays under 10 ms</td><td>L</td></tr><tr><td>4</td><td><b>Ingest.</b> Save the input first, match it against existing projects, ask Claude for a change set, validate it, write it to pending. The claude -p helpers move out of <code>rag/distil.py</code> into one shared module.</td><td>new <code>projects/ingest.py</code>, <code>projects/ingest-prompt.md</code>, <code>src/llm.py</code>; <code>rag/distil.py</code> imports it</td><td><code>test_ingest.py</code> with recorded change sets (no live model): the example produces the review above; an input about an existing project updates it rather than creating a second; an unchanged input is skipped by its sha256</td><td>L</td></tr><tr><td>5</td><td><b>Review and apply.</b> List pending change sets, show them as above, apply or reject, write the record and append the history, rebuild.</td><td>new <code>projects/review.py</code>, <code>commands/project-review.md</code></td><td><code>test_review.py</code>: apply writes record, log and sources; reject leaves the record alone; changes needing confirmation are held back in auto mode</td><td>M</td></tr><tr><td>6</td><td><b>The plan discussion.</b> A slash command that asks the open questions, drafts steps, and records the plan only on your explicit approval, with the discussion saved as an input so its quotes check.</td><td>new <code>commands/project-plan.md</code>, <code>projects/plan.py</code></td><td><code>test_plan.py</code>: an approved plan is written as v1 agreed; a plan without approval stays draft; a change to an agreed plan makes v2 and keeps v1 in the history</td><td>M</td></tr><tr><td>7</td><td><b>Status updates.</b> A direct command for quick changes; new transcripts through ingest; the digest offers each session entry to ingest, and the next session start says how many updates wait for review.</td><td>new <code>projects/status.py</code>, <code>commands/project-new.md</code>; <code>digest/session_start.py</code>, <code>digest/headless_run.py</code>, <code>digest/config.json</code> (<code>"projects": true</code>), <code>hooks.json</code></td><td><code>test_status.py</code>, <code>test_hooks.py</code>: a session entry that marks a step done yields a pending change, never an applied one</td><td>M</td></tr><tr><td>8</td><td><b>Checks and board.</b> The checks above in the build output and on injection lines; a generated board of every project.</td><td><code>src/build_graph.py</code>, new <code>projects/board.py</code> → <code>projects/BOARD.md</code></td><td><code>test_checks.py</code>: stale, overdue, changed source, open question age</td><td>S</td></tr><tr><td>9</td><td><b>Evals and docs.</b> Six project questions in the live eval, with the CLAUDE.md rule on; the README and extraction prompt updated; the CLAUDE.md snippet mentions project records.</td><td><code>bench/live_eval.py</code>, <code>README.md</code>, <code>extract-prompt.md</code>, <code>claude-md-snippet.md</code></td><td>Live: all correct; at most 1 of 6 runs searches in the matched folder</td><td>S</td></tr></tbody></table></div>
+<p>Step 3 needs step 2; steps 4 and 5 need step 1; step 6 needs step 5; step 7 needs steps 4 and 5. Step 8 can go
+any time after step 2.</p>
+
+<h2 id="risks">Risks, decisions, later</h2>
+<h3>Risks</h3>
+<div class="scroll"><table class=""><thead><tr><th>Risk</th><th>What prevents it</th></tr></thead><tbody><tr><td>An input is matched to the wrong project</td><td>The model gets up to 5 candidate projects with their ids and must pick one or create; the review shows which; <code>--project &lt;id&gt;</code> forces it</td></tr><tr><td>Casual talk turns into a status change</td><td>Every change needs a quote from the input; done, cancelled and plan changes always need you; the transition table refuses jumps</td></tr><tr><td>Invented dates, owners or people</td><td>The validator refuses a date the input does not state; an owner must be a graph entity or is offered to you as a new one</td></tr><tr><td>Records drift from reality</td><td>Stale and overdue checks, shown on the injection line; every session can offer updates through the digest</td></tr><tr><td>The injection grows</td><td>Project lines share TOP_K and the 2,000-character quote budget; the plan line is one line unless the question asks for the plan</td></tr><tr><td>Long transcripts</td><td>Split at speaker turns or headings above 60,000 characters; one change set per part, merged before review</td></tr><tr><td>Sensitive transcripts</td><td>Everything stays local; <code>inputs/</code> is in <code>.gitignore</code> except the samples</td></tr><tr><td>Hand edits break a record</td><td>The build validates every record and refuses a broken one with a named problem, as it does for extraction files</td></tr></tbody></table></div>
+<h3>Decisions that need you</h3>
+<div class="scroll"><table class=""><thead><tr><th>Decision</th><th>Options</th><th>Recommended</th></tr></thead><tbody><tr><td>When changes apply</td><td>Review every change set · auto-apply quoted, reversible changes</td><td>Review, with auto mode as a config switch</td></tr><tr><td>Where inputs live</td><td><code>inputs/</code> in the starter · your notes folder</td><td><code>inputs/</code>, configurable, like <code>--corpus</code></td></tr><tr><td>Record format</td><td>JSON · markdown with front matter</td><td>JSON: standard library, matches <code>extraction/</code>, clean diffs</td></tr><tr><td>Sessions feed projects</td><td>On (pending only) · off</td><td>On: the digest already reads the session</td></tr><tr><td>Steps as entities</td><td>Yes, so a question can name a step · no</td><td>No: found through their project; keeps the graph small</td></tr></tbody></table></div>
+<h3>Left for later</h3>
+<ul>
+<li>Syncing with an issue tracker. Records could export to one, but two sources of truth is a design of its own.</li>
+<li>Audio. Transcripts arrive as text; transcribing meetings is a separate tool.</li>
+<li>Reminders and notifications for overdue steps. The checks find them; nothing pushes them yet.</li>
+<li>Several people editing the same records. That needs locking or merge rules beyond git.</li>
+</ul>
+
+<h2>How this proposal was put together</h2>
+<ul class="method">
+<li>From the repo as of 26 September 2026: <code>src/schema.sql</code>, <code>src/build_graph.py</code>,
+<code>src/recall.py</code>, <code>extract-prompt.md</code>, <code>rag/distil.py</code> (the claude -p pattern and sha256
+ledger ingest reuses) and <code>digest/</code> (the session hand-off status updates reuse).</li>
+<li>The example project, transcripts and discussion are invented for illustration. The people, the £2,000 rule and the
+quotes from <code>supplier-payments.md</code> and <code>org-chart.md</code> are the repo's sample corpus.</li>
+<li>Nothing here is built yet. Recommended values are starting points, to be measured in step 9 as the quote budget was.</li>
+</ul>
+</main>
+</body>
+</html>

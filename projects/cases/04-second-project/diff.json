@@ -1,0 +1,42 @@
+{
+ "input": "inputs/requests/2026-09-25-refunds-dashboard.md",
+ "kind": "request",
+ "on": "2026-09-25",
+ "changes": [
+  {
+   "op": "create_project",
+   "project": "refunds-dashboard",
+   "title": "Refunds dashboard",
+   "description": "A dashboard of weekly refund totals and how many needed approval, for the monthly ops review",
+   "quote": "Can we get a refunds dashboard for the monthly ops review?"
+  },
+  {
+   "op": "set_status",
+   "project": "refunds-dashboard",
+   "value": "proposed",
+   "from": "2026-09-25",
+   "quote": "Can we get a refunds dashboard for the monthly ops review?"
+  },
+  {
+   "op": "set_field",
+   "project": "refunds-dashboard",
+   "field": "requested_by",
+   "value": "Sarah Chen",
+   "quote": "Request from Sarah Chen, 25 September 2026"
+  },
+  {
+   "op": "add_dependency",
+   "project": "refunds-dashboard",
+   "on": "project:helpdesk-migration",
+   "kind": "needs",
+   "quote": "it can wait until the new helpdesk is live, since the ticket data moves then."
+  },
+  {
+   "op": "add_deliverable",
+   "project": "refunds-dashboard",
+   "key": "D1",
+   "title": "Dashboard of weekly refund totals and approvals",
+   "quote": "Weekly refund totals, and how many needed approval."
+  }
+ ]
+}

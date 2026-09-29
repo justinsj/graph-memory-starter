@@ -1,0 +1,27 @@
+{
+ "title": "A request creates a second project that waits on the first",
+ "tests": "Telling new work from existing work: a request that mentions the helpdesk creates its own project rather than updating the helpdesk one, starts as proposed, and depends on the helpdesk project by id. The helpdesk project must come out unchanged.",
+ "state": "As after case 02.",
+ "input": "inputs/requests/2026-09-25-refunds-dashboard.md",
+ "kind": "request",
+ "on": "2026-09-25",
+ "expect": {
+  "created": 1,
+  "untouched": [
+   "helpdesk-migration"
+  ],
+  "projects": {
+   "new#1": {
+    "status": "proposed",
+    "requested_by": "Sarah Chen",
+    "deps": [
+     [
+      "needs project:helpdesk-migration",
+      "blocked_by project:helpdesk-migration"
+     ]
+    ],
+    "deliverables_min": 1
+   }
+  }
+ }
+}

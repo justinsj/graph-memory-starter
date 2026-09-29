@@ -1,0 +1,11 @@
+{
+ "title": "A meeting with nothing new changes nothing",
+ "tests": "Restraint: the helpdesk move is mentioned ('on track, nothing new'), and the rest is about the newsletter and tone of voice. The right change set is empty.",
+ "state": "As after case 02.",
+ "input": "inputs/2026-09-25-brand-voice-review.md",
+ "kind": "transcript",
+ "on": "2026-09-25",
+ "expect": {
+  "changes": 0
+ }
+}

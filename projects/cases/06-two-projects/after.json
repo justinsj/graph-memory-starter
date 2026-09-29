@@ -1,0 +1,443 @@
+{
+ "projects": [
+  {
+   "id": "helpdesk-migration",
+   "title": "Helpdesk migration",
+   "aliases": [
+    "new helpdesk"
+   ],
+   "description": {
+    "text": "Move support to a new helpdesk before the January peak",
+    "source": "inputs/2026-09-14-support-tooling-review.md",
+    "quote": "I want us on a new helpdesk before the January peak."
+   },
+   "requested_by": {
+    "entity": "Priya Patel",
+    "source": "inputs/2026-09-14-support-tooling-review.md",
+    "quote": "Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak."
+   },
+   "owner": {
+    "entity": "Priya Patel",
+    "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+    "quote": "Priya owns it end to end."
+   },
+   "status": [
+    {
+     "value": "planning",
+     "from": "2026-09-14",
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "Agreed. Marcus, can you shortlist three options by 23 September?"
+    },
+    {
+     "value": "active",
+     "from": "2026-09-15",
+     "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+     "quote": "Plan agreed, go ahead."
+    },
+    {
+     "value": "blocked",
+     "from": "2026-09-26",
+     "source": "inputs/2026-09-26-ops-sync.md",
+     "quote": "Then the helpdesk migration is blocked until he's back."
+    },
+    {
+     "value": "active",
+     "from": "2026-09-27",
+     "source": "inputs/2026-09-27-ops-catch-up.md",
+     "quote": "Then we're unblocked."
+    }
+   ],
+   "due": {
+    "text": "before the January peak",
+    "date": "2027-01-04",
+    "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+    "quote": "The peak starts on 4 January."
+   },
+   "dependencies": [
+    {
+     "on": "Tooling inventory",
+     "kind": "needs",
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "I'll need the current tooling inventory to see what integrates."
+    },
+    {
+     "on": "Supplier payments",
+     "kind": "subject_to",
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "The annual contract will be over £2,000, so it goes to Alex for sign-off."
+    }
+   ],
+   "deliverables": [
+    {
+     "key": "D1",
+     "title": "Shortlist of three helpdesks",
+     "owner": "Marcus Webb",
+     "due": "2026-09-23",
+     "status": "delivered",
+     "on": "2026-09-24",
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "Marcus, can you shortlist three options by 23 September?",
+     "update": {
+      "source": "inputs/2026-09-24-support-sync.md",
+      "quote": "Shortlist's done, three options in the shared drive."
+     }
+    },
+    {
+     "key": "D2",
+     "title": "Migration plan",
+     "owner": null,
+     "due": null,
+     "status": "planned",
+     "on": null,
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.",
+     "update": null
+    },
+    {
+     "key": "D3",
+     "title": "New helpdesk live with ticket history imported",
+     "owner": null,
+     "due": null,
+     "status": "planned",
+     "on": null,
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.",
+     "update": null
+    }
+   ],
+   "plan": {
+    "state": "agreed",
+    "version": 1,
+    "agreed_on": "2026-09-15",
+    "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+    "steps": [
+     {
+      "n": 1,
+      "title": "Shortlist three helpdesks",
+      "owner": "Marcus Webb",
+      "due": "2026-09-23",
+      "after": [],
+      "delivers": "D1",
+      "status": "done",
+      "on": "2026-09-24",
+      "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+      "quote": "1. Shortlist three helpdesks (Marcus Webb, due 2026-09-23, delivers D1)",
+      "update": {
+       "source": "inputs/2026-09-24-support-sync.md",
+       "quote": "Shortlist's done, three options in the shared drive."
+      }
+     },
+     {
+      "n": 2,
+      "title": "Check each option against the tooling inventory",
+      "owner": "Marcus Webb",
+      "due": "2026-10-02",
+      "after": [
+       1
+      ],
+      "delivers": null,
+      "status": "done",
+      "on": "2026-09-26",
+      "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+      "quote": "2. Check each option against the tooling inventory (Marcus Webb, after step 1)",
+      "update": {
+       "source": "inputs/2026-09-26-ops-sync.md",
+       "quote": "Integration check is done."
+      }
+     },
+     {
+      "n": 3,
+      "title": "Founder signs the contract",
+      "owner": "Alex Doyle",
+      "due": null,
+      "after": [
+       2
+      ],
+      "delivers": null,
+      "status": "done",
+      "on": "2026-09-27",
+      "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+      "quote": "3. Founder signs the contract (Alex Doyle, after step 2)",
+      "update": {
+       "source": "inputs/2026-09-27-ops-catch-up.md",
+       "quote": "I signed the helpdesk contract from the road last night."
+      }
+     },
+     {
+      "n": 4,
+      "title": "Write the migration plan",
+      "owner": "Priya Patel",
+      "due": null,
+      "after": [
+       3
+      ],
+      "delivers": "D2",
+      "status": "doing",
+      "on": "2026-09-27",
+      "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+      "quote": "4. Write the migration plan (Priya Patel, after step 3, delivers D2)",
+      "update": {
+       "source": "inputs/2026-09-27-ops-catch-up.md",
+       "quote": "I'll start on the migration plan this week."
+      }
+     },
+     {
+      "n": 5,
+      "title": "Import ticket history and go live",
+      "owner": "Priya Patel",
+      "due": "2027-01-04",
+      "after": [
+       4
+      ],
+      "delivers": "D3",
+      "status": "todo",
+      "on": null,
+      "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+      "quote": "5. Import ticket history and go live (Priya Patel, due 2027-01-04, after step 4, delivers D3)",
+      "update": null
+     }
+    ]
+   },
+   "questions": [
+    {
+     "key": "Q1",
+     "text": "Does the old helpdesk stay read-only after the move?",
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "We haven't decided whether to keep the old system read-only afterwards.",
+     "answered": {
+      "on": "2026-09-26",
+      "source": "inputs/2026-09-26-ops-sync.md",
+      "quote": "On the old helpdesk: keep it read-only for 90 days after go-live, then close it."
+     }
+    },
+    {
+     "key": "Q2",
+     "text": "What date does the January peak start?",
+     "source": "inputs/2026-09-14-support-tooling-review.md",
+     "quote": "before the January peak",
+     "answered": {
+      "on": "2026-09-15",
+      "source": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+      "quote": "The peak starts on 4 January."
+     }
+    }
+   ],
+   "decisions": [
+    {
+     "text": "Keep the old helpdesk read-only for 90 days after go-live, then close it",
+     "on": "2026-09-26",
+     "source": "inputs/2026-09-26-ops-sync.md",
+     "quote": "On the old helpdesk: keep it read-only for 90 days after go-live, then close it."
+    }
+   ],
+   "sources": [
+    {
+     "doc": "inputs/2026-09-14-support-tooling-review.md",
+     "kind": "transcript",
+     "read_on": "2026-09-14",
+     "sha256": "0357f4cb29c7205dd80b493bbf09111581ff2d654fd34e2e0c4dd7663111ef02",
+     "used_for": [
+      "created",
+      "status planning",
+      "requested_by",
+      "due",
+      "dependencies",
+      "deliverables",
+      "questions"
+     ]
+    },
+    {
+     "doc": "inputs/discussions/2026-09-15-helpdesk-migration.md",
+     "kind": "discussion",
+     "read_on": "2026-09-15",
+     "sha256": "70660980c15eff7c3904a0b776af3e68858ebef863b790a4de5464339b79bb55",
+     "used_for": [
+      "plan v1",
+      "owner",
+      "due",
+      "Q2 answered",
+      "status active"
+     ]
+    },
+    {
+     "doc": "inputs/2026-09-24-support-sync.md",
+     "kind": "transcript",
+     "read_on": "2026-09-24",
+     "sha256": "e0269a135891fe5aca5733a4c1096e2da60a21c2e21d4991d238db9aa205f0a7",
+     "used_for": [
+      "step 1 done",
+      "D1 delivered",
+      "step 2 doing"
+     ]
+    },
+    {
+     "doc": "inputs/2026-09-26-ops-sync.md",
+     "kind": "transcript",
+     "read_on": "2026-09-26",
+     "sha256": "d0b7a0e5e01e2c312faf7311e943c6d91b38a31b3f95f5a5ae47bbe0ab33b83b",
+     "used_for": [
+      "step 2 done",
+      "step 3 blocked",
+      "status blocked",
+      "Q1 answered",
+      "decisions"
+     ]
+    },
+    {
+     "doc": "inputs/2026-09-27-ops-catch-up.md",
+     "kind": "transcript",
+     "read_on": "2026-09-27",
+     "sha256": "257a97d5ca866ad26cd661a4e65f3f246cefe7acd574482cc2f5cce9fe7da4cb",
+     "used_for": [
+      "step 3 done",
+      "status active",
+      "step 4 doing"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "refunds-dashboard",
+   "title": "Refunds dashboard",
+   "aliases": [],
+   "description": {
+    "text": "A dashboard of weekly refund totals and how many needed approval, for the monthly ops review",
+    "source": "inputs/requests/2026-09-25-refunds-dashboard.md",
+    "quote": "Can we get a refunds dashboard for the monthly ops review?"
+   },
+   "requested_by": {
+    "entity": "Sarah Chen",
+    "source": "inputs/requests/2026-09-25-refunds-dashboard.md",
+    "quote": "Request from Sarah Chen, 25 September 2026"
+   },
+   "owner": {
+    "entity": "Marcus Webb",
+    "source": "inputs/2026-09-27-ops-catch-up.md",
+    "quote": "Marcus will own it"
+   },
+   "status": [
+    {
+     "value": "proposed",
+     "from": "2026-09-25",
+     "source": "inputs/requests/2026-09-25-refunds-dashboard.md",
+     "quote": "Can we get a refunds dashboard for the monthly ops review?"
+    },
+    {
+     "value": "planning",
+     "from": "2026-09-27",
+     "source": "inputs/2026-09-27-ops-catch-up.md",
+     "quote": "we'll build it once the new helpdesk is live."
+    }
+   ],
+   "due": null,
+   "dependencies": [
+    {
+     "on": "project:helpdesk-migration",
+     "kind": "needs",
+     "source": "inputs/requests/2026-09-25-refunds-dashboard.md",
+     "quote": "it can wait until the new helpdesk is live, since the ticket data moves then."
+    }
+   ],
+   "deliverables": [
+    {
+     "key": "D1",
+     "title": "Dashboard of weekly refund totals and approvals",
+     "owner": null,
+     "due": null,
+     "status": "planned",
+     "on": null,
+     "source": "inputs/requests/2026-09-25-refunds-dashboard.md",
+     "quote": "Weekly refund totals, and how many needed approval.",
+     "update": null
+    }
+   ],
+   "plan": {
+    "state": "none",
+    "version": 0,
+    "steps": []
+   },
+   "questions": [],
+   "decisions": [],
+   "sources": [
+    {
+     "doc": "inputs/requests/2026-09-25-refunds-dashboard.md",
+     "kind": "request",
+     "read_on": "2026-09-25",
+     "sha256": "20b6f7c003c373992a0b0e0b66df3bb464fd382d077a7d2de8fa33c7c4c0c146",
+     "used_for": [
+      "created",
+      "status proposed",
+      "requested_by",
+      "dependencies",
+      "deliverables"
+     ]
+    },
+    {
+     "doc": "inputs/2026-09-27-ops-catch-up.md",
+     "kind": "transcript",
+     "read_on": "2026-09-27",
+     "sha256": "257a97d5ca866ad26cd661a4e65f3f246cefe7acd574482cc2f5cce9fe7da4cb",
+     "used_for": [
+      "owner",
+      "status planning"
+     ]
+    }
+   ]
+  }
+ ],
+ "events": [
+  {
+   "on": "2026-09-27",
+   "project": "helpdesk-migration",
+   "op": "set_step",
+   "step": 3,
+   "old": "blocked",
+   "new": "done",
+   "by": "ingest",
+   "source": "inputs/2026-09-27-ops-catch-up.md",
+   "quote": "I signed the helpdesk contract from the road last night."
+  },
+  {
+   "on": "2026-09-27",
+   "project": "helpdesk-migration",
+   "op": "set_status",
+   "old": "blocked",
+   "new": "active",
+   "by": "ingest",
+   "source": "inputs/2026-09-27-ops-catch-up.md",
+   "quote": "Then we're unblocked."
+  },
+  {
+   "on": "2026-09-27",
+   "project": "helpdesk-migration",
+   "op": "set_step",
+   "step": 4,
+   "old": "todo",
+   "new": "doing",
+   "by": "ingest",
+   "source": "inputs/2026-09-27-ops-catch-up.md",
+   "quote": "I'll start on the migration plan this week."
+  },
+  {
+   "on": "2026-09-27",
+   "project": "refunds-dashboard",
+   "op": "set_field",
+   "field": "owner",
+   "old": null,
+   "new": "Marcus Webb",
+   "by": "ingest",
+   "source": "inputs/2026-09-27-ops-catch-up.md",
+   "quote": "Marcus will own it"
+  },
+  {
+   "on": "2026-09-27",
+   "project": "refunds-dashboard",
+   "op": "set_status",
+   "old": "proposed",
+   "new": "planning",
+   "by": "ingest",
+   "source": "inputs/2026-09-27-ops-catch-up.md",
+   "quote": "we'll build it once the new helpdesk is live."
+  }
+ ]
+}
