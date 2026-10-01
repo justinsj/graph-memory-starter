@@ -1,0 +1,17 @@
+{
+  "source_doc": "software-licences.md",
+  "nodes": [
+    {"name": "Software licences", "type": "DOCUMENT", "claims": [
+      {"kind": "note", "text": "We pay for 140 seats of the design tool",
+       "quote": "We pay for 140 seats of the design tool.", "amount": 140, "unit": "seats"},
+      {"kind": "note", "text": "Each design tool seat costs £38 a month",
+       "quote": "Each design tool seat costs £38 a month.", "amount": 38, "unit": "£ per seat a month"},
+      {"kind": "note", "text": "85 people signed in to the design tool over the last quarter",
+       "quote": "85 people signed in to the design tool over the last quarter.", "amount": 85, "unit": "people"},
+      {"kind": "note", "text": "The accounting package has 12 seats, all in use",
+       "quote": "The accounting package has 12 seats, all in use.", "amount": 12, "unit": "seats"}
+    ]}
+  ],
+  "edges": [],
+  "aliases": []
+}

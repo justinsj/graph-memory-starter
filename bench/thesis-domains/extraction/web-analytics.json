@@ -1,0 +1,19 @@
+{
+  "source_doc": "web-analytics.md",
+  "nodes": [
+    {"name": "Web analytics", "type": "DOCUMENT", "claims": [
+      {"kind": "note", "text": "The shop had 180,000 sessions in August",
+       "quote": "The shop had 180,000 sessions in August.", "amount": 180000, "unit": "sessions a month"},
+      {"kind": "note", "text": "2.1% of sessions ended in an order",
+       "quote": "2.1% of sessions ended in an order.", "amount": 2.1, "unit": "%"},
+      {"kind": "note", "text": "The average order is worth £46",
+       "quote": "The average order is worth £46.", "amount": 46, "unit": "£ per order"},
+      {"kind": "note", "text": "Product pages take 4.2 seconds to load on mobile",
+       "quote": "Product pages take 4.2 seconds to load on mobile.", "amount": 4.2, "unit": "seconds"},
+      {"kind": "note", "text": "68% of sessions are on mobile",
+       "quote": "68% of sessions are on mobile.", "amount": 68, "unit": "%"}
+    ]}
+  ],
+  "edges": [],
+  "aliases": []
+}
