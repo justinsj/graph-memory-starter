@@ -1,0 +1,40 @@
+{
+ "helpdesk-migration": {
+  "change": "support moves to a new helpdesk",
+  "outcome": "the support hours lost to broken tagging reports",
+  "direction": "reduce",
+  "unit": "hours a year",
+  "formula": [
+   "failures_a_year",
+   "support_agents",
+   "hours_per_failure"
+  ],
+  "reach": "active_clients",
+  "because": {
+   "quote": "Tagging reports broke again this week."
+  },
+  "numbers": [
+   {
+    "key": "failures_a_year",
+    "label": "tagging report failures",
+    "unit": "failures a year"
+   },
+   {
+    "key": "support_agents",
+    "label": "support agents",
+    "unit": "agents"
+   },
+   {
+    "key": "hours_per_failure",
+    "label": "hours each agent loses per failure",
+    "unit": "hours per agent",
+    "question": "When the tagging reports fail, about how many hours does each agent lose?"
+   },
+   {
+    "key": "active_clients",
+    "label": "active clients",
+    "unit": "active clients"
+   }
+  ]
+ }
+}

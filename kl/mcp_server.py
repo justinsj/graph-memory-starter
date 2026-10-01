@@ -114,6 +114,16 @@ def build(svc) -> FastMCP:
     async def list_projects(ctx: Context, status: Optional[str] = None, q: Optional[str] = None) -> str:
         return await call(ctx, lambda p: svc.list_projects(p, status=status, q=q))
 
+    @mcp.tool(description="A project's thesis (if X, Y will change by potentially Z), projected impact with its "
+                          "working, each number and where it came from, estimated effort, and its priority.")
+    async def project_impact(ctx: Context, project_id: str) -> str:
+        return await call(ctx, svc.project_impact, project_id)
+
+    @mcp.tool(description="Open projects ranked by projected impact per person-day of estimated effort; those still "
+                          "missing numbers are listed apart with what they lack.")
+    async def priorities(ctx: Context) -> str:
+        return await call(ctx, svc.priorities)
+
     @mcp.tool(description="One project's record, with pending change requests.")
     async def get_project(ctx: Context, project_id: str) -> str:
         return await call(ctx, lambda p: svc.get_project(p, project_id, {"pending"}, True))

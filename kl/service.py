@@ -10,6 +10,7 @@ from .core import AdminMixin, AuthMixin, CoreMixin, Principal
 from .db import Database
 from .events import EventsMixin
 from .ids import Clock
+from .impact import ImpactMixin
 from .plans import PlansMixin
 from .projection import Projector
 from .projects import ProjectsMixin
@@ -19,7 +20,7 @@ from .sources import SourcesMixin
 
 
 class Service(CoreMixin, AdminMixin, AuthMixin, SourcesMixin, ReviewMixin, ProjectsMixin, PlansMixin, RunsMixin,
-              ContextMixin, EventsMixin):
+              ContextMixin, EventsMixin, ImpactMixin):
 
     def __init__(self, settings: Settings = None, extractor=None, create: bool = True, app_role: str = None):
         self.settings = settings or from_env()

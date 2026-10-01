@@ -34,6 +34,7 @@ from .core import jsonable
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "projects"))
 import model  # noqa: E402  projects/model.py: the change-set engine
+import impact  # noqa: E402  projects/impact.py
 
 RECORD_OPS = set(model.OPS)
 SOURCE_OPS = {"activate_version", "retract_source"}
@@ -77,7 +78,34 @@ def op_line(op: dict) -> str:
         return f"Delete project {pid}."
     if k == "restore_project":
         return f"Restore project {pid}."
+    if k == "set_thesis":
+        verb = impact.DIRECTIONS.get(op.get("direction"), op.get("direction"))
+        return f"Thesis for {pid}: if {op['change']}, {op['outcome']} will {verb}, counted in {op['unit']}."
+    if k == "set_number":
+        return number_line(op)
+    if k == "set_effort":
+        basis = f" Basis: {' '.join(str(op['basis']).split())}" if op.get("basis") else ""
+        return f"Estimated effort for {pid}: {impact.fmt(op['days'])} person-days, by {op.get('by')}.{basis}"
     return f"{k} {pid}"
+
+
+def number_line(op: dict) -> str:
+    """A number's line in its request: the figure first, so the quote always holds it."""
+    head, st = f"Number {op['key']} of {op['project']}", op.get("status")
+    what = f"{impact.fmt(op['value'])} {op.get('unit') or ''}".rstrip() if op.get("value") is not None else ""
+    if st == "found":
+        f = op.get("found_in") or {}
+        return f"{head}: {what}, found in {f.get('source')}: {f.get('quote')}"
+    if st == "answered":
+        said = f": {' '.join(str(op['answer']).split())}" if op.get("answer") else "."
+        return f"{head}: {what}, answered by {op.get('by')}{said}"
+    if st == "estimated":
+        basis = f": {' '.join(str(op['basis']).split())}" if op.get("basis") else "."
+        return f"{head}: {what}, estimated by {op.get('by')}{basis}"
+    label = f"{op.get('label')} ({op.get('unit')})" if op.get("label") else "still to find"
+    if st == "asked":
+        return f"{head}: {label}, not in the graph; asked {op.get('ask')}: {op.get('question')}"
+    return f"{head}: {label}, needed."
 
 
 def describe(op: dict) -> str:
@@ -112,6 +140,12 @@ def render(title: str, ops: list, reason: str, proposer: str, on: str, approver:
         lines.append(f"{i}. {line}")
         if op["op"] == "create_project" and op.get("description"):
             lines.append(f"   Description: {' '.join(op['description'].split())}")
+        if op["op"] == "set_thesis":
+            lines.append("   Formula: " + " × ".join(str(i) if not isinstance(i, dict) else
+                                                   f"{impact.fmt(i['value'])} {i.get('label', '')}".strip()
+                                                   for i in op.get("formula") or []))
+            if op.get("because"):
+                lines.append(f"   Because: {op['because']['quote']} ({op['because']['source']})")
         out.append({**op, "quote": _clip(line)})
     for n in notes:
         lines += ["", n]
@@ -138,8 +172,14 @@ class ReviewMixin:
             sa.select(t.project_records.c.project_id, t.project_records.c.version).where(
                 t.project_records.c.workspace_id == ws, t.project_records.c.project_id.in_(list(pids)))).mappings()}
 
+    def _graph_now(self, ws) -> tuple:
+        """The graph as the project process reads it: as last built when updates are deferred, else current."""
+        if self.settings.graph_updates == "deferred":
+            return self.projector.current(ws)
+        return self.projector.ensure(ws)
+
     def _entities(self, ws) -> list:
-        graph, _, _ = self.projector.ensure(ws)
+        graph, _, _ = self._graph_now(ws)
         return model.entities_from_db(graph, today=self.clock.today())
 
     def _names(self, ws) -> dict:
@@ -160,14 +200,15 @@ class ReviewMixin:
         return problems
 
     def _dry_run(self, ws, ops, reason, proposer_label, input_text=None, input_path=None, kind="request",
-                 on=None) -> dict:
+                 on=None, records=None) -> dict:
         """Check a list of operations against the records as they stand: diff, problems, notes.
-        on: the input's own date (a transcript's); today for an API edit."""
+        on: the input's own date (a transcript's); today for an API edit. records: the records to check
+        against instead, e.g. as a change request still open would leave them."""
         on = on or self.clock.today().isoformat()
         rec_ops = [o for o in ops if o["op"] in RECORD_OPS]
         problems, notes = [], []
         if rec_ops:
-            records = self._records(ws)
+            records = records if records is not None else self._records(ws)
             names = self._names(ws)
             if input_text is None:
                 text, quoted = render("Change request", rec_ops, reason, proposer_label, on)
@@ -176,7 +217,7 @@ class ReviewMixin:
             else:
                 text = input_text
                 diff = {"input": input_path, "kind": kind, "on": on, "by": proposer_label, "changes": rec_ops}
-            found, confirm = model.validate(records, diff, text, names)
+            found, confirm = model.validate(records, diff, text, names, docs=self._doc_reader(ws))
             index = [i for i, o in enumerate(ops, 1) if o["op"] in RECORD_OPS]
             for f in found:  # "change 2 (set_status): ..." counted within the record operations
                 head, _, rest = f.partition(" (")
@@ -438,6 +479,12 @@ class ReviewMixin:
         # stale? another approved request changed a project this one touches
         with self.db.tx(ws) as c:
             now_versions = self._record_versions(c, ws, cr["targets"].get("projects", []))
+        created = {op.get("project") for _, op, _ in final if op["op"] == "create_project"}
+        waiting = sorted({op["project"] for _, op, _ in final if op["op"] in RECORD_OPS and op.get("project")}
+                         - created - set(now_versions))
+        if waiting:  # research opened before review, approved before the project it is about
+            raise errors.Conflict(f"{', '.join(waiting)} does not exist yet: approve the change request that "
+                                  "creates it first")
         moved = {k for k, v in (cr["base"].get("projects") or {}).items() if now_versions.get(k) != v}
         moved |= {k for k in now_versions if k not in (cr["base"].get("projects") or {})}
         if moved or edits:
@@ -462,6 +509,7 @@ class ReviewMixin:
                 raise errors.Invalid("the graph would not build with these sources together; approve the "
                                      "retraction too, or reject", problems=problems)
         self._apply(p, ws, cr, final, edit_notes, note)
+        self._after_applied(ws, [op for _, op, _ in final])
         return self.get_change_request_internal(ws, cid)
 
     def _recheck(self, ws, cr, final) -> list:
@@ -512,7 +560,8 @@ class ReviewMixin:
         if names is None:
             names = self._names(ws)
         diff = {"input": input_path, "kind": kind, "on": on or self.clock.today().isoformat(), "by": by, "changes": ops}
-        problems, _ = model.validate(records, diff, text, names)
+        docs = getattr(self._tls, "docs", None)
+        problems, _ = model.validate(records, diff, text, names, docs=docs)
         if problems:
             raise errors.Invalid("the change no longer passes the project checks", problems=problems)
         after, events = model.apply(records, diff, text)
@@ -534,16 +583,26 @@ class ReviewMixin:
         for pid in sorted({ev["project"] for ev in events}):
             self.emit(c, ws, "project.updated", {"project": pid, "change_request": cr_id,
                                                  "ops": [e["op"] for e in events if e["project"] == pid]})
+        for op in ops:  # a question for a person: whoever routes questions sends it now it is approved
+            if op["op"] == "set_number" and op["status"] == "asked":
+                n = impact.numbers_of(after[op["project"]])[op["key"]]
+                self.emit(c, ws, "number.asked", {"project": op["project"], "key": op["key"], "label": n["label"],
+                                                  "unit": n["unit"], "ask": n["ask"], "question": n.get("question"),
+                                                  "change_request": cr_id})
         return events
 
     def _apply(self, p, ws, cr, final, edit_notes, note):
         rec_final = [(i, op, e) for i, op, e in final if op["op"] in RECORD_OPS]
         needs_names = rec_final or any(op["op"] == "approve_plan" for _, op, _ in final)
         self._tls.names = self._names(ws) if needs_names else None
+        self._tls.docs = self._doc_reader(ws) if rec_final else None
         try:
             self._apply_now(p, ws, cr, final, edit_notes, note, rec_final)
         finally:
-            self._tls.names = None
+            self._tls.names = self._tls.docs = None
+        if rec_final and self.settings.graph_updates == "deferred":  # the graph learns of it later
+            self.projector.defer(ws, {"change": "records", "change_request": cr["number"],
+                                      "projects": cr["targets"].get("projects", [])})
 
     def _apply_now(self, p, ws, cr, final, edit_notes, note, rec_final):
         by = f"{cr['proposer']['name']}, approved by {p.name}"

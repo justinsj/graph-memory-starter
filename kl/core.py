@@ -117,6 +117,11 @@ class AdminMixin:
         bad = sorted(set(changes) - allowed)
         if bad:
             raise errors.Invalid(f"unknown settings: {', '.join(bad)}", problems=[f"known: {sorted(allowed)}"])
+        values = changes.get("unit_values", {})
+        if not isinstance(values, dict) or any(not isinstance(v, (int, float)) or isinstance(v, bool)
+                                               for v in values.values()):
+            raise errors.Invalid("unit_values maps a unit of impact to what one of it is worth: "
+                                 '{"hours a year": 45}')
         with self.db.tx(p.workspace_id) as c:
             row = self.workspace_row(c, p.workspace_id)
             c.execute(t.workspaces.update().where(t.workspaces.c.id == p.workspace_id)

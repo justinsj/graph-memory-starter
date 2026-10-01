@@ -117,6 +117,26 @@ class Client:
         return self._req("POST", f"/v1/projects/{pid}/deliverables", {"key": key, "title": title, **extra},
                          params={"approve": str(approve).lower()})
 
+    def propose_thesis(self, pid, approve=False, **thesis):
+        return self._req("POST", f"/v1/projects/{pid}/thesis", thesis, params={"approve": str(approve).lower()})
+
+    def research(self, pid):
+        return self._req("POST", f"/v1/projects/{pid}:research")
+
+    def answer_number(self, pid, key, value, approve=False, **extra):
+        return self._req("POST", f"/v1/projects/{pid}/numbers/{key}", {"value": value, **extra},
+                         params={"approve": str(approve).lower()})
+
+    def estimate_effort(self, pid, days, approve=False, **extra):
+        return self._req("POST", f"/v1/projects/{pid}/effort", {"days": days, **extra},
+                         params={"approve": str(approve).lower()})
+
+    def impact(self, pid):
+        return self._req("GET", f"/v1/projects/{pid}/impact")
+
+    def priorities(self):
+        return self._req("GET", "/v1/priorities")
+
     def changes(self, ops, reason="", dry_run=False, approve=False, title=None):
         return self._req("POST", "/v1/changes", {"ops": ops, "reason": reason, "title": title},
                          params={"dry_run": str(dry_run).lower(), "approve": str(approve).lower()})

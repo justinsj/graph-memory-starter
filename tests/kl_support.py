@@ -133,9 +133,10 @@ def zip_dir(folder: Path) -> bytes:
 
 
 def without_extracted(text: str) -> str:
-    """Context text less the extraction date, which is the day the service extracted, not the files' mtime."""
+    """Context text less the extraction and code-index dates: the service's are the day it extracted or unzipped,
+    a reference graph's are its files' mtimes."""
     import re
-    return re.sub(r"extracted \d{4}-\d{2}-\d{2}", "extracted <date>", text)
+    return re.sub(r"(extracted|indexed) \d{4}-\d{2}-\d{2}", r"\1 <date>", text)
 
 
 def serve(app, port: int = None):

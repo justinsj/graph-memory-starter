@@ -27,7 +27,7 @@ TYPES = ("source.ingested", "source.retracted", "source.restored", "job.done", "
          "execution.started", "execution.migrated", "execution.resumed", "execution.done", "execution.failed",
          "execution.cancelled", "task.ready", "task.done", "task.failed", "run.leased", "run.provisioning",
          "run.running", "run.progress", "run.artifact", "run.succeeded", "run.failed", "run.lost", "run.cancelled",
-         "question.asked", "question.answered", "deliverable.accepted")
+         "question.asked", "question.answered", "deliverable.accepted", "number.asked")
 
 
 def sign(secret: str, body: bytes, when: int = None) -> str:

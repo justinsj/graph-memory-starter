@@ -22,6 +22,7 @@ import sys
 import tempfile
 import threading
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import sqlalchemy as sa
@@ -228,14 +229,23 @@ class SourcesMixin:
             self._commit_extraction(p, ws, job_id, doc, vid, text, extraction)
         elif kind in INPUTS:
             self._activate(ws, doc, vid, job_id, actor=p.label)
+            on = on or self.clock.today().isoformat()
+            draft = None
             if changes is None:
-                changes = self.extractor.propose_changes(text, doc["path"], kind, on or self.clock.today().isoformat(),
-                                                         self._records(ws), self._entities(ws))
+                changes, draft = self._propose(ws, doc, text, kind, on)
             result = {}
             if changes:
-                cr = self.open_input_change_request(p, ws, doc, vid, text, kind, changes,
-                                                    on or self.clock.today().isoformat(), job_id)
+                cr = self.open_input_change_request(p, ws, doc, vid, text, kind, changes, on, job_id)
                 result = {"change_request": cr["id"], "problems": cr["problems"]}
+                if not cr["problems"] and self.settings.research_before_review:
+                    try:  # the thesis and its numbers, for the reviewer to weigh with the changes
+                        research = self.research_input(ws, f"inputs/{doc['path']}", text, kind, on, changes, draft)
+                        if research.get("change_request"):
+                            result["research"] = research["change_request"]["id"]
+                    except Exception as e:  # noqa: BLE001  research is a help, never a reason the input fails
+                        with self.db.tx(ws) as c:
+                            self.log(c, ws, "impact_research.failed", {"input": doc["path"], "error": str(e)[:300]},
+                                     "impact research")
             with self.db.tx(ws) as c:
                 self._job(c, ws, job_id, "done", "done", result)
         else:
@@ -330,6 +340,33 @@ class SourcesMixin:
             self.log(c, ws, "source.version", {"document": doc["id"], "version": vid, "path": doc["path"]}, actor)
             self.emit(c, ws, "source.ingested", {"document_id": doc["id"], "version_id": vid, "path": doc["path"],
                                                  "kind": doc["kind"], "superseded": cur if cur != vid else None})
+        if self.settings.graph_updates == "deferred":  # noted for the graph; a document is taken in at the next read
+            self.projector.defer(ws, {"change": "source", "kind": doc["kind"], "path": doc["path"],
+                                      "source_version": vid})
+
+    def _propose(self, ws, doc, text, kind, on) -> tuple:
+        """(changes, thesis draft or None) for an input, from the extractor. With research before review, the
+        thesis comes with the change set: in the same model call (thesis_call merged) or in a second call at the
+        same time (parallel), when the extractor can; else it is drafted afterwards from the proposed project.
+        preloaded (preload_note): the call is told that what it is given is all there is, when none of the graph's
+        figures was left out; the change set's call also needs every project to fit (projects/ingest.py)."""
+        ex = self.extractor
+        records, entities = self._records(ws), self._entities(ws)
+        args = (text, doc["path"], kind, on, records, entities)
+        with self.db.tx(ws) as c:
+            research = self.settings.research_before_review and self.ws_settings(c, ws).get("impact_research")
+        mode, preload = self.settings.thesis_call, self.settings.preload_note
+        if research and mode == "merged" and hasattr(ex, "propose_with_thesis"):
+            figures, every = self._figures_all(ws)
+            return ex.propose_with_thesis(*args, figures, preloaded=preload and every)
+        if research and mode == "parallel" and hasattr(ex, "draft_thesis_from_input"):
+            figures, every = self._figures_all(ws)
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                changes = pool.submit(ex.propose_changes, *args, preloaded=preload)
+                draft = pool.submit(ex.draft_thesis_from_input, text, f"inputs/{doc['path']}", figures,
+                                    preloaded=preload and every)
+                return changes.result(), draft.result()
+        return ex.propose_changes(*args, preloaded=preload), None
 
     def submit_extraction(self, p, doc_id: str, extraction: dict, version_id: str = None) -> dict:
         p.need("sources:write")
