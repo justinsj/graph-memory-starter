@@ -1,0 +1,9 @@
+# An OpenSpec root for evidence changes about Kettle & Kiln's sales ledger (evidence/cases/sales).
+# Each change gathers numbers for a thesis and is archived when they are in; the knowledge layer then
+# indexes the archived evidence.md (evidence/evidence_index.py).
+schema: evidence
+context: |
+  The data is evidence/cases/sales/sales.db: SQLite, read-only, timestamps UTC, money in pence.
+rules:
+  - Every number in evidence.md comes from a query in the same set.
+  - A later change repeats a set's id to supersede it.

@@ -1,0 +1,70 @@
+name: evidence
+version: 1
+description: Evidence from data for a thesis - proposal (what to establish) → evidence (numbers, queries, notes) → tasks
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: What the evidence is for, the period, and the definitions it uses
+    template: proposal.md
+    instruction: |
+      Say what the evidence is for, in a page at most.
+
+      - **Why**: the thesis or decision the numbers feed, in one or two sentences.
+      - **What to establish**: one bullet per evidence set, `<set-id>: <what it answers>`. A set id is
+        kebab-case and stays the same when the evidence is gathered again for a later period, so the
+        later change supersedes this one set by set.
+      - **Period and definitions**: the dates covered, how a day is counted, what is counted and what is
+        left out. Copy the definitions you were given word for word; add any you had to choose.
+      - **Data**: the database, the date of the extract, and any earlier evidence change this one updates.
+    requires: []
+
+  - id: evidence
+    generates: evidence.md
+    description: The evidence itself - each set's claim, verdict, numbers, query and notes
+    template: evidence.md
+    instruction: |
+      Write down what the data showed, so that someone without the database can use it later: a person
+      planning, or the knowledge layer looking up a number for a thesis. The knowledge layer indexes this
+      file when the change is archived: each set by its id, title and keywords, each number by its label,
+      value and unit, and each note as it is written.
+
+      One `## <set-id>: <title>` section per set in the proposal, in this order:
+      - `Claim:` the claim tested, or what is measured, in one sentence.
+      - `Verdict:` holds, holds with exceptions, does not hold, or measured (for a set of numbers with no
+        claim to test).
+      - `Keywords:` the words people will ask with, comma-separated: synonyms, column names, the
+        everyday name for each number.
+      - `Tables:` the tables and columns the numbers read.
+      - A table with the columns `Key | Number | Value | Unit`. Key is snake_case and stable across
+        periods. Number is a label in the words a document stating it would use ("Counted orders a
+        day"), and states the period when it is not the change's own. Value is the figure alone: digits,
+        a date (YYYY-MM-DD), or a word. Unit is GBP, %, orders, days, and so on.
+      - The SQL that gives the numbers, in one ```sql block.
+      - `Notes:` and a list. What goes here is your judgement: whatever a later reader needs to use
+        these numbers right and would not see in the table. For example, the definition a number
+        depends on, an exception and its cause, what drives an extreme value, a column not to trust and
+        what to use instead, what was not checked. Put the figure in the note when there is one. Keep
+        each note to one or two sentences, under 300 characters, so it can be quoted whole.
+
+      Do not round a number you were asked to give exactly. A number you did not establish is left out,
+      not guessed.
+    requires:
+      - proposal
+
+  - id: tasks
+    generates: tasks.md
+    description: The checks run, ticked when done
+    template: tasks.md
+    instruction: |
+      One `- [ ] <n>.<m> <check>` line per query or check, grouped under `## <n>. <set-id>`. Tick each
+      one (`- [x]`) when its numbers are in evidence.md.
+    requires:
+      - proposal
+
+apply:
+  requires:
+    - tasks
+  tracks: tasks.md
+  instruction: |
+    Run each check against the database, read-only, and write its numbers and notes into evidence.md as
+    you go. Tick the task when its numbers are written.
