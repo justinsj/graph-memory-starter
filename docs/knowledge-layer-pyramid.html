@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Knowledge Layer Pyramid</title>
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --nuc: #2a78d6; --nuc-ink: #ffffff;
+  --l1: #c9dcf5; --l2: #e0ebfa; --l3: #eff4fc; --l-line: #9fb8d8; --flow: #1d5fae;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+    --nuc: #6aa7ee; --nuc-ink: #0f1115;
+    --l1: #1f3353; --l2: #182840; --l3: #121c2b; --l-line: #34507a; --flow: #8fbdf3;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  --nuc: #6aa7ee; --nuc-ink: #0f1115;
+  --l1: #1f3353; --l2: #182840; --l3: #121c2b; --l-line: #34507a; --flow: #8fbdf3;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td.nw { white-space: nowrap; }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+.acc { color: var(--accent); font-weight: 600; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .lane { fill: var(--ink-2); font-weight: 600; font-size: 13px; }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+
+/* the onion */
+.wide { margin-inline: calc((100% - min(1070px, 100vw - 32px)) / 2); }
+#onion-svg { min-width: 740px; max-width: 1010px; margin: 0 auto; }
+.onion-scroll { overflow-x: auto; }
+.band { stroke: var(--l-line); stroke-width: 1; transition: stroke-width .12s; }
+.ring-1 .band { fill: var(--l1); }
+.ring-1 .nucleus { fill: var(--nuc); }
+.ring-2 .band { fill: var(--l2); }
+.ring-3 .band { fill: var(--l3); stroke-dasharray: 6 5; }
+.ring { cursor: pointer; }
+.ring:hover > .band, .ring:focus-visible > .band { stroke: var(--accent); stroke-width: 2.5; }
+.ring:focus { outline: none; }
+svg .ring-name { font: 600 13px var(--mono); letter-spacing: .08em; fill: var(--ink-2); }
+svg .ring-q { font: italic 12.5px var(--sans); fill: var(--muted); }
+svg .loop-over { font: 600 12.5px var(--sans); fill: var(--flow); }
+svg .core-eyebrow { font: 600 11px var(--mono); letter-spacing: .1em; fill: var(--nuc-ink); opacity: .8; }
+svg .core-title { font: 700 18px var(--sans); fill: var(--nuc-ink); }
+svg .core-q { font: italic 12.5px var(--sans); fill: var(--nuc-ink); opacity: .92; }
+svg .core-p { font: 10.5px var(--mono); fill: var(--nuc-ink); opacity: .9; }
+svg .chip-box { fill: var(--surface); stroke: var(--base); stroke-width: 1; }
+svg .st-d .chip-box { stroke-dasharray: 4 3; stroke: var(--warn); stroke-opacity: .75; }
+svg .st-c .chip-box { stroke: var(--accent); stroke-width: 1.4; }
+svg .loop .chip-box { stroke: var(--flow); stroke-width: 1.8; }
+svg .chip-t { font: 500 12.5px var(--sans); fill: var(--ink); }
+svg .chip-h { font: 600 12.5px var(--sans); fill: var(--flow); }
+svg .st-d .chip-t { fill: var(--ink-2); }
+svg .chip-p { font: 10.5px var(--mono); fill: var(--ink-2); }
+svg .bdg-b { fill: var(--good); stroke: var(--surface); stroke-width: 2; }
+svg .bdg-c { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+svg .bdg-d { fill: var(--surface); stroke: var(--warn); stroke-width: 2; }
+svg .flows { pointer-events: none; }
+svg .flow { stroke: var(--flow); stroke-width: 2; fill: none; }
+svg .flow-head { fill: var(--flow); }
+svg .gate { stroke: var(--flow); stroke-width: 3; stroke-linecap: round; }
+svg .gate-t { font: italic 11.5px var(--sans); fill: var(--flow); }
+svg .side { font: 600 12px var(--mono); letter-spacing: .08em; fill: var(--ink-2); }
+svg .side-sub { font: 12px var(--sans); fill: var(--muted); }
+.v1, .v3 { display: none; }
+[data-level="1"] .v1, [data-level="3"] .v3 { display: inline; }
+[data-level="1"] .v2, [data-level="3"] .v2 { display: none; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; justify-content: space-between; margin: 0 0 10px; }
+.lvl { display: inline-flex; border: 1px solid var(--hair); border-radius: 8px; overflow: hidden; vertical-align: middle; }
+.lvl button { font: 500 13px var(--sans); color: var(--ink-2); background: var(--bg); border: 0; padding: 7px 12px; cursor: pointer; }
+.lvl button + button { border-left: 1px solid var(--hair); }
+.lvl button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+[data-theme="dark"] .lvl button[aria-pressed="true"] { color: #0f1115; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lvl button[aria-pressed="true"] { color: #0f1115; } }
+.lvl-label { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { width: 14px; height: 14px; min-width: 0; display: inline-block; }
+
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--l-line); vertical-align: -1px; margin-right: 8px; }
+.s1 { background: radial-gradient(circle, var(--nuc) 0 45%, var(--l1) 46%); } .s2 { background: var(--l2); } .s3 { background: var(--l3); border-style: dashed; }
+.state { font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; vertical-align: 3px; margin-left: 4px; white-space: nowrap; display: inline-block; line-height: 1.4; }
+.state.b { color: var(--good); background: var(--good-bg); }
+.state.c { color: var(--accent); background: var(--surface); border: 1px solid var(--hair); }
+.state.d { color: var(--warn); background: var(--warn-bg); }
+.facets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 16px; }
+.facet { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 12px 14px; }
+.facet h4 { margin: 0 0 4px; font: 600 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.facet p { margin: 0; font-size: 15px; }
+.facet.full { grid-column: 1 / -1; }
+svg .rb { stroke: var(--l-line); stroke-width: 1; }
+svg .rb-1 { fill: var(--nuc); } svg .rb-2 { fill: var(--l2); } svg .rb-3 { fill: var(--l3); stroke-dasharray: 3 2; }
+svg .rb-n { font: 600 10.5px var(--mono); fill: var(--ink); }
+svg .rb-n-1 { fill: var(--nuc-ink); }
+h2[id] { scroll-margin-top: 16px; }
+@media (max-width: 720px) {
+  .wrap { padding-block: 28px 56px; } figure { padding: 12px; }
+  .facets { grid-template-columns: 1fr; }
+}
+
+#shape-svg { min-width: 740px; max-width: 1040px; margin: 0 auto; }
+svg .axis { font: italic 12.5px var(--sans); fill: var(--muted); }
+svg .areas { font: 600 10.5px var(--mono); letter-spacing: .06em; fill: var(--muted); }
+.s1 { background: var(--l1); }
+svg .rb-1 { fill: var(--l1); } svg .rb-n-1 { fill: var(--ink); }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · map, 30 September 2026</div>
+<h1>The knowledge layer as a pyramid</h1>
+<p class="lede">The system in three layers, stacked as a pyramid. The knowledge layer is the base, project management and OpenSpec are the middle, and business decisions sit at the point. Each layer rests on the one below it. Going up, there are fewer items and bigger decisions. Going down, there are more facts, and code checks more of them.</p>
+
+<div class="answer">
+<p><strong>What the pyramid shows: what depends on what, and the order to build it.</strong> Layer 3's decisions are only as good as layer 2's record of the work, which is only as good as layer 1's checked facts. The build followed the same order: the base is built and tested, the middle is built as a model and a protocol, and the point is designed only.</p>
+<p><strong>Layer 1 is one layer.</strong> The graph memory sits beside the service that shares it. The graph memory recalls before the model, falls back to search, holds dated and quoted facts, and writes sessions up as notes. Both parts answer the same question: what's true, and who may change it?</p>
+<p><strong>Layer 3 is grouped, because the point has room for few items.</strong> Related items share a box: the sources, what the layer holds, and the two kinds of gap. The four areas (People, Strategy, Execution and Cash) sit under the layer's name, as the way it is organised.</p>
+<p><strong>What the pyramid hides: every layer uses the base directly.</strong> The point looks remote from the base, but it isn't. The OpenSpec arrows cut straight down to the graph, and so do the <a href="#walks">walks</a> further down this page. A question asked at the top is answered by recall at the bottom.</p>
+</div>
+
+<figure class="wide" id="onion" data-level="2">
+<div class="controls">
+<div><span class="lvl-label">Detail</span><div class="lvl" role="group" aria-label="Detail level">
+<button type="button" data-level="1" aria-pressed="false">Overview</button><button type="button" data-level="2" aria-pressed="true">Capabilities</button><button type="button" data-level="3" aria-pressed="false">Components</button>
+</div></div>
+<div class="legend">
+<span><svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="var(--good)"/></svg> built and tested here</span>
+<span><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7,1.5 L12.5,7 L7,12.5 L1.5,7 Z" fill="var(--accent)"/></svg> in a client that uses this</span>
+<span><svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="var(--warn)" stroke-width="2"/></svg> designed, not built</span>
+<span><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1,7 H10" stroke="var(--flow)" stroke-width="2"/><path d="M8,3.5 L13,7 L8,10.5 Z" fill="var(--flow)"/></svg> the OpenSpec loop</span>
+</div>
+</div>
+<div class="onion-scroll">
+<svg id="shape-svg" viewBox="0 0 1040 965" role="img" aria-labelledby="shape-title shape-desc">
+<title id="shape-title">The knowledge layer as a pyramid</title>
+<desc id="shape-desc">A pyramid of three layers ending in a point. The base is layer 1, the knowledge layer: the graph memory and the service that shares it, built and tested. The middle is layer 2, project management and OpenSpec, with the OpenSpec loop along its bottom: explore, propose, a person approves, apply, archive. Explore reads context from layer 1, and archive sends specs back into it. The top is layer 3, business decisions and operations, designed but not built, with the daily report for the CEO at the point. Going up, there are fewer items and bigger decisions; going down, more facts, checked by code.</desc>
+<defs><marker id="oarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker><marker id="farr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="flow-head"/></marker><marker id="darr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="warn-head"/></marker></defs>
+<text class="side" x="20" y="30">← WHAT IT ANSWERS</text>
+<text class="side-sub" x="20" y="48">and who asks, on the left of each layer</text>
+<text class="side" x="1020" y="30" text-anchor="end">WHAT FEEDS IT →</text>
+<text class="side-sub" x="1020" y="48" text-anchor="end">and what it holds, on the right</text>
+<path class="line" d="M36,678 V438" marker-end="url(#oarr)"/>
+<text class="axis" x="50" y="554.0">fewer items,</text>
+<text class="axis" x="50" y="571.0">bigger decisions</text>
+<path class="line" d="M1004,438 V678" marker-end="url(#oarr)"/>
+<text class="axis" x="990" y="554.0" text-anchor="end">more facts,</text>
+<text class="axis" x="990" y="571.0" text-anchor="end">checked by code</text>
+<a class="ring ring-3" href="#layer-3" aria-label="Layer 3: Business decisions and ops">
+<path class="band" d="M520.0,18 L774.8,498.7 L265.2,498.7 Z"/>
+<text class="ring-name" x="520.0" y="245.7" text-anchor="middle">3 · BUSINESS DECISIONS</text>
+<text class="ring-name" x="520.0" y="263.7" text-anchor="middle">AND OPS</text>
+<text class="ring-q" x="520.0" y="280.7" text-anchor="middle">What did we decide,</text>
+<text class="ring-q" x="520.0" y="297.7" text-anchor="middle">and does it still hold?</text>
+<text class="areas" x="520.0" y="314.7" text-anchor="middle">People · Strategy · Execution · Cash</text>
+<g class="v2">
+<g class="chip st-d">
+<rect class="chip-box" x="474.8" y="177.7" width="90.3" height="44.0" rx="7"/>
+<text class="chip-t" x="520.0" y="195.7" text-anchor="middle">Daily report</text>
+<text class="chip-t" x="520.0" y="211.7" text-anchor="middle">for the CEO</text>
+<circle class="bdg-d" cx="485.8" cy="177.7" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="368.2" y="334.7" width="78.6" height="44.0" rx="7"/>
+<text class="chip-t" x="407.5" y="352.7" text-anchor="middle">Decisions</text>
+<text class="chip-t" x="407.5" y="368.7" text-anchor="middle">to revisit</text>
+<circle class="bdg-d" cx="379.2" cy="334.7" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="519.0" y="334.7" width="152.9" height="44.0" rx="7"/>
+<text class="chip-t" x="595.4" y="352.7" text-anchor="middle">Bets, commitments,</text>
+<text class="chip-t" x="595.4" y="368.7" text-anchor="middle">decisions with reasons</text>
+<circle class="bdg-d" cx="530.0" cy="334.7" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="339.5" y="388.7" width="129.0" height="44.0" rx="7"/>
+<text class="chip-t" x="404.1" y="406.7" text-anchor="middle">Promises and bets</text>
+<text class="chip-t" x="404.1" y="422.7" text-anchor="middle">with no work</text>
+<circle class="bdg-d" cx="350.5" cy="388.7" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="541.3" y="388.7" width="159.1" height="44.0" rx="7"/>
+<text class="chip-t" x="620.9" y="406.7" text-anchor="middle">Calls, emails, contracts,</text>
+<text class="chip-t" x="620.9" y="422.7" text-anchor="middle">CRM, billing, support</text>
+<circle class="bdg-d" cx="552.3" cy="388.7" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="411.9" y="442.7" width="216.2" height="44.0" rx="7"/>
+<text class="chip-t" x="520.0" y="460.7" text-anchor="middle">Facts kept apart from judgments;</text>
+<text class="chip-t" x="520.0" y="476.7" text-anchor="middle">a review date on every decision</text>
+<circle class="bdg-d" cx="422.9" cy="442.7" r="4.2"/>
+</g>
+</g>
+<g class="v3">
+<g class="chip st-d">
+<rect class="chip-box" x="474.4" y="178.2" width="91.3" height="43.0" rx="7"/>
+<text class="chip-p" x="520.0" y="195.7" text-anchor="middle">saved graph</text>
+<text class="chip-p" x="520.0" y="210.7" text-anchor="middle">queries</text>
+<circle class="bdg-d" cx="485.4" cy="178.2" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="367.9" y="335.2" width="91.3" height="43.0" rx="7"/>
+<text class="chip-p" x="413.6" y="352.7" text-anchor="middle">rests_on a</text>
+<text class="chip-p" x="413.6" y="367.7" text-anchor="middle">stale claim</text>
+<circle class="bdg-d" cx="378.9" cy="335.2" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="555.6" y="335.2" width="116.5" height="43.0" rx="7"/>
+<text class="chip-p" x="613.8" y="352.7" text-anchor="middle">BET  COMMITMENT</text>
+<text class="chip-p" x="613.8" y="367.7" text-anchor="middle">DECISION</text>
+<circle class="bdg-d" cx="566.6" cy="335.2" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="339.3" y="389.2" width="85.0" height="43.0" rx="7"/>
+<text class="chip-p" x="381.8" y="406.7" text-anchor="middle">no serves,</text>
+<text class="chip-p" x="381.8" y="421.7" text-anchor="middle">no drives</text>
+<circle class="bdg-d" cx="350.3" cy="389.2" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="577.9" y="389.2" width="122.8" height="43.0" rx="7"/>
+<text class="chip-p" x="639.3" y="406.7" text-anchor="middle">input handlers,</text>
+<text class="chip-p" x="639.3" y="421.7" text-anchor="middle">exports as files</text>
+<circle class="bdg-d" cx="588.9" cy="389.2" r="4.2"/>
+</g>
+<g class="chip st-d">
+<rect class="chip-box" x="398.8" y="450.7" width="242.5" height="28.0" rx="7"/>
+<text class="chip-p" x="520.0" y="468.2" text-anchor="middle">the build&#x27;s checks, pointed outward</text>
+<circle class="bdg-d" cx="409.8" cy="450.7" r="4.2"/>
+</g>
+</g>
+</a>
+<a class="ring ring-2" href="#layer-2" aria-label="Layer 2: Project management and OpenSpec">
+<path class="band" d="M265.2,498.7 L774.8,498.7 L919.4,771.7 L120.6,771.7 Z"/>
+<text class="ring-name" x="520.0" y="524.7" text-anchor="middle">2 · PROJECT MANAGEMENT AND OPENSPEC</text>
+<text class="ring-q" x="520.0" y="541.7" text-anchor="middle">What are we doing, and how far along is it?</text>
+<text class="loop-over v1" x="520.0" y="711.7" text-anchor="middle">OpenSpec: explore → propose → a person approves → apply → archive</text>
+<g class="v2">
+<g class="chip st-b">
+<rect class="chip-box" x="247.9" y="569.7" width="104.0" height="44.0" rx="7"/>
+<text class="chip-t" x="299.8" y="587.7" text-anchor="middle">Status on any</text>
+<text class="chip-t" x="299.8" y="603.7" text-anchor="middle">date, blockers</text>
+<circle class="bdg-b" cx="258.9" cy="569.7" r="4.6"/>
+</g>
+<g class="chip st-c">
+<rect class="chip-box" x="361.8" y="569.7" width="100.6" height="44.0" rx="7"/>
+<text class="chip-t" x="412.1" y="587.7" text-anchor="middle">Task app:</text>
+<text class="chip-t" x="412.1" y="603.7" text-anchor="middle">board, review</text>
+<path class="bdg-c" d="M372.8,564.3 L378.2,569.7 L372.8,575.1 L367.4,569.7 Z"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="676.2" y="569.7" width="115.9" height="44.0" rx="7"/>
+<text class="chip-t" x="734.2" y="587.7" text-anchor="middle">Requests,</text>
+<text class="chip-t" x="734.2" y="603.7" text-anchor="middle">meetings, notes</text>
+<circle class="bdg-b" cx="687.2" cy="569.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="559.0" y="561.7" width="107.2" height="60.0" rx="7"/>
+<text class="chip-t" x="612.6" y="579.7" text-anchor="middle">Projects →</text>
+<text class="chip-t" x="612.6" y="595.7" text-anchor="middle">deliverables →</text>
+<text class="chip-t" x="612.6" y="611.7" text-anchor="middle">plans → runs</text>
+<circle class="bdg-b" cx="570.0" cy="561.7" r="4.6"/>
+</g>
+<g class="chip st-c">
+<rect class="chip-box" x="210.8" y="631.7" width="81.4" height="44.0" rx="7"/>
+<text class="chip-t" x="251.4" y="649.7" text-anchor="middle">Execution</text>
+<text class="chip-t" x="251.4" y="665.7" text-anchor="middle">platform</text>
+<path class="bdg-c" d="M221.8,626.3 L227.2,631.7 L221.8,637.1 L216.4,631.7 Z"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="728.8" y="631.7" width="100.5" height="44.0" rx="7"/>
+<text class="chip-t" x="779.0" y="649.7" text-anchor="middle">Run protocol:</text>
+<text class="chip-t" x="779.0" y="665.7" text-anchor="middle">leases, briefs</text>
+<circle class="bdg-b" cx="739.8" cy="631.7" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="209.4" y="685.7" width="112.3" height="44.0" rx="7"/>
+<text class="chip-h" x="265.5" y="703.7" text-anchor="middle">1 · Explore</text>
+<text class="chip-t" x="265.5" y="719.7" text-anchor="middle">think it through</text>
+<circle class="bdg-b" cx="220.4" cy="685.7" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="367.7" y="685.7" width="108.1" height="44.0" rx="7"/>
+<text class="chip-h" x="421.8" y="703.7" text-anchor="middle">2 · Propose</text>
+<text class="chip-t" x="421.8" y="719.7" text-anchor="middle">change → plan</text>
+<circle class="bdg-b" cx="378.7" cy="685.7" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="559.8" y="685.7" width="117.5" height="44.0" rx="7"/>
+<text class="chip-h" x="618.6" y="703.7" text-anchor="middle">3 · Apply</text>
+<text class="chip-t" x="618.6" y="719.7" text-anchor="middle">agents run tasks</text>
+<circle class="bdg-b" cx="570.8" cy="685.7" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="723.3" y="685.7" width="107.3" height="44.0" rx="7"/>
+<text class="chip-h" x="777.0" y="703.7" text-anchor="middle">4 · Archive</text>
+<text class="chip-t" x="777.0" y="719.7" text-anchor="middle">specs updated</text>
+<circle class="bdg-b" cx="734.3" cy="685.7" r="4.6"/>
+</g>
+</g>
+<g class="v3">
+<g class="chip st-b">
+<rect class="chip-box" x="243.4" y="570.2" width="72.4" height="43.0" rx="7"/>
+<text class="chip-p" x="279.6" y="587.7" text-anchor="middle">recall</text>
+<text class="chip-p" x="279.6" y="602.7" text-anchor="middle">BOARD.md</text>
+<circle class="bdg-b" cx="254.4" cy="570.2" r="4.6"/>
+</g>
+<g class="chip st-c">
+<rect class="chip-box" x="325.8" y="577.7" width="72.4" height="28.0" rx="7"/>
+<text class="chip-p" x="362.0" y="595.2" text-anchor="middle">a client</text>
+<path class="bdg-c" d="M336.8,572.3 L342.2,577.7 L336.8,583.1 L331.4,577.7 Z"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="661.2" y="577.7" width="135.4" height="28.0" rx="7"/>
+<text class="chip-p" x="728.9" y="595.2" text-anchor="middle">projects/ingest.py</text>
+<circle class="bdg-b" cx="672.2" cy="577.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="559.9" y="570.2" width="91.3" height="43.0" rx="7"/>
+<text class="chip-p" x="605.6" y="587.7" text-anchor="middle">projects/</text>
+<text class="chip-p" x="605.6" y="602.7" text-anchor="middle">kl/plans.py</text>
+<circle class="bdg-b" cx="570.9" cy="570.2" r="4.6"/>
+</g>
+<g class="chip st-c">
+<rect class="chip-box" x="210.5" y="639.7" width="72.4" height="28.0" rx="7"/>
+<text class="chip-p" x="246.7" y="657.2" text-anchor="middle">a client</text>
+<path class="bdg-c" d="M221.5,634.3 L226.9,639.7 L221.5,645.1 L216.1,639.7 Z"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="713.0" y="632.2" width="116.5" height="43.0" rx="7"/>
+<text class="chip-p" x="771.3" y="649.7" text-anchor="middle">kl/runs.py</text>
+<text class="chip-p" x="771.3" y="664.7" text-anchor="middle">orchestrator.py</text>
+<circle class="bdg-b" cx="724.0" cy="632.2" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="230.5" y="693.7" width="103.9" height="28.0" rx="7"/>
+<text class="chip-p" x="282.4" y="711.2" text-anchor="middle">/opsx:explore</text>
+<circle class="bdg-b" cx="241.5" cy="693.7" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="380.4" y="686.2" width="103.9" height="43.0" rx="7"/>
+<text class="chip-p" x="432.3" y="703.7" text-anchor="middle">/opsx:propose</text>
+<text class="chip-p" x="432.3" y="718.7" text-anchor="middle">POST …/plans</text>
+<circle class="bdg-b" cx="391.4" cy="686.2" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="568.3" y="686.2" width="91.3" height="43.0" rx="7"/>
+<text class="chip-p" x="613.9" y="703.7" text-anchor="middle">/opsx:apply</text>
+<text class="chip-p" x="613.9" y="718.7" text-anchor="middle">leased runs</text>
+<circle class="bdg-b" cx="579.3" cy="686.2" r="4.6"/>
+</g>
+<g class="chip st-b loop">
+<rect class="chip-box" x="705.6" y="693.7" width="103.9" height="28.0" rx="7"/>
+<text class="chip-p" x="757.5" y="711.2" text-anchor="middle">/opsx:archive</text>
+<circle class="bdg-b" cx="716.6" cy="693.7" r="4.6"/>
+</g>
+</g>
+</a>
+<a class="ring ring-1" href="#layer-1" aria-label="Layer 1: The knowledge layer">
+<path class="band" d="M120.6,771.7 L919.4,771.7 L1011.1,944.7 L28.9,944.7 Z"/>
+<text class="ring-name" x="520.0" y="797.7" text-anchor="middle">1 · THE KNOWLEDGE LAYER</text>
+<text class="ring-q" x="520.0" y="814.7" text-anchor="middle">What&#x27;s true? Who may change it?</text>
+<g class="v2">
+<g class="chip st-b">
+<rect class="chip-box" x="103.2" y="834.7" width="81.8" height="44.0" rx="7"/>
+<text class="chip-t" x="144.0" y="852.7" text-anchor="middle">Events,</text>
+<text class="chip-t" x="144.0" y="868.7" text-anchor="middle">webhooks</text>
+<circle class="bdg-b" cx="114.2" cy="834.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="194.9" y="834.7" width="94.8" height="44.0" rx="7"/>
+<text class="chip-t" x="242.3" y="852.7" text-anchor="middle">Context and</text>
+<text class="chip-t" x="242.3" y="868.7" text-anchor="middle">code impact</text>
+<circle class="bdg-b" cx="205.9" cy="834.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="299.7" y="834.7" width="75.4" height="44.0" rx="7"/>
+<text class="chip-t" x="337.4" y="852.7" text-anchor="middle">REST</text>
+<text class="chip-t" x="337.4" y="868.7" text-anchor="middle">and MCP</text>
+<circle class="bdg-b" cx="310.7" cy="834.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="837.8" y="834.7" width="99.0" height="44.0" rx="7"/>
+<text class="chip-t" x="887.3" y="852.7" text-anchor="middle">Any files in,</text>
+<text class="chip-t" x="887.3" y="868.7" text-anchor="middle">deduplicated</text>
+<circle class="bdg-b" cx="848.8" cy="834.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="718.5" y="834.7" width="109.3" height="44.0" rx="7"/>
+<text class="chip-t" x="773.2" y="852.7" text-anchor="middle">Specs as dated</text>
+<text class="chip-t" x="773.2" y="868.7" text-anchor="middle">requirements</text>
+<circle class="bdg-b" cx="729.5" cy="834.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="601.3" y="834.7" width="107.2" height="44.0" rx="7"/>
+<text class="chip-t" x="654.9" y="852.7" text-anchor="middle">Log and graph</text>
+<text class="chip-t" x="654.9" y="868.7" text-anchor="middle">per workspace</text>
+<circle class="bdg-b" cx="612.3" cy="834.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="74.5" y="888.7" width="120.3" height="44.0" rx="7"/>
+<text class="chip-t" x="134.7" y="906.7" text-anchor="middle">Recall before the</text>
+<text class="chip-t" x="134.7" y="922.7" text-anchor="middle">model, ~3 ms</text>
+<circle class="bdg-b" cx="85.5" cy="888.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="204.8" y="888.7" width="112.1" height="44.0" rx="7"/>
+<text class="chip-t" x="260.9" y="906.7" text-anchor="middle">Search fallback</text>
+<text class="chip-t" x="260.9" y="922.7" text-anchor="middle">over your notes</text>
+<circle class="bdg-b" cx="215.8" cy="888.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="847.7" y="888.7" width="117.7" height="44.0" rx="7"/>
+<text class="chip-t" x="906.6" y="906.7" text-anchor="middle">Sessions written</text>
+<text class="chip-t" x="906.6" y="922.7" text-anchor="middle">up as notes</text>
+<circle class="bdg-b" cx="858.7" cy="888.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="700.4" y="888.7" width="137.4" height="44.0" rx="7"/>
+<text class="chip-t" x="769.1" y="906.7" text-anchor="middle">Dated, quoted facts</text>
+<text class="chip-t" x="769.1" y="922.7" text-anchor="middle">from docs and code</text>
+<circle class="bdg-b" cx="711.4" cy="888.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="463.4" y="888.7" width="113.1" height="44.0" rx="7"/>
+<text class="chip-t" x="520.0" y="906.7" text-anchor="middle">People approve</text>
+<text class="chip-t" x="520.0" y="922.7" text-anchor="middle">every edit</text>
+<circle class="bdg-b" cx="474.4" cy="888.7" r="4.6"/>
+</g>
+</g>
+<g class="v3">
+<g class="chip st-b">
+<rect class="chip-box" x="102.9" y="835.2" width="97.6" height="43.0" rx="7"/>
+<text class="chip-p" x="151.7" y="852.7" text-anchor="middle">kl/events.py</text>
+<text class="chip-p" x="151.7" y="867.7" text-anchor="middle">/v1/events</text>
+<circle class="bdg-b" cx="113.9" cy="835.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="210.5" y="835.2" width="103.9" height="43.0" rx="7"/>
+<text class="chip-p" x="262.5" y="852.7" text-anchor="middle">kl/context.py</text>
+<text class="chip-p" x="262.5" y="867.7" text-anchor="middle">/v1/context</text>
+<circle class="bdg-b" cx="221.5" cy="835.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="324.4" y="835.2" width="103.9" height="43.0" rx="7"/>
+<text class="chip-p" x="376.4" y="852.7" text-anchor="middle">kl/api.py</text>
+<text class="chip-p" x="376.4" y="867.7" text-anchor="middle">mcp_server.py</text>
+<circle class="bdg-b" cx="335.4" cy="835.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="833.2" y="835.2" width="103.9" height="43.0" rx="7"/>
+<text class="chip-p" x="885.1" y="852.7" text-anchor="middle">kl/sources.py</text>
+<text class="chip-p" x="885.1" y="867.7" text-anchor="middle">/v1/sources</text>
+<circle class="bdg-b" cx="844.2" cy="835.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="713.0" y="842.7" width="110.2" height="28.0" rx="7"/>
+<text class="chip-p" x="768.1" y="860.2" text-anchor="middle">kl/openspec.py</text>
+<circle class="bdg-b" cx="724.0" cy="842.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="599.1" y="835.2" width="103.9" height="43.0" rx="7"/>
+<text class="chip-p" x="651.0" y="852.7" text-anchor="middle">kl/db.py</text>
+<text class="chip-p" x="651.0" y="867.7" text-anchor="middle">projection.py</text>
+<circle class="bdg-b" cx="610.1" cy="835.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="74.3" y="889.2" width="103.9" height="43.0" rx="7"/>
+<text class="chip-p" x="126.2" y="906.7" text-anchor="middle">src/recall.py</text>
+<text class="chip-p" x="126.2" y="921.7" text-anchor="middle">hooks.json</text>
+<circle class="bdg-b" cx="85.3" cy="889.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="188.2" y="896.7" width="47.2" height="28.0" rx="7"/>
+<text class="chip-p" x="211.8" y="914.2" text-anchor="middle">rag/</text>
+<circle class="bdg-b" cx="199.2" cy="896.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="899.6" y="896.7" width="66.1" height="28.0" rx="7"/>
+<text class="chip-p" x="932.7" y="914.2" text-anchor="middle">digest/</text>
+<circle class="bdg-b" cx="910.6" cy="896.7" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="754.2" y="889.2" width="135.4" height="43.0" rx="7"/>
+<text class="chip-p" x="821.9" y="906.7" text-anchor="middle">src/build_graph.py</text>
+<text class="chip-p" x="821.9" y="921.7" text-anchor="middle">codegraph/</text>
+<circle class="bdg-b" cx="765.2" cy="889.2" r="4.6"/>
+</g>
+<g class="chip st-b">
+<rect class="chip-box" x="461.8" y="889.2" width="116.5" height="43.0" rx="7"/>
+<text class="chip-p" x="520.0" y="906.7" text-anchor="middle">kl/review.py</text>
+<text class="chip-p" x="520.0" y="921.7" text-anchor="middle">change requests</text>
+<circle class="bdg-b" cx="472.8" cy="889.2" r="4.6"/>
+</g>
+</g>
+</a>
+<g class="v2 flows" aria-hidden="true">
+<path class="flow" d="M324.7,707.7 H363.7" marker-end="url(#farr)"/>
+<path class="flow" d="M478.8,707.7 H555.8" marker-end="url(#farr)"/>
+<path class="flow" d="M680.3,707.7 H719.3" marker-end="url(#farr)"/>
+<path class="gate" d="M517.8,698.7 V716.7"/>
+<text class="gate-t" x="517.8" y="730.7" text-anchor="middle">a person</text>
+<text class="gate-t" x="517.8" y="743.7" text-anchor="middle">approves</text>
+<path class="flow" d="M249.6,831.7 L249.6,733.7" marker-end="url(#farr)"/>
+<path class="flow" d="M775.6,732.7 L775.6,830.7" marker-end="url(#farr)"/>
+</g>
+<g class="v3 flows" aria-hidden="true">
+<path class="flow" d="M337.4,707.7 H376.4" marker-end="url(#farr)"/>
+<path class="flow" d="M487.3,707.7 H564.3" marker-end="url(#farr)"/>
+<path class="flow" d="M662.6,707.7 H701.6" marker-end="url(#farr)"/>
+<path class="gate" d="M526.3,698.7 V716.7"/>
+<text class="gate-t" x="526.3" y="730.7" text-anchor="middle">a person</text>
+<text class="gate-t" x="526.3" y="743.7" text-anchor="middle">approves</text>
+<path class="flow" d="M272.5,832.2 L272.5,725.7" marker-end="url(#farr)"/>
+<path class="flow" d="M761.2,724.7 L761.2,838.7" marker-end="url(#farr)"/>
+</g>
+</svg>
+</div>
+<figcaption>Left of each layer: what it answers and who asks. Right: what feeds it and what it holds. Centre: what keeps it true. In layer 2 that is the OpenSpec loop, read left to right. Explore reads context from layer 1, and archive sends the updated specs back into it. Click a layer to jump to its section below. <em>Overview</em> shows the layers and their questions only. <em>Components</em> shows the file, endpoint or command behind each item.</figcaption>
+</figure>
+
+<h2>At a glance</h2>
+<div class="scroll">
+<table>
+<colgroup><col style="width:27%"><col style="width:25%"><col style="width:24%"><col style="width:24%"></colgroup>
+<thead><tr><th>Layer</th><th>The question it answers</th><th>State</th><th>Where it lives</th></tr></thead>
+<tbody>
+<tr><td><span class="swatch s3"></span><a href="#layer-3">3 · Business decisions and ops</a></td><td>What did we decide, and does it still hold?</td><td class="warn">Designed, not built</td><td>Nothing yet</td></tr>
+<tr><td><span class="swatch s2"></span><a href="#layer-2">2 · Project management and OpenSpec</a></td><td>What are we doing, and how far along is it?</td><td><span class="good">Model, protocol and OpenSpec import built</span>; <span class="acc">screens and machines in clients</span></td><td><code>projects/</code> <code>commands/</code> <code>kl/plans.py</code> <code>kl/runs.py</code> <code>kl/openspec.py</code> <code>openspec/</code></td></tr>
+<tr><td><span class="swatch s1"></span><a href="#layer-1">1 · The knowledge layer</a></td><td>What's true, and who may change it?</td><td class="good">Built, tested; not load tested</td><td><code>src/</code> <code>rag/</code> <code>codegraph/</code> <code>digest/</code> <code>kl/</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Reading the pyramid</h2>
+<p>A pyramid invites three questions of each layer: who acts there, how often, and what checks the work. The answers move from code at the base to people at the point.</p>
+<div class="scroll">
+<table>
+<colgroup><col style="width:22%"><col style="width:27%"><col style="width:23%"><col style="width:28%"></colgroup>
+<thead><tr><th>Layer</th><th>Who acts</th><th>How often</th><th>What checks it</th></tr></thead>
+<tbody>
+<tr><td><span class="swatch s3"></span>3 · Business decisions and ops</td><td>The CEO and leadership <span class="warn">(designed)</span></td><td>A daily report; weekly and monthly reviews</td><td>People. Every decision gets a reason, a review date, and the evidence that would make you drop it.</td></tr>
+<tr><td><span class="swatch s2"></span>2 · Project management and OpenSpec</td><td>The team and its agents, through a task app and an execution platform</td><td>Every change and every run. Status can be asked at any time.</td><td>Code refuses bad change sets. A person approves each plan and accepts each deliverable.</td></tr>
+<tr><td><span class="swatch s1"></span>1 · The knowledge layer</td><td>Input handlers, the prompt hook, and any agent over REST or MCP</td><td>Every prompt (recall takes about 3 ms), every closed session, and every file sent in</td><td>Code, at build time: every quote must be in its source, dates must not overlap, and each name has one type. A file that conflicts is held for a person.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="layer-1"><span class="swatch s1"></span>1 · The knowledge layer<span class="state b">built</span></h2>
+<p>A knowledge graph that the assistant reads before it answers, and the service that shares it with teams. The graph memory runs on one machine, with no server and no API key. The service hosts the same graph for teams in separate workspaces, and its answers are the prompt hook's answers, because each workspace's graph is built by the same code from the service's log.</p>
+<div class="facets">
+<div class="facet"><h4>Feeds it</h4><p>Modelled documents and their extractions on one machine. Documents, transcripts, requests and session notes, sent to the service as any set of files through <code>POST /v1/sources</code>. Each file is deduplicated (the same bytes, the same text, a new version, or a copy at least 90% the same), extracted, and checked against its text. Code is indexed with no model. Every closed session is written up as a note. Archived OpenSpec specs are read in code.</p></div>
+<div class="facet"><h4>Holds</h4><p>Entities from a closed vocabulary: people, roles, policies, processes, documents, projects, deliverables, code symbols, and the specs' capabilities, requirements and scenarios. Claims of eight kinds, each with its source quote and the dates it holds for. Typed links, dated the same way. Names and aliases. In the service, each workspace has a log (Postgres with row-level security, or SQLite), and its graph is rebuilt from that log.</p></div>
+<div class="facet"><h4>Answers</h4><p>Multi-hop questions as of any date, before the model starts. “£800 refund in March, who signs it off?” is Marcus Webb, 3 hops, in about 3 ms. For code, it traces what a change would reach, both ways, with the requirements at stake. When no name matches, it says so and adds up to three passages from a search over your notes, labelled as search results. The service answers context, search, entities and claims over REST (<code>/v1</code>) and MCP (<code>/mcp</code>), with an event feed and signed webhooks.</p></div>
+<div class="facet"><h4>Keeps it true</h4><p>The build refuses a quote its document does not contain, two versions of a threshold at once, one name with two types, and an unknown claim kind. A file that passes these checks becomes current, and one that conflicts is held for a person. Every edit to a project, plan or deliverable is a change request that a person approves, and agents and service accounts can only propose. The service holds no one else's credentials.</p></div>
+<div class="facet full"><h4>Not done yet</h4><p>Load testing, backups, an object-store (S3) adapter, meaning search inside the service (it has full-text and name search only), and sign-in against a real identity provider.</p></div>
+</div>
+
+<h2 id="layer-2"><span class="swatch s2"></span>2 · Project management and OpenSpec<span class="state b">model built</span> <span class="state c">screens in clients</span></h2>
+<p>This layer runs the work on top of the knowledge layer. The project side tracks what the team is doing. A project breaks down into deliverables, a deliverable has plans, a plan is a task graph, and runs carry out the tasks. For any deliverable that changes code, OpenSpec is the core workflow. It fits because its loop is the same shape as this system's: a change is proposed, a person reviews it, it is applied, and then it is kept as history.</p>
+
+<h3>The core workflow: OpenSpec's loop</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Step</th><th>Command</th><th>What happens in the knowledge layer</th><th>Who</th></tr></thead>
+<tbody>
+<tr><td class="nw"><strong>1 · Explore</strong></td><td class="nw"><code>/opsx:explore</code></td><td>The assistant works through the options by reading the specs and the code. With the service's MCP attached, it can also ask layer 1 for context and for code impact, including the requirements a change would put at stake. It writes nothing until you confirm.</td><td>You and the assistant</td></tr>
+<tr><td class="nw"><strong>2 · Propose</strong></td><td class="nw"><code>/opsx:propose</code></td><td>The assistant writes the change folder: <code>proposal.md</code>, spec deltas, <code>design.md</code> and <code>tasks.md</code>. The folder is imported as a plan for one deliverable. The proposal becomes the plan's summary, each scenario an acceptance check, <code>tasks.md</code> the tasks in order, and <code>design.md</code> part of every task's brief. Proposing it opens a change request.</td><td>The assistant drafts</td></tr>
+<tr><td class="nw"><strong>Approve</strong></td><td class="nw">review queue</td><td>A person approves the plan once, in the task app's review queue. Nothing runs before then.</td><td>A person</td></tr>
+<tr><td class="nw"><strong>3 · Apply</strong></td><td class="nw"><code>/opsx:apply</code></td><td>The orchestrator leases the tasks to the execution platform's machines. Each agent works its task through the run protocol (a brief, heartbeats, artifacts, questions to a person) and ticks its own box. Checks and people's gates run before acceptance, and <code>/opsx:verify</code> checks the code against the plan.</td><td>Agents</td></tr>
+<tr><td class="nw"><strong>4 · Archive</strong></td><td class="nw"><code>/opsx:archive</code></td><td>When a person accepts the deliverable, the service emits <code>deliverable.accepted</code>, which tells the platform to archive the change. Archiving merges the deltas into <code>openspec/specs/</code>. When the repository is sent in again, layer 1 reads the specs as requirements, dated by the archive folder, and links each scenario to the test that names it.</td><td>A person accepts; the agent archives</td></tr>
+</tbody>
+</table>
+</div>
+<p>The loop feeds the base without a change request of its own. People approve earlier, on the plan and on the deliverable. The archived specs then come back in as a source, checked by code like any other file.</p>
+<p>OpenSpec is for code in one repository. A report, a migration weekend or a hire gets a general plan instead. <code>tasks.md</code> is a checklist, so the plan adds what it lacks: dependencies, what the runners must offer, and people's gates. This repository builds itself the same way. The eight specs in <code>openspec/specs/</code> hold 87 scenarios, and each is verified by the test of the same name.</p>
+
+<h3>The project side</h3>
+<div class="facets">
+<div class="facet"><h4>Feeds it</h4><p>Requests, meeting transcripts and session write-ups become change sets, and every change quotes its input. OpenSpec change folders become plans. Agents send back results, questions and proposals.</p></div>
+<div class="facet"><h4>Holds</h4><p>Status history, owners, due dates, dependencies (needs, subject to, blocked by), decisions and open questions, all as dated claims. Every plan version is kept. When a new version is approved, work already running moves onto it.</p></div>
+<div class="facet"><h4>Answers</h4><p>“What's the status of the helpdesk migration?”, on any date, and “What's blocked?”. It flags a project with no update for 14 days, an overdue step, and a question open for 7 days. On eight project questions the graph got 32 of 32 right in 4.5 s. The model searching for itself got 29 of 32 in 12.0 s.</p></div>
+<div class="facet"><h4>Keeps it true</h4><p>It refuses a quote the input does not contain, a date the input does not state, a status move outside the table, an unknown name, a dependency cycle, and a plan that did not come from a discussion. A run holds a lease, and its token's expiry moves with that lease.</p></div>
+<div class="facet full"><h4>The clients</h4><p>A task app shows the board and the review queue, and it is where people approve. An execution platform leases tasks to its machines and injects each run's credentials, including this service's run token. In tests, the reference orchestrator and worker in <code>kl/</code> stand in for both.</p></div>
+</div>
+
+<h2 id="layer-3"><span class="swatch s3"></span>3 · Business decisions and ops<span class="state d">designed</span></h2>
+<p>What the company bets on, promises and decides, tied to the evidence behind each one and the work that carries it out. It is organised around four areas: People, Strategy, Execution and Cash. None of it is built yet.</p>
+<div class="facets">
+<div class="facet"><h4>Would be fed by</h4><p>Calls, emails and contracts, where promises are made. CRM, billing, the support tool and the calendar, as evidence. The CEO's own answers, which become decisions.</p></div>
+<div class="facet"><h4>Would hold</h4><p>Bets, and the assumptions each one rests on. Evidence, as dated claims. Commitments to customers, investors and the board. Decisions, each dated and with a reason. Outcomes, whether measured or not.</p></div>
+<div class="facet"><h4>Would answer</h4><p>A daily report with sections for what needs you, what is at risk and which promises are coming due. It would also find patterns only a graph can: a bet with no work behind it, work that serves no bet, a promise due soon with no work item, and a decision whose reason a later claim contradicts.</p></div>
+<div class="facet"><h4>Would keep it true</h4><p>Facts would be kept apart from judgments. Every item would carry its source and date, and the report would show how fresh each source is. Every decision would get a review date and the evidence that would make you drop it.</p></div>
+<div class="facet full"><h4>Nearest built thing</h4><p>The <code>add_decision</code> change stores a project decision as a dated, quoted claim. Date-aware recall already answers “what held then?”. The build already refuses two thresholds for one thing at once, and the same check could flag a decision whose reason has changed.</p></div>
+</div>
+<h3>The grouped boxes</h3>
+<div class="scroll">
+<table>
+<colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+<thead><tr><th>Box</th><th>What it groups</th></tr></thead>
+<tbody>
+<tr><td>Daily report for the CEO (the point)</td><td>What needs you, what is at risk, and the promises coming due, built as saved graph queries</td></tr>
+<tr><td>Decisions to revisit</td><td>Decisions whose reason rests on a claim that a later claim has replaced</td></tr>
+<tr><td>Promises and bets with no work</td><td>A commitment due soon with no project serving it, and a bet with no work behind it</td></tr>
+<tr><td>Calls, emails, contracts, CRM, billing, support</td><td>Where promises are made, and the evidence, sent in as files until connectors exist</td></tr>
+<tr><td>Bets, commitments, decisions with reasons</td><td>The new entity types, <code>BET</code>, <code>ASSUMPTION</code>, <code>COMMITMENT</code> and <code>DECISION</code>, each with dated claims</td></tr>
+<tr><td>Facts kept apart from judgments</td><td>The layer's rule: every item carries its source and date, and every decision gets a review date</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="walks">Why one graph, not three systems</h2>
+<p>The layers are not separate stores. An object in an upper layer is an entity like any other, so recall can walk from it down to the evidence, or down to the work. Here are two walks that no single tool can make, because each tool sees only one layer:</p>
+<figure>
+<div class="scroll" style="border:0;background:none;margin:0">
+<svg viewBox="0 0 920 262" role="img" aria-label="Two walks across the layers. First: a decision in layer 3 rests on a dated claim in layer 1; a later claim replaces it; the decision is flagged as needing the CEO. Second: a bet in layer 3 drives a project in layer 2, planned as an approved OpenSpec change, whose fourth task runs on an agent.">
+<defs><marker id="warr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker></defs>
+<text class="lane" x="0" y="22">Revisit a decision</text>
+<rect class="box" x="0" y="36" width="180" height="66" rx="8"/>
+<circle class="rb rb-3" cx="16" cy="53" r="8"/>
+<text class="rb-n rb-n-3" x="16" y="57" text-anchor="middle">3</text>
+<text class="sub" x="30" y="57">DECISION</text>
+<text x="12" y="76">Globex SLA at 99.5%</text>
+<text class="sub" x="12" y="93">2026-09-28, the CEO</text>
+<path class="line" d="M182,69.0 H243" marker-end="url(#warr)"/>
+<text class="edge" x="213.0" y="61.0" text-anchor="middle">rests on</text>
+<rect class="box" x="246" y="36" width="180" height="66" rx="8"/>
+<circle class="rb rb-1" cx="262" cy="53" r="8"/>
+<text class="rb-n rb-n-1" x="262" y="57" text-anchor="middle">1</text>
+<text class="sub" x="276" y="57">CLAIM</text>
+<text x="258" y="76">90-day uptime 99.7%</text>
+<text class="sub" x="258" y="93">status page, to 10-25</text>
+<path class="line" d="M428,69.0 H489" marker-end="url(#warr)"/>
+<text class="edge" x="459.0" y="61.0" text-anchor="middle">replaced by</text>
+<rect class="box" x="492" y="36" width="180" height="66" rx="8"/>
+<circle class="rb rb-1" cx="508" cy="53" r="8"/>
+<text class="rb-n rb-n-1" x="508" y="57" text-anchor="middle">1</text>
+<text class="sub" x="522" y="57">CLAIM</text>
+<text x="504" y="76">90-day uptime 99.4%</text>
+<text class="sub" x="504" y="93">status page, from 10-26</text>
+<path class="line" d="M674,69.0 H735" marker-end="url(#warr)"/>
+<text class="edge" x="705.0" y="61.0" text-anchor="middle">flags</text>
+<rect class="box-warn" x="738" y="36" width="180" height="66" rx="8"/>
+<circle class="rb rb-3" cx="754" cy="53" r="8"/>
+<text class="rb-n rb-n-3" x="754" y="57" text-anchor="middle">3</text>
+<text class="sub" x="768" y="57">NEEDS YOU</text>
+<text x="750" y="76">Revisit the SLA</text>
+<text class="sub" x="750" y="93">reason no longer holds</text>
+<text class="lane" x="0" y="152">Trace a bet down to the work</text>
+<rect class="box" x="0" y="166" width="180" height="66" rx="8"/>
+<circle class="rb rb-3" cx="16" cy="183" r="8"/>
+<text class="rb-n rb-n-3" x="16" y="187" text-anchor="middle">3</text>
+<text class="sub" x="30" y="187">BET</text>
+<text x="12" y="206">Win enterprise accounts</text>
+<text class="sub" x="12" y="223">needs 99.9% uptime</text>
+<path class="line" d="M182,199.0 H243" marker-end="url(#warr)"/>
+<text class="edge" x="213.0" y="191.0" text-anchor="middle">drives</text>
+<rect class="box" x="246" y="166" width="180" height="66" rx="8"/>
+<circle class="rb rb-2" cx="262" cy="183" r="8"/>
+<text class="rb-n rb-n-2" x="262" y="187" text-anchor="middle">2</text>
+<text class="sub" x="276" y="187">PROJECT</text>
+<text x="258" y="206">Multi-region failover</text>
+<text class="sub" x="258" y="223">active, D2 due 12-15</text>
+<path class="line" d="M428,199.0 H489" marker-end="url(#warr)"/>
+<text class="edge" x="459.0" y="191.0" text-anchor="middle">planned as</text>
+<rect class="box" x="492" y="166" width="180" height="66" rx="8"/>
+<circle class="rb rb-2" cx="508" cy="183" r="8"/>
+<text class="rb-n rb-n-2" x="508" y="187" text-anchor="middle">2</text>
+<text class="sub" x="522" y="187">OPENSPEC PLAN</text>
+<text x="504" y="206">add-multi-region</text>
+<text class="sub" x="504" y="223">5 tasks, approved</text>
+<path class="line" d="M674,199.0 H735" marker-end="url(#warr)"/>
+<text class="edge" x="705.0" y="191.0" text-anchor="middle">runs as</text>
+<rect class="box" x="738" y="166" width="180" height="66" rx="8"/>
+<circle class="rb rb-2" cx="754" cy="183" r="8"/>
+<text class="rb-n rb-n-2" x="754" y="187" text-anchor="middle">2</text>
+<text class="sub" x="768" y="187">RUN</text>
+<text x="750" y="206">Task 4 on an agent</text>
+<text class="sub" x="750" y="223">leased, heartbeat ok</text>
+</svg>
+</div>
+<figcaption>A made-up example; the company is invented. Layer 3's entity types do not exist yet. Both walks would use today's recall steps: names, relevance, a 3-hop walk, and the dates each fact holds for. The first walk is the refund example from layer 1, with a decision in place of the policy.</figcaption>
+</figure>
+
+<h2>Suggestions</h2>
+
+<h3>Building the point, smallest step first</h3>
+<ol>
+<li><strong>Extend the vocabulary.</strong> Add <code>BET</code>, <code>ASSUMPTION</code>, <code>COMMITMENT</code>, <code>DECISION</code> and <code>OUTCOME</code>, with the links <code>drives</code>, <code>rests_on</code>, <code>made_to</code>, <code>tested_by</code> and <code>serves</code>. The build's rules apply unchanged: a quote for every claim, and dates wherever the source gives them.</li>
+<li><strong>Make decisions entities.</strong> Turn a project's decisions into <code>DECISION</code> entities, each with a reason linked to the claims it rests on and a review date. “Which decisions should we revisit?” then becomes one walk.</li>
+<li><strong>Flag a decision whose reason changes.</strong> When a newer claim replaces one that a decision rests on, flag the decision. This is the build's conflict check, pointed upward.</li>
+<li><strong>Take commitments from calls and emails</strong> through an input handler, as change requests that quote the source. Projects already use this path: one person approves each change.</li>
+<li><strong>Build the daily report as saved graph queries</strong>, with no new store. <em>Needs you</em> is the open change requests, the decisions to revisit and the questions for the CEO. <em>At risk</em> is the commitments due within 14 days that have no work item.</li>
+<li><strong>Build CRM and billing connectors last.</strong> Until then, send their exports as files to <code>POST /v1/sources</code>.</li>
+</ol>
+
+<h3>Getting more from OpenSpec</h3>
+<ul>
+<li><strong>Attach the service's MCP when you explore.</strong> Then <code>/opsx:explore</code> can ask for code impact with the requirements at stake before it proposes anything. Say so in the <code>context</code> field of <code>openspec/config.yaml</code>, so every proposal reads it.</li>
+<li><strong>Name the bet in the proposal's Why section.</strong> If the Why names the bet or commitment the change serves, the parser can link the change to it. That is the cheapest bridge from layer 2 to layer 3, and it makes “work with no bet” a query.</li>
+<li><strong>Archive promptly.</strong> Open changes stay out of the graph until they are archived. Until then, the graph describes the code as it was before the change.</li>
+</ul>
+
+<h3>Things to watch</h3>
+<ul>
+<li><strong>Most layer-3 evidence lives in tools the service doesn't connect to.</strong> Until it does, exported files carry that evidence, and the report must say how fresh each one is.</li>
+<li><strong>Commitments call for judgment, so extraction will propose too many.</strong> Keep the quote rule and the one-person approval. One wrong item under <em>Needs you</em> loses more trust than ten useful ones build.</li>
+<li><strong>Layer-3 questions are worded loosely</strong> (“is Acme OK?”), and the service has no meaning search yet. The local search in layer 1 has it, but the service does not.</li>
+</ul>
+</main>
+<script>
+(function () {
+  var fig = document.getElementById('onion');
+  var buttons = document.querySelectorAll('.lvl button');
+  function set(level) {
+    fig.setAttribute('data-level', level);
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-level') === level)); });
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () {
+      set(b.getAttribute('data-level'));
+      try { localStorage.setItem('onion-level', b.getAttribute('data-level')); } catch (e) {}
+    });
+  });
+  set(fig.getAttribute('data-level'));
+  try { var saved = localStorage.getItem('onion-level'); if (saved === '1' || saved === '2' || saved === '3') set(saved); } catch (e) {}
+})();
+</script>
+</body>
+</html>
