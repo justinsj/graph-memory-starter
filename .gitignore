@@ -46,3 +46,5 @@ bench/code-raw/
 bench/code-raw-plain/
 bench/code-raw-deps/
 bench/project-raw-hint/
+bench/query-raw/
+querygraph/cases/*/*.db
