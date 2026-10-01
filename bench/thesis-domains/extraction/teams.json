@@ -1,0 +1,54 @@
+{
+  "source_doc": "teams.md",
+  "nodes": [
+    {"name": "Head of E-commerce", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Owns the online shop, its pages and checkout",
+       "quote": "Head of E-commerce: Nadia Okafor. Owns the online shop, its pages and checkout."}
+    ]},
+    {"name": "Nadia Okafor", "type": "PERSON", "claims": [
+      {"kind": "note", "text": "The Head of E-commerce", "quote": "Head of E-commerce: Nadia Okafor."}
+    ]},
+    {"name": "Web Developer", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Builds and maintains the shop's pages",
+       "quote": "Web Developer: Tom Reyes. Builds and maintains the shop's pages."}
+    ]},
+    {"name": "Tom Reyes", "type": "PERSON", "claims": [
+      {"kind": "note", "text": "The Web Developer", "quote": "Web Developer: Tom Reyes."}
+    ]},
+    {"name": "IT Admin", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Manages software accounts and licences",
+       "quote": "IT Admin: Owen Hart. Manages software accounts and licences."}
+    ]},
+    {"name": "Owen Hart", "type": "PERSON", "claims": [
+      {"kind": "note", "text": "The IT Admin", "quote": "IT Admin: Owen Hart."}
+    ]},
+    {"name": "Field Service Manager", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Runs the installation technicians",
+       "quote": "Field Service Manager: Leo Grant. Runs the installation technicians."}
+    ]},
+    {"name": "Leo Grant", "type": "PERSON", "claims": [
+      {"kind": "note", "text": "The Field Service Manager", "quote": "Field Service Manager: Leo Grant."}
+    ]},
+    {"name": "Marketing Lead", "type": "ROLE", "claims": [
+      {"kind": "responsibility", "text": "Runs campaigns and the customer email list",
+       "quote": "Marketing Lead: Ines Moreau. Runs campaigns and the customer email list."}
+    ]},
+    {"name": "Ines Moreau", "type": "PERSON", "claims": [
+      {"kind": "note", "text": "The Marketing Lead", "quote": "Marketing Lead: Ines Moreau."}
+    ]}
+  ],
+  "edges": [
+    {"source": "Head of E-commerce", "predicate": "held_by", "target": "Nadia Okafor"},
+    {"source": "Web Developer", "predicate": "held_by", "target": "Tom Reyes"},
+    {"source": "IT Admin", "predicate": "held_by", "target": "Owen Hart"},
+    {"source": "Field Service Manager", "predicate": "held_by", "target": "Leo Grant"},
+    {"source": "Marketing Lead", "predicate": "held_by", "target": "Ines Moreau"}
+  ],
+  "aliases": [
+    {"entity": "Nadia Okafor", "alias": "Nadia"},
+    {"entity": "Tom Reyes", "alias": "Tom"},
+    {"entity": "Owen Hart", "alias": "Owen"},
+    {"entity": "Leo Grant", "alias": "Leo"},
+    {"entity": "Ines Moreau", "alias": "Ines"}
+  ]
+}

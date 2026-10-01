@@ -1,0 +1,15 @@
+{
+  "source_doc": "customer-base.md",
+  "nodes": [
+    {"name": "Customer base", "type": "DOCUMENT", "claims": [
+      {"kind": "note", "text": "4,800 customers have not ordered in the last 12 months",
+       "quote": "4,800 customers have not ordered in the last 12 months.", "amount": 4800, "unit": "customers"},
+      {"kind": "note", "text": "The last win-back email brought back 3% of the people it reached",
+       "quote": "Our last win-back email brought back 3% of the people it reached.", "amount": 3, "unit": "%"},
+      {"kind": "note", "text": "The customer list has 21,500 customers in all",
+       "quote": "The customer list has 21,500 customers in all.", "amount": 21500, "unit": "customers"}
+    ]}
+  ],
+  "edges": [],
+  "aliases": []
+}

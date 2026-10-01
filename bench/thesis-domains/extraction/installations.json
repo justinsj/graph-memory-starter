@@ -1,0 +1,18 @@
+{
+  "source_doc": "installations.md",
+  "nodes": [
+    {"name": "Installations", "type": "DOCUMENT", "claims": [
+      {"kind": "note", "text": "The installation backlog stands at 260 jobs",
+       "quote": "The installation backlog stands at 260 jobs.", "amount": 260, "unit": "jobs"},
+      {"kind": "note", "text": "Each technician completes about 9 installations a week",
+       "quote": "Each technician completes about 9 installations a week.", "amount": 9,
+       "unit": "installations a week"},
+      {"kind": "note", "text": "We have 6 installation technicians",
+       "quote": "We have 6 installation technicians.", "amount": 6, "unit": "technicians"},
+      {"kind": "note", "text": "Customers who wait more than three weeks cancel 12% of the time",
+       "quote": "Customers who wait more than three weeks cancel 12% of the time.", "amount": 12, "unit": "%"}
+    ]}
+  ],
+  "edges": [],
+  "aliases": []
+}
