@@ -38,6 +38,8 @@ projects/ingested.json
 projects/BOARD.md
 projects/eval-raw/
 bench/project-raw/
+bench/project-create-raw/
+bench/project-create-raw-*/
 bench/code-raw/
 bench/code-raw-plain/
 bench/code-raw-deps/
