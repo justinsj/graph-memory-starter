@@ -170,7 +170,7 @@
      "workspaces"
     ],
     "summary": "Change settings",
-    "description": "Admins: self_approval, review_extractions, near_duplicates, max_concurrent_runs, max_storage_bytes.",
+    "description": "Admins: self_approval, review_extractions, near_duplicates, max_concurrent_runs, max_storage_bytes, impact_research, unit_values, currency.",
     "operationId": "update_settings_v1_workspace_settings_patch",
     "parameters": [
      {
@@ -1548,7 +1548,7 @@
      "projects"
     ],
     "summary": "Projects",
-    "description": "Approved state. Filters: status, owner, due_before, due_after, q. include=pending adds open change requests.",
+    "description": "Approved state. Filters: status, owner, due_before, due_after, q. include=pending adds open change requests; include=impact adds each thesis and its figures. sort=priority: ranked projects first, by projected impact per person-day.",
     "operationId": "list_projects_v1_projects_get",
     "parameters": [
      {
@@ -1654,10 +1654,30 @@
          "type": "null"
         }
        ],
-       "description": "pending",
+       "description": "pending,impact",
        "title": "Include"
       },
-      "description": "pending"
+      "description": "pending,impact"
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "enum": [
+          "id",
+          "priority"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Sort"
+      }
      },
      {
       "name": "limit",
@@ -2388,6 +2408,504 @@
     },
     "responses": {
      "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/projects/{pid}/thesis": {
+   "post": {
+    "tags": [
+     "impact"
+    ],
+    "summary": "Propose a thesis",
+    "description": "If <change>, <outcome> will <reduce|increase|improve> by potentially <amount> <unit>. The amount is the product of the formula's numbers, researched at once: each is found in the graph (quoted from its document) or asked of a person. One change request.",
+    "operationId": "propose_thesis_v1_projects__pid__thesis_post",
+    "parameters": [
+     {
+      "name": "pid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Pid"
+      }
+     },
+     {
+      "name": "approve",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Approve"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "kl-workspace",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Kl-Workspace"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ThesisIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/projects/{pid}:research": {
+   "post": {
+    "tags": [
+     "impact"
+    ],
+    "summary": "Research the numbers",
+    "description": "Look again for a project's missing numbers, and ask people for the rest; drafts a thesis first if there is none. Opens a change request, or says there is nothing new.",
+    "operationId": "research_v1_projects__pid__research_post",
+    "parameters": [
+     {
+      "name": "pid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Pid"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "kl-workspace",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Kl-Workspace"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/projects/{pid}/numbers/{key}": {
+   "post": {
+    "tags": [
+     "impact"
+    ],
+    "summary": "Give a number",
+    "description": "An answer, or an estimate (status=estimated) that stays marked as one. Opens a change request; approve=true applies it at once.",
+    "operationId": "answer_number_v1_projects__pid__numbers__key__post",
+    "parameters": [
+     {
+      "name": "pid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Pid"
+      }
+     },
+     {
+      "name": "key",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Key"
+      }
+     },
+     {
+      "name": "approve",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Approve"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "kl-workspace",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Kl-Workspace"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/NumberIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/projects/{pid}/effort": {
+   "post": {
+    "tags": [
+     "impact"
+    ],
+    "summary": "Estimate the effort",
+    "description": "Person-days, and what the estimate rests on. Through a change request.",
+    "operationId": "estimate_effort_v1_projects__pid__effort_post",
+    "parameters": [
+     {
+      "name": "pid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Pid"
+      }
+     },
+     {
+      "name": "approve",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Approve"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "kl-workspace",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Kl-Workspace"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EffortIn"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/projects/{pid}/impact": {
+   "get": {
+    "tags": [
+     "impact"
+    ],
+    "summary": "A project's impact",
+    "description": "The thesis as a sentence, projected impact with its working, each number with where it came from, estimated effort, impact per person-day, and its place in the priorities.",
+    "operationId": "project_impact_v1_projects__pid__impact_get",
+    "parameters": [
+     {
+      "name": "pid",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Pid"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "kl-workspace",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Kl-Workspace"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/priorities": {
+   "get": {
+    "tags": [
+     "impact"
+    ],
+    "summary": "Priorities",
+    "description": "Open projects ranked by projected impact per person-day: within each unit, or in money across units when settings.unit_values prices them. Projects still missing numbers or an effort are listed apart, with what they lack.",
+    "operationId": "priorities_v1_priorities_get",
+    "parameters": [
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "name": "kl-workspace",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Kl-Workspace"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
       "description": "Successful Response",
       "content": {
        "application/json": {
@@ -5655,7 +6173,7 @@
       },
       "type": "array",
       "title": "Ops",
-      "description": "Operations: projects/model.py's (create_project, set_status, set_field, add_dependency, add_deliverable, set_deliverable, set_step, add_question, close_question, add_decision, delete_project, restore_project), or activate_version, retract_source"
+      "description": "Operations: projects/model.py's (create_project, set_status, set_field, add_dependency, add_deliverable, set_deliverable, set_step, add_question, close_question, add_decision, delete_project, restore_project, set_thesis, set_number, set_effort), or activate_version, retract_source"
      },
      "reason": {
       "type": "string",
@@ -5857,6 +6375,59 @@
     ],
     "title": "DeliverableIn"
    },
+   "EffortIn": {
+    "properties": {
+     "days": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "number"
+       }
+      ],
+      "title": "Days",
+      "description": "Person-days",
+      "examples": [
+       15
+      ]
+     },
+     "basis": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Basis"
+     },
+     "by": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "By",
+      "description": "Who estimated it, if not the caller"
+     },
+     "reason": {
+      "type": "string",
+      "title": "Reason",
+      "default": ""
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "days"
+    ],
+    "title": "EffortIn"
+   },
    "ExtractionIn": {
     "properties": {
      "extraction": {
@@ -6051,6 +6622,138 @@
      "role"
     ],
     "title": "MemberIn"
+   },
+   "NumberIn": {
+    "properties": {
+     "value": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "number"
+       }
+      ],
+      "title": "Value"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "answered",
+       "estimated"
+      ],
+      "title": "Status",
+      "default": "answered"
+     },
+     "answer": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Answer",
+      "description": "The answer in the person's words; it is quoted, so it should state the figure",
+      "examples": [
+       "About 6 hours per agent."
+      ]
+     },
+     "basis": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Basis",
+      "description": "For an estimate: what it rests on"
+     },
+     "by": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "By",
+      "description": "Who gave it, if not the caller"
+     },
+     "reason": {
+      "type": "string",
+      "title": "Reason",
+      "default": ""
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "value"
+    ],
+    "title": "NumberIn"
+   },
+   "NumberSpec": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key",
+      "description": "lowercase words joined by underscores",
+      "examples": [
+       "failures_a_year"
+      ]
+     },
+     "label": {
+      "type": "string",
+      "title": "Label",
+      "description": "The words a document stating it would use: the research looks for a fact with every one of them",
+      "examples": [
+       "tagging report failures"
+      ]
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit",
+      "examples": [
+       "failures a year"
+      ]
+     },
+     "ask": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ask",
+      "description": "Who to ask if no document holds it (a name the graph knows); default the project's owner, else whoever asked for it"
+     },
+     "question": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Question"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "label",
+     "unit"
+    ],
+    "title": "NumberSpec"
    },
    "PlanIn": {
     "properties": {
@@ -6670,6 +7373,112 @@
     ],
     "title": "TaskIn"
    },
+   "ThesisIn": {
+    "properties": {
+     "change": {
+      "type": "string",
+      "title": "Change",
+      "description": "What is done",
+      "examples": [
+       "support moves to a new helpdesk"
+      ]
+     },
+     "outcome": {
+      "type": "string",
+      "title": "Outcome",
+      "description": "What gets better, countably",
+      "examples": [
+       "the support hours lost to broken tagging reports"
+      ]
+     },
+     "direction": {
+      "type": "string",
+      "enum": [
+       "reduce",
+       "increase",
+       "improve"
+      ],
+      "title": "Direction"
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit",
+      "description": "The outcome's unit",
+      "examples": [
+       "hours a year"
+      ]
+     },
+     "formula": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "object"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Formula",
+      "description": "Number keys multiplied together; a constant as {\"value\": 52, \"label\": \"weeks a year\"}",
+      "examples": [
+       [
+        "failures_a_year",
+        "support_agents",
+        "hours_per_failure"
+       ]
+      ]
+     },
+     "reach": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reach",
+      "description": "A number key: the clients or people the change touches"
+     },
+     "because": {
+      "anyOf": [
+       {
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Because",
+      "description": "{\"quote\": ...}: a line from the project's inputs that shows why it matters (its source is found for you)"
+     },
+     "numbers": {
+      "items": {
+       "$ref": "#/components/schemas/NumberSpec"
+      },
+      "type": "array",
+      "title": "Numbers",
+      "default": []
+     },
+     "reason": {
+      "type": "string",
+      "title": "Reason",
+      "default": ""
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "change",
+     "outcome",
+     "direction",
+     "unit",
+     "formula"
+    ],
+    "title": "ThesisIn"
+   },
    "ValidationError": {
     "properties": {
      "loc": {
@@ -6780,6 +7589,10 @@
   {
    "name": "projects",
    "description": "Projects, read as approved; every write opens a change request. For task apps."
+  },
+  {
+   "name": "impact",
+   "description": "Each project's thesis, the numbers behind it (found, asked, answered, estimated), estimated effort, and the priorities they give."
   },
   {
    "name": "review",
