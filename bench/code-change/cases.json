@@ -1,0 +1,117 @@
+{
+ "about": "Code changes on the sample shop, graph against search. Every run starts from the snapshot below, extracted from git and checked file by file. The hidden tests are never in the model's folder.",
+ "snapshot": {
+  "commit": "e432c093b2f9f754eaeaa739fe3ac207d2b41e5b",
+  "path": "codegraph/cases/shop",
+  "files": {
+   "backend/app.py": "b1698a8fcb4d81617ef7682053d2b1a704a11f96e53cbbfd2ca11a76bf1b9885",
+   "backend/approvals.py": "4928abfd769f8c02af44eb70a5ab263daefbbf0e7fe44ba1270ea18fe6a589ba",
+   "backend/config.py": "8a142de7c9b0df9f18ebd880cb0cff4a7b195337a1fea1a136ff1f0e1be99849",
+   "backend/orders/__init__.py": "7430513a149da05d63ce288eb7591be2e708e55572c6c08b1298436c88d9f978",
+   "backend/orders/service.py": "f86b4b7f2b0cb7d8c0365898092981a0a4e0298f8039da013a7d7f267cfa7b05",
+   "backend/orders/views.py": "75b4838828cf8023ae8ea590d4bfac8a9812c661392de94e2388509bb8063fb3",
+   "backend/refunds/__init__.py": "9f269b98c31d3029eb702d20eb11bfc92cfe95ef88b17705d1f5eea393e758ee",
+   "backend/refunds/legacy.py": "dde72ebd4a31cffe3ddf81b8d7e6b777cbf8f54be33ef5c04d123f47810d7bb6",
+   "backend/refunds/rules.py": "4437dac9f6f66f816bf195826f678f3503f0cfd634fe5bd892df2a1bdb51d61d",
+   "backend/refunds/views.py": "3f82cf2cfbeeb1ca1b043a64a5458c715e379deea3bccf304baa319f6de4b94c",
+   "backend/reports.py": "101fe20f69f450e0ba644c7cf006d44acb5765b0a685251b3cdd441e406fa477",
+   "backend/tests/__init__.py": "46943b7171c5d959a6714fe52e7b2800ad4e599de1ba5f1e8ff7663c9679b6ec",
+   "backend/tests/test_rules.py": "9098fd12e033cb3b3fa09892354e5108bca765aee6b2fc62461a0684f699c6cb",
+   "frontend/src/api.ts": "23f95ba2e4b9d113881e943380c025ddf086c1e1ad74dd1a96c8e1cfcf4daed7",
+   "frontend/src/components/OrderPage.tsx": "46340c86b59f5503d3127e82a7c69875720143264663bbc1bcd889a5e80e12e4",
+   "frontend/src/components/RefundForm.tsx": "e3abf097cc71f711cdb75a52cea20147d848ffd32ffdcc3c4f6a1417593c178e",
+   "frontend/src/config.ts": "aca9620fc1445dfffd1d72b18e7b7d7131ef6c4ad19ca9f095ec61352f031dd4"
+  }
+ },
+ "prompt_end": "The shop's code is in this folder: a Python (Flask) backend in backend/ and a TypeScript frontend in frontend/. Make the change in the code. Keep the existing tests passing: run them with `python run_tests.py`. Do not ask questions; decide and do it. Finish with one short paragraph saying which files you changed.",
+ "cases": [
+  {
+   "id": "01-refund-currency",
+   "title": "Refunds in euros",
+   "kind": "Change a function's signature; every caller passes the new argument, across both languages",
+   "prompt": "Customers now pay in euros as well as pounds. A refund may carry a `currency`: \"GBP\" or \"EUR\", and \"GBP\" when it is missing. Change `needs_approval` in backend/refunds/rules.py to `needs_approval(amount, currency=\"GBP\")`: it converts a euro amount to pounds with a new setting `EUR_TO_GBP = 0.85` in backend/config.py before comparing it with the threshold, and raises ValueError for any other currency. Then make everything that decides whether a refund needs approval pass the refund's currency, and make the frontend send a `currency` (\"GBP\" unless the caller gives one) with every refund it submits.",
+   "must_change": [
+    "backend/config.py: EUR_TO_GBP",
+    "backend/refunds/rules.py: needs_approval",
+    "backend/refunds/views.py: create_refund passes the currency",
+    "backend/orders/service.py: process_refund passes the currency",
+    "frontend/src/api.ts: submitRefund and refundViaActions send it",
+    "backend/reports.py: count_large, if it is to pass the currency (either design passes)"
+   ],
+   "trap": "backend/reports.py passes needs_approval to filter() through the refunds package's re-export, one amount at a time: either the currency stays optional, or the report is changed to pass each refund's currency.",
+   "hidden": "test_01_refund_currency.py"
+  },
+  {
+   "id": "02-approver-routing",
+   "title": "Queued refunds name their approver",
+   "kind": "Add a parameter to a function with two callers in two packages, and change both responses",
+   "prompt": "Large refunds must go to the right person. Add `DIRECTOR_THRESHOLD_GBP = 1000` to backend/config.py, and `approver_for(amount_gbp)` to backend/refunds/rules.py: None when the refund needs no approval, \"Director\" above DIRECTOR_THRESHOLD_GBP, and \"Ops Manager\" otherwise. Change `queue_for_approval` in backend/approvals.py to `queue_for_approval(refund, approver)`, which keeps `{\"refund\": refund, \"approver\": approver}` in PENDING. Every refund that is queued must be queued with its approver, and every API response for a queued refund must say who it waits for: `{\"status\": \"awaiting approval\", \"approver\": <the approver>}`.",
+   "must_change": [
+    "backend/config.py: DIRECTOR_THRESHOLD_GBP",
+    "backend/refunds/rules.py: approver_for",
+    "backend/approvals.py: queue_for_approval",
+    "backend/refunds/views.py: create_refund",
+    "backend/orders/service.py: process_refund"
+   ],
+   "trap": "queue_for_approval has a second caller outside the refunds package: the order page's quick refund, in backend/orders/service.py.",
+   "hidden": "test_02_approver_routing.py"
+  },
+  {
+   "id": "03-refund-window",
+   "title": "The refund window, wherever refunds are validated",
+   "kind": "Extend a validation, and apply it on a path that skips it today",
+   "prompt": "Refunds are only allowed within REFUND_WINDOW_DAYS of the order. A refund may now carry `order_age_days`. Make the refund validation in backend/refunds/rules.py raise ValueError(\"outside the refund window\") when `order_age_days` is over the window; a refund without it is allowed, and so is one on the window's last day. Every way the API takes a refund must apply this validation: the refunds endpoint answers such a refund with status 400 and `{\"error\": \"outside the refund window\"}`, and the order page's quick refund answers with status 400 and `{\"status\": \"rejected\", \"error\": \"outside the refund window\"}`. Orders are validated as before.",
+   "must_change": [
+    "backend/refunds/rules.py: validate",
+    "backend/refunds/views.py: create_refund answers 400",
+    "backend/orders/service.py: process_refund validates the refund",
+    "backend/orders/views.py: handle_action answers 400"
+   ],
+   "trap": "backend/orders/service.py has its own validate, for orders, which must not change; the quick refund must call the refund validation.",
+   "hidden": "test_03_refund_window.py"
+  },
+  {
+   "id": "04-hold-action",
+   "title": "A Hold button on the order page",
+   "kind": "A feature across the API route, the client and the component",
+   "prompt": "Add a \"Hold order\" button to the order page, next to \"Cancel order\". It must put the order on hold through the same quick actions endpoint the cancel button uses, with the action \"hold\", using the hold logic the backend already has. Add a `holdOrder(orderId)` function to the frontend's API client for it.",
+   "must_change": [
+    "backend/orders/views.py: handle_action handles \"hold\"",
+    "frontend/src/api.ts: holdOrder",
+    "frontend/src/components/OrderPage.tsx: the button"
+   ],
+   "trap": "hold_order is already reachable, but only through the bulk endpoint's lookup table; the quick actions endpoint picks its branch with if/elif on the body's action.",
+   "hidden": "test_04_hold_action.py"
+  },
+  {
+   "id": "05-rename",
+   "title": "Rename needs_approval",
+   "kind": "Rename a function everywhere it is used, including uses that are not calls",
+   "prompt": "Rename `needs_approval` to `requires_sign_off` throughout the backend: its definition and everywhere it is imported, re-exported, passed or tested. Its behaviour stays the same, and no reference to the old name may remain in the backend.",
+   "must_change": [
+    "backend/refunds/rules.py",
+    "backend/refunds/__init__.py: the re-export",
+    "backend/refunds/views.py",
+    "backend/orders/service.py",
+    "backend/reports.py: imports it from the package, passes it to filter()",
+    "backend/tests/test_rules.py"
+   ],
+   "trap": "Two of the uses are not calls: the package's re-export, and filter(needs_approval, refunds).",
+   "hidden": "test_05_rename.py"
+  },
+  {
+   "id": "06-threshold-from-backend",
+   "title": "One approval threshold, served by the backend",
+   "kind": "Replace a frontend constant with a new API route, across both languages",
+   "prompt": "The refund form warns that a refund needs approval above 500, but the backend's threshold is 250. Make the backend the one source: add `GET /api/config`, answering `{\"approval_threshold_gbp\": <the backend's APPROVAL_THRESHOLD_GBP>}`; add `getConfig()` to the frontend's API client to fetch it; make the refund form warn using the threshold it fetches; and remove APPROVAL_THRESHOLD from the frontend entirely.",
+   "must_change": [
+    "backend: the GET /api/config route",
+    "frontend/src/api.ts: getConfig",
+    "frontend/src/components/RefundForm.tsx: uses it",
+    "frontend/src/config.ts: APPROVAL_THRESHOLD removed"
+   ],
+   "trap": "Two constants with near names: the backend's APPROVAL_THRESHOLD_GBP (250) and the frontend's APPROVAL_THRESHOLD (500).",
+   "hidden": "test_06_threshold_from_backend.py"
+  }
+ ]
+}
