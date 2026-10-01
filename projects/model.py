@@ -30,6 +30,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from recall import plain  # noqa: E402  the build's own quote comparison
+sys.path.insert(0, str(ROOT / "projects"))
+import impact  # noqa: E402  the thesis, its numbers, and what they come to
 
 MAX_QUOTE = 300  # as for claims: any one sentence fits
 STATUSES = ("proposed", "planning", "active", "blocked", "on_hold", "done", "cancelled")
@@ -62,7 +64,11 @@ OPS = {  # operation: what it must carry besides "op" and "quote"
     "agree_plan": ("project", "steps"),  # a discussion's only: see plan.py
     "delete_project": ("project",),  # soft: the record stays, out of the graph, until restored
     "restore_project": ("project",),
+    "set_thesis": ("project", "change", "outcome", "direction", "unit", "formula"),  # see impact.py
+    "set_number": ("project", "key", "status"),  # a number the thesis needs, and where it came from
+    "set_effort": ("project", "days"),  # estimated effort, in person-days
 }
+NUMBER_KEY = re.compile(r"[a-z][a-z0-9_]*")
 MAX_STEPS = 25  # more than this is two projects
 STALE_DAYS = 14  # an active project with nothing new for this long is flagged
 QUESTION_DAYS = 7  # an open question this old is flagged
@@ -466,11 +472,95 @@ def _check_restore(rec, ch, ctx, state):
     return [] if rec.get("deleted") else ["not deleted"]
 
 
+def _check_thesis(rec, ch, ctx, state):
+    out = []
+    if ch["direction"] not in impact.DIRECTIONS:
+        out.append(f"direction is one of {', '.join(impact.DIRECTIONS)}: not {ch['direction']!r}")
+    formula = ch["formula"]
+    if not isinstance(formula, list) or not formula:
+        return out + ["formula is a list of the numbers the impact multiplies: number keys, or constants"]
+    for item in formula:
+        if isinstance(item, dict):
+            if not _number_value(item.get("value")) or not item.get("label"):
+                out.append(f"a constant needs a value and a label (52, weeks a year): not {item!r}")
+        elif not NUMBER_KEY.fullmatch(str(item)):
+            out.append(f"number keys are lowercase words joined by underscores: not {item!r}")
+    keys = [i for i in formula if isinstance(i, str)]
+    if len(set(keys)) < len(keys):
+        out.append("a number appears twice in the formula")
+    if ch.get("reach") and not NUMBER_KEY.fullmatch(str(ch["reach"])):
+        out.append(f"reach is a number key: not {ch['reach']!r}")
+    if ch.get("because"):
+        out += _elsewhere(ch["because"], ctx, "because")
+    return out
+
+
+def _elsewhere(ref, ctx, label) -> list:
+    """Problems with a quote from another document ({"source", "quote"}): it must be in it."""
+    if not isinstance(ref, dict) or not ref.get("source") or not ref.get("quote"):
+        return [f"{label} names a source and its quote"]
+    if ctx.get("docs") is None:
+        return []  # the build checks it, with the record's other quotes
+    doc = ctx["docs"](ref["source"])
+    if doc is None:
+        return [f"{label}: no document {ref['source']}"]
+    return [] if plain(ref["quote"]) in plain(doc) else [f"{label}: quote not in {ref['source']}: {ref['quote']!r}"]
+
+
+def _number_value(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0
+
+
+def _check_number(rec, ch, ctx, state):
+    key, status = str(ch["key"]), ch["status"]
+    if not NUMBER_KEY.fullmatch(key):
+        return [f"number keys are lowercase words joined by underscores: not {key!r}"]
+    if status not in impact.NUMBER_STATUSES:
+        return [f"a number's status is one of {', '.join(impact.NUMBER_STATUSES)}: not {status!r}"]
+    old = _find(rec.get("numbers") or [], "key", key)
+    out = [] if old or (ch.get("label") and ch.get("unit")) else [f"a new number needs a label and a unit ({key})"]
+    value = ch.get("value")
+    if status in impact.KNOWN:
+        if not _number_value(value):
+            return out + [f"a {status} number needs its value, zero or more"]
+        if not impact.mentions(value, ch["quote"]):
+            out.append(f"{impact.fmt(value)} is not in the quote: a number must be pointed at where it was said")
+        if status in ("answered", "estimated") and not ch.get("by"):
+            out.append(f"an {status} number names who {'gave' if status == 'answered' else 'made'} it (by)")
+        found = ch.get("found_in")
+        if found:
+            out += _elsewhere(found, ctx, "found_in")
+            if isinstance(found, dict) and found.get("quote") and not impact.mentions(value, found["quote"]):
+                out.append(f"{impact.fmt(value)} is not in the found_in quote")
+    else:
+        if value is not None:
+            out.append(f"a number that is {status} has no value yet")
+        if status == "asked" and not ch.get("ask"):
+            out.append("an asked number names who was asked (ask)")
+    if ch.get("ask"):
+        out += _entity(ch["ask"], ctx)
+    if old and old["status"] == status and old.get("value") == value and not ch.get("label") and not ch.get("ask"):
+        out.append(f"{key} is already {status}" + (f" at {impact.fmt(value)}" if value is not None else ""))
+    return out
+
+
+def _check_effort(rec, ch, ctx, state):
+    days = ch["days"]
+    if not _number_value(days) or days == 0:
+        return ["estimated effort is a number of person-days above zero"]
+    out = [] if impact.mentions(days, ch["quote"]) else \
+        [f"{impact.fmt(days)} is not in the quote: an estimate must be pointed at where it was made"]
+    if (rec.get("effort") or {}).get("days") == days:
+        out.append(f"effort is already {impact.fmt(days)} person-days")
+    return out
+
+
 CHECKS = {"agree_plan": _check_plan, "set_status": _check_status, "set_field": _check_field,
           "add_dependency": _check_dependency, "add_deliverable": _check_add_deliverable,
           "set_deliverable": _check_set_deliverable, "set_step": _check_step,
           "add_question": _check_add_question, "close_question": _check_close_question,
-          "add_decision": _check_decision, "delete_project": _check_delete, "restore_project": _check_restore}
+          "add_decision": _check_decision, "delete_project": _check_delete, "restore_project": _check_restore,
+          "set_thesis": _check_thesis, "set_number": _check_number, "set_effort": _check_effort}
 
 
 def _problems(state, ch, ctx) -> list:
@@ -505,28 +595,37 @@ def _needs_you(state, ch) -> bool:
         return ch["value"] in CONFIRM or status_of(rec) in CONFIRM
     if ch["op"] == "set_field" and ch["field"] in ("owner", "due"):
         return rec[ch["field"]] is not None  # changing one already set, not filling a gap
+    if ch["op"] == "set_thesis":
+        return rec.get("thesis") is not None
+    if ch["op"] == "set_number":  # a known number changed or withdrawn, not a gap filled
+        old = _find(rec.get("numbers") or [], "key", ch["key"])
+        return bool(old) and old.get("value") is not None and old.get("value") != ch.get("value")
+    if ch["op"] == "set_effort":
+        return rec.get("effort") is not None
     return False
 
 
-def _context(diff, text, names) -> dict:
+def _context(diff, text, names, docs=None) -> dict:
     return {"doc": diff["input"], "kind": diff.get("kind", "transcript"), "on": diff["on"],
-            "by": diff.get("by", "ingest"), "text": text, "plain": plain(text), "names": names}
+            "by": diff.get("by", "ingest"), "text": text, "plain": plain(text), "names": names, "docs": docs}
 
 
-def validate(records, diff, text, names) -> tuple:
+def validate(records, diff, text, names, docs=None) -> tuple:
     """What is wrong with a change set, and which changes need your confirmation.
 
     Returns (problems, confirm), each a list of sentences naming the change by
     number. A set with problems is never applied. Changes are checked in order
     against the records as the earlier ones leave them, so a set can create a
-    project and then add to it. names: name_map() of the graph.
+    project and then add to it. names: name_map() of the graph. docs: a function
+    from a path to that document's text (None when there is none), to check the
+    quote of a number found in another document; left out, the build checks it.
     """
     missing = [k for k in ("input", "on", "changes") if k not in diff]
     if missing:
         return [f"the change set has no {', '.join(missing)}"], []
     if not stated(diff["on"], "", diff["on"]):
         return [f"the change set's date {diff['on']!r} is not YYYY-MM-DD"], []
-    ctx, state = _context(diff, text, names), copy.deepcopy(records)
+    ctx, state = _context(diff, text, names, docs), copy.deepcopy(records)
     problems, confirm = [], []
     for i, ch in enumerate(diff["changes"], 1):
         found = _problems(state, ch, ctx)
@@ -551,7 +650,8 @@ def _label(ch, ev) -> str:
             "add_deliverable": "deliverables", "set_deliverable": f"{ch.get('key')} {ch.get('status')}",
             "set_step": f"step {ch.get('n')} {ch.get('status') or 'due'}", "add_question": "questions",
             "close_question": f"{ch.get('key')} answered", "add_decision": "decisions",
-            "delete_project": "deleted", "restore_project": "restored"}[op]
+            "delete_project": "deleted", "restore_project": "restored", "set_thesis": "thesis",
+            "set_number": f"number {ch.get('key')} {ch.get('status')}", "set_effort": "effort"}[op]
 
 
 def _apply_one(state, ch, ctx) -> dict:
@@ -627,6 +727,35 @@ def _apply_one(state, ch, ctx) -> dict:
         elif op == "restore_project":
             rec["deleted"] = None
             ev = {"old": "deleted", "new": "restored"}
+        elif op == "set_thesis":
+            old = rec.get("thesis")
+            rec["thesis"] = {k: ch.get(k) for k in ("change", "outcome", "direction", "unit", "formula", "reach")}
+            rec["thesis"]["because"] = {"source": ch["because"]["source"], "quote": ch["because"]["quote"]} \
+                if ch.get("because") else None
+            rec["thesis"].update(on=ctx["on"], **src)
+            ev = {"old": old and f"{old['outcome']}, {old['direction']}, {old['unit']}",
+                  "new": f"{ch['outcome']}, {ch['direction']}, {ch['unit']}"}
+        elif op == "set_number":
+            nums = rec.setdefault("numbers", [])
+            n = _find(nums, "key", ch["key"])
+            ev = {"key": ch["key"], "old": n and _number_text(n)}
+            if n is None:
+                n = {"key": ch["key"], "label": ch["label"], "unit": ch["unit"]}
+                nums.append(n)
+            n.update({k: ch[k] for k in ("label", "unit") if ch.get(k)})
+            known = ch["status"] in impact.KNOWN
+            n.update(status=ch["status"], value=ch.get("value") if known else None,
+                     ask=ch.get("ask") or n.get("ask"), question=ch.get("question") or n.get("question"),
+                     by=ch.get("by") if known else None, basis=ch.get("basis") if known else None,
+                     found_in=({"source": ch["found_in"]["source"], "quote": ch["found_in"]["quote"]}
+                               if ch.get("found_in") else None),
+                     on=ctx["on"], **src)
+            ev["new"] = _number_text(n)
+        elif op == "set_effort":
+            old = rec.get("effort")
+            rec["effort"] = {"days": ch["days"], "basis": ch.get("basis"), "by": ch.get("by"), "on": ctx["on"], **src}
+            ev = {"old": old and f"{impact.fmt(old['days'])} person-days",
+                  "new": f"{impact.fmt(ch['days'])} person-days"}
         elif op == "agree_plan":
             old = rec["plan"]
             version = old["version"] + 1
@@ -640,6 +769,13 @@ def _apply_one(state, ch, ctx) -> dict:
             ev = {"old": f"v{old['version']}, {len(old['steps'])} steps" if old["state"] == "agreed" else None,
                   "new": f"v{version}, {len(ch['steps'])} steps"}
     return {"on": ctx["on"], "project": pid, "op": op, **ev, "by": ctx["by"], **src}
+
+
+def _number_text(n) -> str:
+    """A number as its history line gives it: "11 failures a year (found)", "hours per failure (asked)"."""
+    if n.get("value") is None:
+        return f"{n['label']} ({n['status']})"
+    return f"{impact.fmt(n['value'])} {n['unit']} ({n['status']})"
 
 
 def apply(records, diff, text) -> tuple:
@@ -703,6 +839,21 @@ def describe(ch) -> str:
         return f"- project      {p}: deleted (can be restored)"
     if op == "restore_project":
         return f"+ project      {p}: restored"
+    if op == "set_thesis":
+        formula = " × ".join(str(i) if not isinstance(i, dict) else f"{i.get('value')} {i.get('label', '')}".strip()
+                             for i in ch.get("formula") or [])
+        verb = impact.DIRECTIONS.get(ch.get("direction"), ch.get("direction"))
+        return f"+ thesis       {p}: if {ch.get('change')}, {ch.get('outcome')} will {verb} ({ch.get('unit')} = {formula})"
+    if op == "set_number":
+        what = f"{impact.fmt(ch['value'])} {ch.get('unit') or ''}".rstrip() if ch.get("value") is not None \
+            else (ch.get("label") or "")
+        who = f", ask {ch['ask']}" if ch.get("ask") and ch.get("status") in ("needed", "asked") else \
+            f", by {ch['by']}" if ch.get("by") else ""
+        where = f", in {ch['found_in']['source']}" if isinstance(ch.get("found_in"), dict) else ""
+        return f"# number       {p} {ch.get('key')}: {what} ({ch.get('status')}{who}{where})"
+    if op == "set_effort":
+        by = f", by {ch['by']}" if ch.get("by") else ""
+        return f"~ effort       {p}: {impact.fmt(ch.get('days'))} person-days{by}"
     return f"! {op}"
 
 

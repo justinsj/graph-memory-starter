@@ -621,6 +621,9 @@ EVENT_TEXT = {
     "close_question": lambda s, o, n: f"{s} answered: {o}",
     "add_decision": lambda s, o, n: f"decided: {n}",
     "agree_plan": lambda s, o, n: f"plan agreed: {n}",
+    "set_thesis": lambda s, o, n: f"thesis {o} → {n}" if o else f"thesis set: {n}",
+    "set_number": lambda s, o, n: f"number {s}: {o} → {n}" if o else f"number {s}: {n}",
+    "set_effort": lambda s, o, n: f"estimated effort {o} → {n}" if o else f"estimated effort: {n}",
 }
 
 
