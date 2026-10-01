@@ -1,0 +1,284 @@
+{
+ "about": "Questions asked after the evidence is archived, by someone without the database: a planning conversation, a thesis being drafted. Each names the numbers its answer comes from (`from`: archive date/set/key), so the answer cannot drift from the evidence; a `formula` works it out from them, and `answer` gives one that is not a number in the evidence. grade: number (within tolerance), date, word (exact, case aside), keywords (any one of the phrases), none (the evidence does not say: the right answer is to say so). kind: headline (a number the evidence states), derived (arithmetic on stated numbers), caveat (needs what the notes say, not only the numbers), by-number (the question quotes a figure and asks what it is), period (the older archive, or both), out-of-scope (nothing in the evidence answers it). store: true for a question whose right answer is about the stored evidence itself (what it says, or that it does not cover the question), so a run with only the database is not asked it. `support` (a caveat's) is the wording, any one of the phrases, that carries it in the stored evidence: the scorecard checks recall brings it. `slips` are the answers a plausible mistake gives.",
+ "now": "2026-09-23",
+ "questions": [
+  {
+   "id": "q01-sales",
+   "kind": "headline",
+   "question": "What were our sales in July and August 2026, in pounds?",
+   "from": {
+    "v": "2026-09-15/daily-sales/sales"
+   },
+   "grade": "number",
+   "tolerance": 0.5,
+   "unit": "GBP",
+   "slips": {
+    "178187.8": "the order headers",
+    "178974.8": "UTC days"
+   }
+  },
+  {
+   "id": "q02-best-day",
+   "kind": "headline",
+   "question": "Which day in July and August 2026 had the highest sales?",
+   "from": {
+    "v": "2026-09-15/days-ranked/best_day"
+   },
+   "grade": "date"
+  },
+  {
+   "id": "q03-one-line-share",
+   "kind": "headline",
+   "question": "What share of our orders have just one order line?",
+   "from": {
+    "v": "2026-09-15/lines-per-order/single_line_share"
+   },
+   "grade": "number",
+   "tolerance": 0.1,
+   "unit": "%",
+   "slips": {
+    "23.8": "the first half's figure, superseded"
+   }
+  },
+  {
+   "id": "q04-orders-a-day",
+   "kind": "headline",
+   "question": "How many orders a day do we take?",
+   "from": {
+    "v": "2026-09-15/daily-sales/orders_a_day"
+   },
+   "grade": "number",
+   "tolerance": 0.1,
+   "unit": "orders a day",
+   "slips": {
+    "32.3": "the first half's figure, superseded"
+   }
+  },
+  {
+   "id": "q05-best-retail-day",
+   "kind": "caveat",
+   "question": "Leaving trade accounts aside, which day in July and August 2026 was our best for sales?",
+   "from": {
+    "v": "2026-09-15/days-ranked/best_retail_day"
+   },
+   "grade": "date",
+   "slips": {
+    "2026-08-14": "the best day overall, made by one trade order"
+   }
+  },
+  {
+   "id": "q06-single-line-a-day",
+   "kind": "derived",
+   "question": "Roughly how many single-line orders do we get a day?",
+   "from": {
+    "orders": "2026-09-15/daily-sales/orders_a_day",
+    "share": "2026-09-15/lines-per-order/single_line_share"
+   },
+   "formula": "orders * share / 100",
+   "round": 1,
+   "grade": "number",
+   "tolerance": 0.3,
+   "unit": "orders a day"
+  },
+  {
+   "id": "q07-bundle-uplift",
+   "kind": "derived",
+   "question": "If a quarter of our single-line orders added one more line of average value, how much more would we sell a day, in pounds?",
+   "from": {
+    "orders": "2026-09-15/daily-sales/orders_a_day",
+    "share": "2026-09-15/lines-per-order/single_line_share",
+    "line": "2026-09-15/order-value/average_line_amount"
+   },
+   "formula": "orders * share / 100 * 0.25 * line",
+   "round": 2,
+   "grade": "number",
+   "tolerance": 1.5,
+   "unit": "GBP a day"
+  },
+  {
+   "id": "q08-orders-over-50",
+   "kind": "derived",
+   "question": "What share of our orders are worth 50 pounds or more?",
+   "from": {
+    "a": "2026-09-15/order-value/from_50_to_100_share",
+    "b": "2026-09-15/order-value/over_100_share"
+   },
+   "formula": "a + b",
+   "round": 1,
+   "grade": "number",
+   "tolerance": 0.2,
+   "unit": "%"
+  },
+  {
+   "id": "q09-daily-growth",
+   "kind": "period",
+   "question": "How much higher were mean daily sales in July and August 2026 than in the first half of the year, in pounds?",
+   "from": {
+    "now": "2026-09-15/daily-sales/mean_daily_sales",
+    "before": "2026-07-01/daily-sales/mean_daily_sales"
+   },
+   "formula": "now - before",
+   "round": 2,
+   "grade": "number",
+   "tolerance": 1.0,
+   "unit": "GBP"
+  },
+  {
+   "id": "q10-units-from-header",
+   "kind": "caveat",
+   "question": "Can I count the units we sold in July and August 2026 by adding up orders.total_quantity? Answer yes or no.",
+   "from": {
+    "n": "2026-09-15/header-totals/quantity_mismatches"
+   },
+   "answer": "no",
+   "grade": "word",
+   "slips": {
+    "yes": "trusting the header, as the first half's evidence did"
+   },
+   "support": [
+    "differs from their lines",
+    "use order_items",
+    "leave out"
+   ]
+  },
+  {
+   "id": "q11-who-amends",
+   "kind": "caveat",
+   "question": "Whose changes leave an order's header totals out of step with its lines?",
+   "from": {
+    "n": "2026-09-15/header-totals/mismatches_amended"
+   },
+   "answer": "the phone desk",
+   "grade": "keywords",
+   "keywords": [
+    "phone"
+   ],
+   "support": [
+    "phone desk",
+    "phone-desk"
+   ]
+  },
+  {
+   "id": "q12-staff-in-sales",
+   "kind": "caveat",
+   "store": true,
+   "question": "Do the July and August 2026 sales figures include staff purchases? Answer yes or no.",
+   "from": {
+    "v": "2026-09-15/daily-sales/sales"
+   },
+   "answer": "no",
+   "grade": "word",
+   "support": [
+    "staff purchases"
+   ]
+  },
+  {
+   "id": "q13-day-boundary",
+   "kind": "caveat",
+   "store": true,
+   "question": "Are the daily sales figures counted by UTC day or by London day?",
+   "from": {
+    "v": "2026-09-15/daily-sales/days"
+   },
+   "answer": "London",
+   "grade": "keywords",
+   "keywords": [
+    "london",
+    "bst",
+    "british summer time",
+    "local"
+   ],
+   "support": [
+    "london day"
+   ]
+  },
+  {
+   "id": "q14-best-day-order",
+   "kind": "caveat",
+   "question": "Was the largest order on our best day of July and August 2026 a retail order or a trade order?",
+   "from": {
+    "v": "2026-09-15/days-ranked/best_day_largest_order"
+   },
+   "answer": "trade",
+   "grade": "word",
+   "support": [
+    "trade order"
+   ]
+  },
+  {
+   "id": "q15-what-is-23-6",
+   "kind": "by-number",
+   "store": true,
+   "question": "Someone in the planning meeting quoted 23.6%. What is that a share of?",
+   "from": {
+    "v": "2026-09-15/lines-per-order/single_line_share"
+   },
+   "answer": "orders with one order line",
+   "grade": "keywords",
+   "keywords": [
+    "one order line",
+    "one line",
+    "single-line",
+    "single line",
+    "a single order line",
+    "only one line"
+   ]
+  },
+  {
+   "id": "q16-what-is-717-50",
+   "kind": "by-number",
+   "store": true,
+   "question": "Where does the figure of 717.50 pounds come from?",
+   "from": {
+    "v": "2026-09-15/header-totals/amount_missing"
+   },
+   "answer": "sales the order headers leave out",
+   "grade": "keywords",
+   "keywords": [
+    "header",
+    "total_amount",
+    "amended",
+    "amendment"
+   ]
+  },
+  {
+   "id": "q17-h1-one-line",
+   "kind": "period",
+   "question": "In the first half of 2026, what share of our orders had one order line?",
+   "from": {
+    "v": "2026-07-01/lines-per-order/single_line_share"
+   },
+   "grade": "number",
+   "tolerance": 0.1,
+   "unit": "%",
+   "slips": {
+    "23.6": "July and August's figure"
+   }
+  },
+  {
+   "id": "q18-h1-headers",
+   "kind": "period",
+   "question": "In the first half of 2026, did every completed order's total_quantity match the sum of its lines? Answer yes or no.",
+   "from": {
+    "v": "2026-07-01/header-totals/quantity_mismatches"
+   },
+   "answer": "yes",
+   "grade": "word"
+  },
+  {
+   "id": "q19-september",
+   "kind": "out-of-scope",
+   "question": "What were our sales in the first two weeks of September 2026?",
+   "answer": null,
+   "grade": "none",
+   "store": true
+  },
+  {
+   "id": "q20-margin",
+   "kind": "out-of-scope",
+   "question": "What gross margin did we make on July and August 2026's sales?",
+   "answer": null,
+   "grade": "none"
+  }
+ ]
+}
