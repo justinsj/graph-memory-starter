@@ -233,6 +233,36 @@ def project_claims(rec: dict, recs: dict) -> list:
     out += [("decision", f"Decided: {d['text']}", d["quote"], d["on"], None, d["source"]) for d in rec["decisions"]]
     out += [("unknown", f"Open question: {q['text']}", q["quote"], since(q), None, q["source"])
             for q in rec["questions"] if not q.get("answered")]
+    return out + impact_claims(rec)
+
+
+def impact_claims(rec: dict) -> list:
+    """The thesis, each number it rests on and the estimated effort, as claims, so a
+    question about a project's impact is answered with where each figure came from."""
+    th = rec.get("thesis")
+    if not th:
+        return []
+    impact = _projects_module().impact
+    e = impact.evaluate(rec)
+    out = [("note", f"Thesis: {e['thesis']}", th["quote"], th["on"], None, th["source"])]
+    if e["complete"]:
+        out.append(("note", f"Projected impact: {impact.fmt(e['value'])} {e['unit']} ({e['working']})",
+                    th["quote"], max([th["on"]] + [n["on"] for n in e["numbers"]]), None, th["source"]))
+    for n in e["numbers"]:
+        if n.get("value") is not None:
+            how = {"found": f"found in {(n.get('found_in') or {}).get('source') or n['source']}",
+                   "answered": f"answered by {n.get('by')}", "estimated": f"estimated by {n.get('by')}"}[n["status"]]
+            out.append(("note", f"{n['label']}: {impact.fmt(n['value'])} {n['unit']} ({how})", n["quote"], n["on"],
+                        None, n["source"]))
+        else:
+            who = f", asked {n['ask']}" if n.get("ask") and n["status"] == "asked" else ""
+            out.append(("unknown", f"Number still needed: {n['label']} ({n['unit']}){who}", n["quote"], n["on"],
+                        None, n["source"]))
+    effort = rec.get("effort")
+    if effort:
+        by = f", estimated by {effort['by']}" if effort.get("by") else ""
+        out.append(("note", f"Estimated effort: {impact.fmt(effort['days'])} person-days{by}", effort["quote"],
+                    effort["on"], None, effort["source"]))
     return out
 
 
