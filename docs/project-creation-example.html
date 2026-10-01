@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project Creation Example</title>
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } }
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+td code, td .m { white-space: nowrap; }
+.m { font: 12.5px var(--mono); }
+.verb { font: 600 11.5px var(--mono); padding: 1px 6px; border-radius: 4px; background: var(--bg); border: 1px solid var(--hair); }
+.stack { display: grid; gap: 8px; margin: 10px 0 18px; }
+.layer { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: stretch; }
+.layer > b { font: 600 12px/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-top: 10px; }
+.boxes { display: flex; flex-wrap: wrap; gap: 8px; }
+.box { flex: 1 1 8em; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+.box small { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; margin-top: 2px; }
+.box.keep { border-color: var(--good); background: var(--good-bg); }
+.box.new { border-color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin: 0 0 6px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--hair); background: var(--surface); }
+.legend .k::before { border-color: var(--good); background: var(--good-bg); }
+.legend .n::before { border-color: var(--accent); }
+@media (max-width: 620px) { .layer { grid-template-columns: 1fr; gap: 4px; } .layer > b { padding-top: 0; } }
+
+.note { font-size: 14px; color: var(--ink-2); }
+.small { font-size: 12px; color: var(--muted); }
+.quote { color: var(--ink-2); font-family: var(--mono); font-size: 12.5px; }
+pre.code { white-space: pre-wrap; word-break: break-word; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 14px; }
+.flow .st { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; font-weight: 600; max-width: 14em; }
+.flow .st small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.flow .st.gate { border-color: var(--warn); background: var(--warn-bg); }
+.flow .st.done { border-color: var(--good); background: var(--good-bg); }
+.flow .ar { color: var(--muted); }
+table.changes td:first-child { color: var(--muted); }
+h2.first { border-top: 0; padding-top: 0; margin-top: 30px; }
+.glance { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 8px 0 22px; }
+.between { display: flex; justify-content: center; align-items: center; font-size: 12.5px; color: var(--muted); }
+.between .arrow { font-size: 24px; color: var(--accent); line-height: 1; transform: rotate(90deg); margin-right: 12px; }
+.between .step { display: inline; }
+.between .step + .step::before { content: "\00a0·\00a0"; }
+.proj-body { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; }
+.facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--hair); border-radius: 14px; padding: 16px 18px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04); }
+.card-kicker { font: 600 11px/1.4 var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.card-title { font-size: 19px; font-weight: 700; line-height: 1.25; }
+.card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); margin: 8px 0 12px; }
+.card-foot { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.av { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg); border: 1px solid var(--base); font: 600 11px var(--sans); color: var(--ink); flex: none; }
+.av.sm { width: 26px; height: 26px; font-size: 10.5px; }
+.av.xs { width: 20px; height: 20px; font-size: 9px; margin-right: 6px; vertical-align: -5px; }
+.avs { display: inline-flex; } .avs .av + .av { margin-left: -6px; }
+.bubbles { display: grid; gap: 10px; }
+.role { color: var(--muted); font-size: 12px; }
+.att { white-space: nowrap; }
+.small-meta { margin-top: -6px; font-size: 12.5px; color: var(--muted); }
+.known { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.doc { border: 1px solid var(--hair); border-radius: 10px; background: var(--bg); padding: 10px 12px; }
+.doc-kind { font: 600 10.5px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.doc-title { font-size: 14px; font-weight: 700; margin: 2px 0 6px; }
+.doc p { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); margin: 0 0 5px; }
+.submit-meta { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin: 12px 0; }
+.submit-meta label, .ta-label { display: flex; flex-direction: column; gap: 4px; font: 600 10.5px var(--mono); letter-spacing: .05em;
+  text-transform: uppercase; color: var(--muted); }
+.submit-meta input, .submit textarea { font: 13px/1.5 var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--hair);
+  border-radius: 8px; padding: 7px 9px; text-transform: none; letter-spacing: 0; width: 100%; box-sizing: border-box; }
+.submit textarea { margin-top: 4px; resize: vertical; min-height: 120px; }
+.submit textarea:focus, .submit-meta input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.run { margin-top: 14px; }
+.steps { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 12px; }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; animation: rise .35s ease-out both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .step { animation: none; } }
+.step-n { width: 24px; height: 24px; border-radius: 50%; background: var(--good-bg); color: var(--good); border: 1px solid var(--good);
+  display: inline-flex; align-items: center; justify-content: center; font: 700 11.5px var(--sans); }
+.step-title { font-weight: 700; font-size: 14px; }
+.step-detail { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.step-note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.found { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.find { padding: 8px 10px; border: 1px solid var(--hair); border-radius: 10px; background: var(--bg); min-width: 0; }
+.find-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: 13.5px; }
+.find-q { font: 12px var(--mono); color: var(--ink-2); }
+.find-arrow { color: var(--accent); }
+.find-src { font: 11.5px var(--mono); color: var(--muted); margin-top: 1px; }
+.find-claim { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+.checks { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; color: var(--ink-2); }
+.checks li::before { content: "✓ "; color: var(--good); font-weight: 700; }
+.play-h { margin-top: 26px; }
+.play { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; margin: 10px 0 24px; }
+.play-left, .play-right { display: grid; gap: 14px; min-width: 0; }
+.play-right { position: sticky; top: 12px; }
+.play .said.clickable { cursor: pointer; border-radius: 8px; padding: 3px 6px; margin: -3px -6px; }
+.play .said.clickable:hover { background: var(--bg); }
+.play .said.hl { background: var(--good-bg); box-shadow: inset 3px 0 0 var(--good); }
+.play .said.focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.play .said:focus-visible { outline: 2px solid var(--accent); }
+.play-cr-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.play-tools { font-size: 12.5px; margin: 10px 0 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; cursor: pointer; }
+.linkish:disabled { color: var(--muted); cursor: default; }
+.op-row { display: grid; grid-template-columns: 18px 22px minmax(0, 1fr); gap: 8px; align-items: start; padding: 7px 8px;
+  border: 1px solid var(--hair); border-radius: 10px; margin-bottom: 6px; cursor: pointer; background: var(--surface); }
+.op-row.off { opacity: .55; }
+.op-row.hl { border-color: var(--good); background: var(--good-bg); }
+.op-row input { margin-top: 3px; }
+.op-n { font: 600 12px/1.9 var(--mono); color: var(--muted); }
+.op-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.op-label { font-size: 13.5px; font-weight: 600; }
+.op-quote { font: 12px/1.45 var(--mono); color: var(--ink-2); }
+.problem { font-size: 13px; color: var(--warn); background: var(--warn-bg); border: 1px solid var(--warn); border-radius: 8px;
+  padding: 8px 10px; margin: 6px 0; }
+.play-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.btn { font: 600 13px var(--sans); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--base); background: var(--surface);
+  color: var(--ink); cursor: pointer; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.ghost { border-color: transparent; color: var(--accent); background: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.pill.ok { color: var(--good); border-color: var(--good); background: var(--good-bg); }
+.pill.bad { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+.pill.open { color: var(--accent); border-color: var(--accent); }
+.play-proj-state { margin: 2px 0 10px; }
+.pf { display: block; border-radius: 8px; transition: box-shadow .12s, background .12s; }
+.card-title .pf, .desc .pf, .val .pf, .proj-head > .pf { display: inline; }
+.pf.hl { background: var(--good-bg); box-shadow: 0 0 0 2px var(--good); }
+.card-title .pf.hl, .desc .pf.hl, .val .pf.hl { box-shadow: none; border-radius: 4px; padding: 0 2px; }
+.play .deps { display: grid; gap: 6px; }
+.play .dep .sub { margin-top: 2px; }
+.empty { font-size: 13.5px; color: var(--muted); padding: 14px 0 4px; }
+.empty.small { padding: 2px 0; font-size: 12.5px; }
+.hist { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; font-size: 13px; }
+.hist code { font-size: 11.5px; }
+.said { display: grid; grid-template-columns: 26px 64px minmax(0, 1fr); column-gap: 10px; align-items: start;
+  font-size: 13.5px; line-height: 1.5; }
+.said .who { font-weight: 600; padding-top: 3px; }
+.said .words { padding-top: 3px; }
+.used { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tag { font: 500 11px var(--mono); color: var(--accent); background: var(--bg); border: 1px solid var(--hair); border-radius: 999px; padding: 1px 7px; }
+.proj-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.pid { font-size: 11.5px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 12px var(--sans); border-radius: 999px; padding: 3px 10px;
+  border: 1px solid var(--hair); background: var(--bg); color: var(--ink-2); white-space: nowrap; }
+.pill.status { color: var(--accent); border-color: var(--accent); flex-direction: column; gap: 0; line-height: 1.25; padding: 4px 11px; border-radius: 10px; }
+.pill .since { font: 500 10.5px var(--sans); color: var(--muted); }
+.pill.small { font-size: 11px; padding: 1px 8px; }
+.desc { font-size: 14px; color: var(--ink-2); margin: 10px 0 12px; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 10px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.facts > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.lbl { font: 600 10.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.val { font-size: 13.5px; font-weight: 600; }
+.sub { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); }
+.muted { color: var(--muted); font-weight: 400; }
+.sect { font: 600 12px var(--sans); color: var(--ink-2); margin: 14px 0 6px; display: flex; align-items: center; gap: 6px; }
+.count { font: 600 10.5px var(--mono); background: var(--bg); border: 1px solid var(--hair); border-radius: 999px; padding: 0 6px; color: var(--muted); }
+.dls { display: grid; gap: 6px; }
+.dl { display: grid; grid-template-columns: 30px 1fr auto; grid-template-areas: "key title pill" "key meta pill"; column-gap: 8px;
+  align-items: center; padding: 8px 10px; border: 1px solid var(--hair); border-radius: 10px; background: var(--bg); }
+.dl .key { grid-area: key; font: 700 12px var(--mono); color: var(--accent); }
+.dl .dl-title { grid-area: title; font-size: 13.5px; font-weight: 600; }
+.dl .dl-meta { grid-area: meta; font-size: 12px; color: var(--ink-2); }
+.dl .pill { grid-area: pill; }
+.deps { display: grid; gap: 6px; }
+.deps-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 4px; }
+.dep { font-size: 13.5px; padding: 10px 12px; border-left: 3px solid var(--base); background: var(--bg); border-radius: 0 10px 10px 0; }
+.dep-head { margin-bottom: 6px; }
+.dep .kind { font: 600 11px var(--mono); color: var(--muted); margin-right: 4px; text-transform: uppercase; letter-spacing: .04em; }
+.dep-row { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 8px; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); padding: 3px 0; }
+.dep-lbl { font: 600 10.5px/1.9 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.qs { display: grid; gap: 6px; }
+.q { display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 13.5px; align-items: start; }
+.qmark { width: 22px; height: 22px; border-radius: 50%; background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn);
+  display: inline-flex; align-items: center; justify-content: center; font: 700 12px var(--sans); }
+.known.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.thesis { margin: 4px 0 14px; }
+.thesis .sect:first-child { margin-top: 4px; }
+.thesis-text { font-size: 17px; line-height: 1.45; font-weight: 600; margin: 4px 0 8px; }
+.thesis-text mark { background: var(--good-bg); color: var(--good); border-radius: 4px; padding: 0 3px; }
+.thesis-text mark.gap { background: var(--warn-bg); color: var(--warn); font-weight: 500; }
+.because { font-size: 13px; color: var(--ink-2); margin-bottom: 10px; }
+.because .lbl, .step-detail .lbl { margin-right: 6px; }
+.figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fig { border: 1px solid var(--hair); border-radius: 10px; background: var(--bg); padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.fig-v { font-size: 26px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.fig-u { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.fig .sub { margin-top: 4px; line-height: 1.4; }
+.nums { display: grid; gap: 6px; container-type: inline-size; }
+.num { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr) auto; grid-template-areas: "v l chip" "w w w";
+  gap: 2px 10px; align-items: baseline; padding: 8px 10px; border: 1px solid var(--hair); border-radius: 10px; }
+.num-v { grid-area: v; font-size: 13.5px; }
+.num-l { grid-area: l; font-size: 13px; color: var(--ink-2); }
+.num .chip { grid-area: chip; justify-self: end; }
+.num-w { grid-area: w; font-size: 12.5px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.nsrc { font-weight: 600; }
+.nq { font: 12px/1.45 var(--mono); color: var(--ink-2); }
+@container (max-width: 520px) {
+  .num { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "v chip" "l l" "w w"; }
+}
+.chip { font: 600 10.5px var(--mono); letter-spacing: .05em; text-transform: uppercase; border-radius: 999px; padding: 1px 8px;
+  border: 1px solid var(--hair); white-space: nowrap; }
+.chip.is-found { color: var(--good); border-color: var(--good); background: var(--good-bg); }
+.chip.is-answered { color: var(--accent); border-color: var(--accent); }
+.chip.is-estimated, .chip.is-asked, .chip.is-needed { color: var(--warn); border-color: var(--warn); background: var(--warn-bg); }
+.blank { font: 12.5px var(--mono); background: var(--warn-bg); color: var(--warn); border-radius: 4px; padding: 0 4px; }
+.thesis-draft { font-size: 14px; line-height: 1.55; }
+.op-row.static { grid-template-columns: 22px minmax(0, 1fr); cursor: default; }
+.rs-ops { margin-top: 10px; }
+.rs-next { display: grid; gap: 12px; margin-top: 6px; }
+.rs-log { font-size: 13px; color: var(--ink-2); margin-top: 8px; line-height: 1.5; }
+.rs-log:empty { display: none; }
+@media (max-width: 760px) {
+  .proj-body, .known, .known.four, .deps-grid, .play, .found, .submit-meta, .figures { grid-template-columns: 1fr; }
+  .play-right { position: static; }
+}
+@media (max-width: 520px) { .facts { grid-template-columns: 1fr; } }
+details.more { margin: 0 0 16px; }
+details.more > summary { cursor: pointer; font-size: 14px; color: var(--accent); margin: 0 0 8px; }
+details.more > summary code { color: var(--accent); }
+table.routes td:first-child { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.flow .st code { font-size: 11px; }
+</style>
+
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">knowledge layer · a tested example, 30 September 2026</div>
+<h1>A meeting creates a project, and its thesis</h1>
+<p class="lede">One of the tested cases. Submit it first and watch what the knowledge layer does: it proposes the
+project and, at the same time, researches its thesis, what should get better and by how much, from numbers it finds
+in the workspace's documents or asks people for, so the reviewer sees the projected impact while deciding. Then see the service's real output from the same run,
+step by step, and what the tests check.</p>
+<p class="note" id="model-context-pointer">How the graph gets into the model's context, and the exact prompts: <a href="#model-context">How the graph reaches the model</a>.</p>
+
+<h2 id="try" class="first">Try it: submit the transcript</h2>
+<p>Send the meeting transcript to the knowledge layer, watch what it does with it, then review the change request it
+opens and see the project that comes out.</p>
+<p class="note">This replays a recorded run of the service, step by step, in the page. What the service itself
+produced is shown after it, in <a href="#glance">At a glance</a> and the sections below. Every value shown was recorded
+from that run; the review and the project preview run in the page, with the checks the service applies.</p>
+<script type="application/json" id="run-data">{"text": "# Support tooling review, 14 September 2026\nAttendees: Sarah Chen, Priya Patel, Marcus Webb\n\nPriya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.\nSarah: Agreed. Marcus, can you shortlist three options by 23 September?\nMarcus: Yes. I'll need the current tooling inventory to see what integrates.\nSarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.\nPriya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.\nSarah: We haven't decided whether to keep the old system read-only afterwards. Let's come back to that.\n", "steps": [{"title": "Received", "detail": "POST /v1/sources · kind transcript · dated 14 Sep 2026 → 202 Accepted, job job_sb4vv2jzxy9j68"}, {"title": "Stored and fingerprinted", "detail": "6 lines · 650 bytes · SHA-256 0357f4cb29c7…"}, {"title": "Deduplicated", "detail": "A new document (new): no copy of it among the workspace's 10 documents. The closest, tooling-inventory.md, is 0% alike; a near copy is 90% or more."}, {"title": "Read the graph", "detail": "The people, documents and rules the transcript mentions, found in the graph:", "found": [{"phrase": "Priya", "name": "Priya Patel", "type": "PERSON", "source": "org-chart.md", "role": "Support Lead", "claim": "The Support Lead", "links": [], "why": "asked for the new helpdesk", "rank": 1}, {"phrase": "Sarah", "name": "Sarah Chen", "type": "PERSON", "source": "delegation-memo.md", "role": "Ops Manager", "claim": "On leave 1-31 March 2026", "links": [["delegates_to", "Marcus Webb"]], "why": "chaired the meeting", "rank": 1}, {"phrase": "Marcus", "name": "Marcus Webb", "type": "PERSON", "source": "delegation-memo.md", "role": null, "claim": "Covers Sarah Chen's sign-offs and approvals during her leave, with full operational authority", "links": [], "why": "will shortlist the options", "rank": 1}, {"phrase": "Alex", "name": "Alex Doyle", "type": "PERSON", "source": "org-chart.md", "role": "Founder", "claim": "The Founder", "links": [], "why": "signs off the contract", "rank": 1}, {"phrase": "tooling inventory", "name": "Tooling inventory", "type": "DOCUMENT", "source": "tooling-inventory.md", "role": null, "claim": "The systems the company runs on: helpdesk, payments, accounting and the shared drive", "links": [], "why": "Marcus needs it; it lists the helpdesk", "rank": 1}, {"phrase": "over £2,000 … sign-off", "name": "Supplier payments", "type": "POLICY", "source": "supplier-payments.md", "role": null, "claim": "Payments over £2,000 need Founder sign-off before they are scheduled", "links": [["approved_by", "Founder"], ["references", "Tooling inventory"]], "why": "the contract is over £2,000", "rank": 2, "chain": "approved by the Founder, who is Alex Doyle"}]}, {"title": "Looked for an existing project", "detail": "The workspace has 0 projects, so these changes create a project rather than update one."}, {"title": "Proposed changes", "detail": "11 operations: create the project; set its status, requester and due date; 2 dependencies, 3 deliverables, 2 open questions. Each quotes the line it rests on.", "note": "In this recording the case's change set is sent with the transcript; in production the configured extractor proposes it, given the graph's names."}, {"title": "Checked", "checks": ["11 of 11 quotes found word for word in the transcript", "4 names match the graph: Priya Patel, Tooling inventory, Supplier payments, Marcus Webb", "Dates: 14 Sep 2026 is the transcript's own date; 23 Sep 2026 is stated (“by 23 September”)", "Status: a new project may start in planning", "0 problems"]}, {"title": "Change request 1 opened", "detail": "Waiting for a person. Nothing is applied until someone approves it: review it below."}, {"title": "Change request 2 opened beside it: the impact research", "detail": "The new project's thesis, drafted before review: 3 of its numbers found in the graph, 1 to ask a person. It is reviewed with the changes, so the projected impact can inform the decision, and applies once change request 1 has created the project. The graph itself is not rebuilt: what the run changes is saved as a pending diff, applied later."}]}</script>
+<form class="card submit" id="submit-form">
+  <div class="card-kicker">POST /v1/sources</div>
+  <div class="card-title">Submit a transcript</div>
+  <div class="submit-meta">
+    <label>Name<input type="text" value="2026-09-14-support-tooling-review.md" readonly></label>
+    <label>Kind<input type="text" value="transcript" readonly></label>
+    <label>Dated<input type="text" value="2026-09-14" readonly></label>
+  </div>
+  <label class="ta-label" for="submit-text">Transcript</label>
+  <textarea id="submit-text" rows="12" spellcheck="false"># Support tooling review, 14 September 2026
+Attendees: Sarah Chen, Priya Patel, Marcus Webb
+
+Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.
+Sarah: Agreed. Marcus, can you shortlist three options by 23 September?
+Marcus: Yes. I&#x27;ll need the current tooling inventory to see what integrates.
+Sarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.
+Priya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.
+Sarah: We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.</textarea>
+  <div id="submit-warn" class="problem" hidden>The page replays the recorded run, which used the original text. Reset
+  the transcript to submit it.</div>
+  <div class="play-actions">
+    <button type="submit" class="btn primary" id="submit-go">Submit to the knowledge layer</button>
+    <button type="button" class="btn ghost" id="submit-reset">Reset</button>
+  </div>
+</form>
+<div class="card run" id="run" hidden aria-live="polite">
+  <div class="play-cr-head"><div><div class="card-kicker">The knowledge layer</div>
+  <div class="card-title">What it did with the transcript</div></div>
+  <button type="button" class="linkish" id="run-skip">Show all</button></div>
+  <ol class="steps" id="run-steps"></ol>
+</div>
+<div id="play-wrap" hidden>
+<h3 class="play-h">Review the change request</h3>
+<p class="note">Tick or untick the operations: the project on the right shows what approving would apply.
+Click a transcript line to see what came from it; hover an operation or a field to see its line. Without operation 1
+the others change a project that does not exist, and the checks refuse them, as the service's do. The service's own
+result, with all eleven approved, is the project card in <a href="#glance">At a glance</a> below.</p>
+<script type="application/json" id="play-data">{"pid": "helpdesk-migration", "lines": [{"who": "Priya", "full": "Priya Patel", "initials": "PP", "words": "Tagging reports broke again this week. I want us on a new helpdesk before the January peak."}, {"who": "Sarah", "full": "Sarah Chen", "initials": "SC", "words": "Agreed. Marcus, can you shortlist three options by 23 September?"}, {"who": "Marcus", "full": "Marcus Webb", "initials": "MW", "words": "Yes. I'll need the current tooling inventory to see what integrates."}, {"who": "Sarah", "full": "Sarah Chen", "initials": "SC", "words": "The annual contract will be over £2,000, so it goes to Alex for sign-off."}, {"who": "Priya", "full": "Priya Patel", "initials": "PP", "words": "What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported."}, {"who": "Sarah", "full": "Sarah Chen", "initials": "SC", "words": "We haven't decided whether to keep the old system read-only afterwards. Let's come back to that."}], "ops": [{"op": "create_project", "project": "helpdesk-migration", "title": "Helpdesk migration", "aliases": ["new helpdesk"], "description": "Move support to a new helpdesk before the January peak", "quote": "I want us on a new helpdesk before the January peak.", "label": "Create project “Helpdesk migration”", "line": 0}, {"op": "set_status", "project": "helpdesk-migration", "value": "planning", "from": "2026-09-14", "quote": "Agreed. Marcus, can you shortlist three options by 23 September?", "label": "Status: planning, from 14 Sep 2026", "line": 1}, {"op": "set_field", "project": "helpdesk-migration", "field": "requested_by", "value": "Priya Patel", "quote": "Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.", "label": "Requested by: Priya Patel", "line": 0}, {"op": "set_field", "project": "helpdesk-migration", "field": "due", "value": "before the January peak", "quote": "I want us on a new helpdesk before the January peak.", "label": "Due: before the January peak", "line": 0}, {"op": "add_dependency", "project": "helpdesk-migration", "on": "Tooling inventory", "kind": "needs", "quote": "I'll need the current tooling inventory to see what integrates.", "label": "Needs: Tooling inventory", "line": 2}, {"op": "add_dependency", "project": "helpdesk-migration", "on": "Supplier payments", "kind": "subject_to", "quote": "The annual contract will be over £2,000, so it goes to Alex for sign-off.", "label": "Must follow: Supplier payments", "line": 3}, {"op": "add_deliverable", "project": "helpdesk-migration", "key": "D1", "title": "Shortlist of three helpdesks", "owner": "Marcus Webb", "due": "2026-09-23", "quote": "Marcus, can you shortlist three options by 23 September?", "label": "Deliverable D1: Shortlist of three helpdesks", "line": 1}, {"op": "add_deliverable", "project": "helpdesk-migration", "key": "D2", "title": "Migration plan", "quote": "a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.", "label": "Deliverable D2: Migration plan", "line": 4}, {"op": "add_deliverable", "project": "helpdesk-migration", "key": "D3", "title": "New helpdesk live with ticket history imported", "quote": "a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.", "label": "Deliverable D3: New helpdesk live with ticket history imported", "line": 4}, {"op": "add_question", "project": "helpdesk-migration", "key": "Q1", "text": "Does the old helpdesk stay read-only after the move?", "quote": "We haven't decided whether to keep the old system read-only afterwards.", "label": "Question Q1: Does the old helpdesk stay read-only after the move?", "line": 5}, {"op": "add_question", "project": "helpdesk-migration", "key": "Q2", "text": "What date does the January peak start?", "quote": "before the January peak", "label": "Question Q2: What date does the January peak start?", "line": 0}], "roles": {"Sarah Chen": "Ops Manager", "Priya Patel": "Support Lead", "Alex Doyle": "Founder"}, "about": {"Tooling inventory": "The systems the company runs on: helpdesk, payments, accounting and the shared drive", "Supplier payments": "Payments over £2,000 need Founder sign-off before they are scheduled"}, "signoff": "Founder", "holder": "Alex Doyle"}</script>
+<div class="play">
+  <div class="play-left">
+    <div class="card">
+      <div class="card-kicker">Input · meeting transcript</div>
+      <div class="card-title">Support tooling review, 14 September 2026</div>
+      <div class="bubbles" id="play-lines"></div>
+    </div>
+    <div class="card">
+      <div class="play-cr-head">
+        <div><div class="card-kicker">Review · change request 1</div>
+        <div class="card-title">Changes from the transcript</div></div>
+        <span class="pill" id="play-state">open</span>
+      </div>
+      <div class="play-tools"><button type="button" class="linkish" id="play-all">Select all</button> ·
+        <button type="button" class="linkish" id="play-none">Select none</button>
+        <span class="muted" id="play-count"></span></div>
+      <div id="play-ops"></div>
+      <div id="play-problems"></div>
+      <div class="play-actions">
+        <button type="button" class="btn primary" id="play-approve">Approve selected</button>
+        <button type="button" class="btn" id="play-reject">Reject</button>
+        <button type="button" class="btn ghost" id="play-reset">Reset</button>
+      </div>
+    </div>
+  </div>
+  <div class="play-right">
+    <div id="play-project"></div>
+    <div id="play-history"></div>
+  </div>
+</div>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('play-data').textContent);
+  const $ = id => document.getElementById(id);
+  const CREATE = D.ops.findIndex(o => o.op === 'create_project');
+  let selected = new Set(D.ops.map((_, i) => i)), decided = null, focusLine = null, hoverOp = null, hoverLine = null;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  const initials = n => n.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const niceDate = iso => { const [y, m, d] = iso.split('-').map(Number); return d + ' ' + MONTHS[m - 1] + ' ' + y; };
+
+  function project() {  // the selected operations applied in order, as projects/model.py applies them
+    if (!selected.has(CREATE)) return null;
+    const p = {deps: [], deliverables: [], questions: [], src: {}};
+    D.ops.forEach((o, i) => {
+      if (!selected.has(i)) return;
+      if (o.op === 'create_project') { p.title = o.title; p.description = o.description; p.src.title = i; }
+      if (o.op === 'set_status') { p.status = {value: o.value, from: o.from}; p.src.status = i; }
+      if (o.op === 'set_field') { p[o.field] = o.field === 'due' ? {text: o.value, date: o.date || null} : o.value; p.src[o.field] = i; }
+      if (o.op === 'add_dependency') p.deps.push({...o, i});
+      if (o.op === 'add_deliverable') p.deliverables.push({...o, i});
+      if (o.op === 'add_question') p.questions.push({...o, i});
+    });
+    return p;
+  }
+  function problems() {
+    if (selected.has(CREATE) || !selected.size) return [];
+    return ['Operations ' + [...selected].map(i => i + 1).join(', ') + ' change the project that operation 1 creates. ' +
+            'Without it the checks refuse them: “no project ' + D.pid + '”.'];
+  }
+  function active() {  // the operations to highlight
+    if (hoverOp !== null) return new Set([hoverOp]);
+    const line = hoverLine !== null ? hoverLine : focusLine;
+    return line === null ? new Set() : new Set(D.ops.map((o, i) => o.line === line ? i : -1).filter(i => i >= 0));
+  }
+  function field(i, html) { return '<span class="pf' + (active().has(i) ? ' hl' : '') + '" data-op="' + i + '">' + html + '</span>'; }
+
+  function renderLines() {
+    const act = active(), lit = new Set([...act].map(i => D.ops[i].line));
+    if (focusLine !== null && hoverOp === null) lit.add(focusLine);
+    $('play-lines').innerHTML = D.lines.map((l, n) =>
+      '<div class="said clickable' + (lit.has(n) ? ' hl' : '') + (focusLine === n ? ' focus' : '') + '" data-line="' + n +
+      '" tabindex="0" role="button" aria-pressed="' + (focusLine === n) + '"><span class="av sm" title="' + esc(l.full) + '">' +
+      esc(l.initials) + '</span><b class="who">' + esc(l.who) + '</b><span class="words">' + esc(l.words) + '</span></div>').join('');
+  }
+  function renderOps() {
+    const act = active(), locked = decided !== null;
+    $('play-ops').innerHTML = D.ops.map((o, i) =>
+      '<label class="op-row' + (act.has(i) ? ' hl' : '') + (selected.has(i) ? '' : ' off') + '" data-op="' + i + '">' +
+      '<input type="checkbox" data-i="' + i + '"' + (selected.has(i) ? ' checked' : '') + (locked ? ' disabled' : '') + '>' +
+      '<span class="op-n">' + (i + 1) + '</span><span class="op-body"><span class="op-label">' + esc(o.label) + '</span>' +
+      '<span class="op-quote">“' + esc(o.quote) + '” <span class="muted">line ' + (o.line + 1) + '</span></span></span></label>').join('');
+    $('play-count').textContent = selected.size + ' of ' + D.ops.length + ' selected';
+    const probs = problems();
+    $('play-problems').innerHTML = probs.map(p => '<div class="problem">' + esc(p) + '</div>').join('');
+    $('play-approve').disabled = locked || !selected.size || probs.length > 0;
+    $('play-reject').disabled = locked;
+    $('play-all').disabled = $('play-none').disabled = locked;
+    $('play-approve').textContent = 'Approve ' + (selected.size === D.ops.length ? 'all' : selected.size + ' selected');
+    const st = $('play-state');
+    st.textContent = decided === 'approved' ? 'applied · ' + selected.size + ' of ' + D.ops.length :
+                     decided === 'rejected' ? 'rejected' : 'open';
+    st.className = 'pill ' + (decided === 'approved' ? 'ok' : decided === 'rejected' ? 'bad' : 'open');
+  }
+  function renderProject() {
+    const p = project();
+    const head = decided === 'approved' ? '<span class="pill ok">Applied · version 1</span>' :
+                 decided === 'rejected' ? '<span class="pill bad">Rejected · nothing applied</span>' :
+                 '<span class="pill open">Preview · what approving would apply</span>';
+    if (decided === 'rejected' || !p) {
+      $('play-project').innerHTML = '<div class="card project"><div class="card-kicker">Output · project</div>' + head +
+        '<div class="empty">' + (decided === 'rejected' ? 'The request was rejected, so no project exists.' :
+        'No project: operation 1 (create project) is not selected.') + '</div></div>';
+      return;
+    }
+    const role = p.requested_by && D.roles[p.requested_by];
+    const deps = p.deps.map(d => {
+      const what = D.about[d.on] ? '<span class="sub">' + esc(D.about[d.on]) + (d.on === 'Supplier payments' && D.holder ?
+                   '; signed off by ' + esc(D.holder) + ', the ' + esc(D.signoff) : '') + '</span>' : '';
+      return field(d.i, '<div class="dep"><div class="dep-head"><span class="kind">' + (d.kind === 'needs' ? 'Needs' : 'Must follow') +
+                     '</span> <b>' + esc(d.on) + '</b></div>' + what + '</div>');
+    }).join('');
+    $('play-project').innerHTML = '<div class="card project"><div class="card-kicker">Output · project</div>' +
+      '<div class="play-proj-state">' + head + '</div>' +
+      '<div class="proj-head"><div><div class="card-title">' + field(p.src.title, esc(p.title)) + '</div><code class="pid">' +
+      esc(D.pid) + '</code></div>' + (p.status ? field(p.src.status, '<span class="pill status">' + esc(p.status.value[0].toUpperCase() +
+      p.status.value.slice(1)) + '<span class="since">since ' + niceDate(p.status.from) + '</span></span>') :
+      '<span class="pill">no status yet</span>') + '</div>' +
+      '<p class="desc">' + field(p.src.title, esc(p.description)) + '</p>' +
+      '<div class="facts"><div><span class="lbl">Requested by</span><span class="val">' + (p.requested_by ?
+        field(p.src.requested_by, '<span class="av xs">' + initials(p.requested_by) + '</span>' + esc(p.requested_by) +
+        (role ? '<span class="sub">' + esc(role) + '</span>' : '')) : '<span class="muted">not set</span>') + '</span></div>' +
+      '<div><span class="lbl">Owner</span><span class="val muted">not set yet</span></div>' +
+      '<div><span class="lbl">Due</span><span class="val">' + (p.due ? field(p.src.due, esc(p.due.text) + (p.due.date ? '' :
+        '<span class="sub">no date given</span>')) : '<span class="muted">not set</span>') + '</span></div></div>' +
+      '<div class="sect">Thesis</div><div class="empty small">Proposed beside it, in change request 2: see below.</div>' +
+      '<div class="sect">Deliverables <span class="count">' + p.deliverables.length + '</span></div><div class="dls">' +
+      (p.deliverables.map(d => field(d.i, '<div class="dl"><span class="key">' + esc(d.key) + '</span><span class="dl-title">' +
+        esc(d.title) + '</span><span class="dl-meta">' + (d.owner ? '<span class="av xs">' + initials(d.owner) + '</span>' + esc(d.owner) :
+        '<span class="muted">no owner</span>') + (d.due ? ' · due ' + niceDate(d.due) : '') +
+        '</span><span class="pill small">planned</span></div>')).join('') || '<div class="empty small">none</div>') + '</div>' +
+      '<div class="sect">Needs and rules <span class="count">' + p.deps.length + '</span></div><div class="deps">' +
+      (deps || '<div class="empty small">none</div>') + '</div>' +
+      '<div class="sect">Open questions <span class="count">' + p.questions.length + '</span></div><div class="qs">' +
+      (p.questions.map(q => field(q.i, '<div class="q"><span class="qmark">?</span><span><b>' + esc(q.key) + '</b> ' + esc(q.text) +
+        '</span></div>')).join('') || '<div class="empty small">none</div>') + '</div></div>';
+  }
+  function renderHistory() {
+    if (decided !== 'approved') { $('play-history').innerHTML = ''; return; }
+    const rows = D.ops.map((o, i) => selected.has(i) ? '<li><code>' + esc(o.op) + '</code> ' + esc(o.label) +
+      ' <span class="muted">· ingest job, approved by you · quotes line ' + (o.line + 1) + '</span></li>' : '').join('');
+    const skipped = D.ops.length - selected.size;
+    $('play-history').innerHTML = '<div class="card"><div class="card-kicker">The project’s history</div><ol class="hist">' + rows +
+      '</ol>' + (skipped ? '<p class="note">' + skipped + ' operation' + (skipped > 1 ? 's were' : ' was') +
+      ' not approved: the change request records ' + (skipped > 1 ? 'them' : 'it') + ' as skipped.</p>' : '') + '</div>';
+  }
+  function render() { renderLines(); renderOps(); renderProject(); renderHistory(); }
+
+  $('play-ops').addEventListener('change', e => {
+    const i = Number(e.target.dataset.i);
+    if (e.target.checked) selected.add(i); else selected.delete(i);
+    render();
+  });
+  $('play-all').onclick = () => { selected = new Set(D.ops.map((_, i) => i)); render(); };
+  $('play-none').onclick = () => { selected = new Set(); render(); };
+  $('play-approve').onclick = () => { decided = 'approved'; render(); };
+  $('play-reject').onclick = () => { decided = 'rejected'; render(); };
+  $('play-reset').onclick = () => { selected = new Set(D.ops.map((_, i) => i)); decided = null; focusLine = null; render(); };
+  const toggleLine = n => { focusLine = focusLine === n ? null : n; render(); };
+  $('play-lines').addEventListener('click', e => { const r = e.target.closest('[data-line]'); if (r) toggleLine(Number(r.dataset.line)); });
+  $('play-lines').addEventListener('keydown', e => {
+    const r = e.target.closest('[data-line]');
+    if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleLine(Number(r.dataset.line)); }
+  });
+  const hover = (root, attr, set) => {
+    root.addEventListener('mouseover', e => { const r = e.target.closest('[' + attr + ']'); const v = r ? Number(r.getAttribute(attr)) : null;
+      if (v !== get(set)) { put(set, v); render(); } });
+    root.addEventListener('mouseleave', () => { if (get(set) !== null) { put(set, null); render(); } });
+  };
+  const get = k => k === 'op' ? hoverOp : hoverLine, put = (k, v) => { if (k === 'op') hoverOp = v; else hoverLine = v; };
+  hover($('play-ops'), 'data-op', 'op');
+  hover($('play-project'), 'data-op', 'op');
+  hover($('play-lines'), 'data-line', 'line');
+  render();
+})();
+</script>
+<div id="rs" hidden>
+<h3 class="play-h">Beside it: the impact research</h3>
+<p>When the meeting arrived, the knowledge layer also drafted the new project's thesis, before anyone reviewed it:
+what should get better if the project is done, and by how much, with every number found in a document or asked of a
+person. It opened that as change request 2 beside change request 1, so the projected impact can inform the
+review. It applies once change request 1 has created the project.</p>
+<script type="application/json" id="rs-data">{"steps": ["<li class=\"step\"><span class=\"step-n\">1<\/span><div><div class=\"step-title\">Drafted a thesis<\/div><div class=\"step-detail thesis-draft\">If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially <span class=\"blank\">tagging report failures × support agents × hours each agent loses per failure<\/span> hours a year, across <span class=\"blank\">active clients<\/span>.<\/div><div class=\"step-detail\"><span class=\"lbl\">Because<\/span> “Tagging reports broke again this week.” <span class=\"muted\">(Priya Patel, line 1)<\/span><\/div><div class=\"step-note\">The amount is never written by hand: it is the product of the numbers in the blanks. In this recording the draft comes from the test fixture (tests/fixtures/impact/theses.json); in production the configured model drafts it in a call of its own, run at the same time as the change set's, from the transcript and the graph's figures (projects/thesis-prompt.md).<\/div><\/div><\/li>", "<li class=\"step\"><span class=\"step-n\">2<\/span><div><div class=\"step-title\">Looked for each number in the graph<\/div><div class=\"step-detail\">A number counts as found only when one fact has every word of its label and states one figure. What no document states is asked of a person the graph knows.<\/div><div class=\"found\"><div class=\"find\"><div class=\"find-top\"><span class=\"find-q\">“tagging report failures”<\/span><span class=\"find-arrow\">→<\/span><b>11 failures a year<\/b> <span class=\"chip is-found\">found<\/span><\/div><div class=\"find-src\">Support metrics · support-metrics.md<\/div><div class=\"find-claim\">“Tagging reports failed 11 times over the past year.”<\/div><\/div><div class=\"find\"><div class=\"find-top\"><span class=\"find-q\">“support agents”<\/span><span class=\"find-arrow\">→<\/span><b>4 agents<\/b> <span class=\"chip is-found\">found<\/span><\/div><div class=\"find-src\">Support metrics · support-metrics.md<\/div><div class=\"find-claim\">“The support rota has 4 agents.”<\/div><\/div><div class=\"find\"><div class=\"find-top\"><span class=\"find-q\">“hours each agent loses per failure”<\/span><span class=\"find-arrow\">→<\/span><b>in no document<\/b> <span class=\"chip is-asked\">ask<\/span><\/div><div class=\"find-src\">Priya Patel, Support Lead: who asked for the project<\/div><div class=\"find-claim\">When the tagging reports fail, about how many hours does each agent lose?<\/div><\/div><div class=\"find\"><div class=\"find-top\"><span class=\"find-q\">“active clients”<\/span><span class=\"find-arrow\">→<\/span><b>1,240 active clients<\/b> <span class=\"chip is-found\">found<\/span><\/div><div class=\"find-src\">Support metrics · support-metrics.md<\/div><div class=\"find-claim\">“Support serves 1,240 active clients.”<\/div><\/div><\/div><\/div><\/li>", "<li class=\"step\"><span class=\"step-n\">3<\/span><div><div class=\"step-title\">Checked<\/div><ul class=\"checks\"><li>3 figures found, each in the sentence it came from, each sentence word for word in its document<\/li><li>Priya Patel is in the graph: Support Lead (org-chart.md)<\/li><li>0 problems<\/li><\/ul><\/div><\/li>", "<li class=\"step\"><span class=\"step-n\">4<\/span><div><div class=\"step-title\">Change request 2 opened, beside change request 1<\/div><div class=\"step-detail\">Proposed by impact research, not by a person, before review. Nothing is recorded until someone approves it, and not before change request 1 has created the project: review it below.<\/div><\/div><\/li>"], "stages": {"preview": "<div class=\"card project\"><div class=\"card-kicker\">Output · the project’s thesis<\/div><div class=\"play-proj-state\"><span class=\"pill open\">Preview · what approving would apply<\/span><\/div><p class=\"thesis-text\">If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall <mark class=\"gap\">by an amount still being researched (2 of 3 numbers in)<\/mark>, across <b>1,240 active clients<\/b>.<\/p><div class=\"because\"><span class=\"lbl\">Because<\/span> “Tagging reports broke again this week.” <span class=\"muted\">(Priya Patel, in the meeting)<\/span><\/div><div class=\"figures\"><div class=\"fig\"><span class=\"lbl\">Projected impact<\/span><span class=\"fig-v muted\">?<\/span><span class=\"fig-u\">hours a year<\/span><span class=\"sub\">waiting on 1 number<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Estimated effort<\/span><span class=\"fig-v muted\">?<\/span><span class=\"fig-u\">person-days<\/span><span class=\"sub\">not estimated yet<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Priority<\/span><span class=\"fig-v muted\">–<\/span><span class=\"fig-u\">not ranked yet<\/span><span class=\"sub\">numbers still being researched: hours_per_failure<\/span><\/div><\/div><div class=\"sect\">The numbers behind it <span class=\"count\">4<\/span><\/div><div class=\"nums\"><div class=\"num\"><div class=\"num-v\"><b>11<\/b> failures a year<\/div><div class=\"num-l\">tagging report failures<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Tagging reports failed 11 times over the past year.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>4<\/b> agents<\/div><div class=\"num-l\">support agents<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“The support rota has 4 agents.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><span class=\"muted\">?<\/span><\/div><div class=\"num-l\">hours each agent loses per failure<\/div><span class=\"chip is-asked\">asked<\/span><div class=\"num-w\"><span class=\"nsrc\">asked Priya Patel<\/span><span class=\"nq\">When the tagging reports fail, about how many hours does each agent lose?<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>1,240<\/b> active clients<\/div><div class=\"num-l\">active clients <span class=\"muted\">· reach<\/span><\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Support serves 1,240 active clients.”<\/span><\/div><\/div><\/div><\/div>", "s1": "<div class=\"card project\"><div class=\"card-kicker\">Output · the project’s thesis<\/div><div class=\"play-proj-state\"><span class=\"pill ok\">Applied · version 2<\/span><\/div><p class=\"thesis-text\">If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall <mark class=\"gap\">by an amount still being researched (2 of 3 numbers in)<\/mark>, across <b>1,240 active clients<\/b>.<\/p><div class=\"because\"><span class=\"lbl\">Because<\/span> “Tagging reports broke again this week.” <span class=\"muted\">(Priya Patel, in the meeting)<\/span><\/div><div class=\"figures\"><div class=\"fig\"><span class=\"lbl\">Projected impact<\/span><span class=\"fig-v muted\">?<\/span><span class=\"fig-u\">hours a year<\/span><span class=\"sub\">waiting on 1 number<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Estimated effort<\/span><span class=\"fig-v muted\">?<\/span><span class=\"fig-u\">person-days<\/span><span class=\"sub\">not estimated yet<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Priority<\/span><span class=\"fig-v muted\">–<\/span><span class=\"fig-u\">not ranked yet<\/span><span class=\"sub\">numbers still being researched: hours_per_failure<\/span><\/div><\/div><div class=\"sect\">The numbers behind it <span class=\"count\">4<\/span><\/div><div class=\"nums\"><div class=\"num\"><div class=\"num-v\"><b>11<\/b> failures a year<\/div><div class=\"num-l\">tagging report failures<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Tagging reports failed 11 times over the past year.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>4<\/b> agents<\/div><div class=\"num-l\">support agents<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“The support rota has 4 agents.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><span class=\"muted\">?<\/span><\/div><div class=\"num-l\">hours each agent loses per failure<\/div><span class=\"chip is-asked\">asked<\/span><div class=\"num-w\"><span class=\"nsrc\">asked Priya Patel<\/span><span class=\"nq\">When the tagging reports fail, about how many hours does each agent lose?<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>1,240<\/b> active clients<\/div><div class=\"num-l\">active clients <span class=\"muted\">· reach<\/span><\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Support serves 1,240 active clients.”<\/span><\/div><\/div><\/div><\/div>", "s2": "<div class=\"card project\"><div class=\"card-kicker\">Output · the project’s thesis<\/div><div class=\"play-proj-state\"><span class=\"pill ok\">Applied · version 3<\/span><\/div><p class=\"thesis-text\">If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially <mark>264 hours a year<\/mark>, across <b>1,240 active clients<\/b>.<\/p><div class=\"because\"><span class=\"lbl\">Because<\/span> “Tagging reports broke again this week.” <span class=\"muted\">(Priya Patel, in the meeting)<\/span><\/div><div class=\"figures\"><div class=\"fig\"><span class=\"lbl\">Projected impact<\/span><span class=\"fig-v\">264<\/span><span class=\"fig-u\">hours a year<\/span><span class=\"sub\">11 failures a year × 4 agents × 6 hours per agent<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Estimated effort<\/span><span class=\"fig-v muted\">?<\/span><span class=\"fig-u\">person-days<\/span><span class=\"sub\">not estimated yet<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Priority<\/span><span class=\"fig-v muted\">–<\/span><span class=\"fig-u\">not ranked yet<\/span><span class=\"sub\">no estimated effort yet<\/span><\/div><\/div><div class=\"sect\">The numbers behind it <span class=\"count\">4<\/span><\/div><div class=\"nums\"><div class=\"num\"><div class=\"num-v\"><b>11<\/b> failures a year<\/div><div class=\"num-l\">tagging report failures<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Tagging reports failed 11 times over the past year.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>4<\/b> agents<\/div><div class=\"num-l\">support agents<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“The support rota has 4 agents.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>6<\/b> hours per agent<\/div><div class=\"num-l\">hours each agent loses per failure<\/div><span class=\"chip is-answered\">answered<\/span><div class=\"num-w\"><span class=\"nsrc\">Priya Patel, when asked<\/span><span class=\"nq\">“About 6 hours per agent, rebuilding the queues by hand.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>1,240<\/b> active clients<\/div><div class=\"num-l\">active clients <span class=\"muted\">· reach<\/span><\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Support serves 1,240 active clients.”<\/span><\/div><\/div><\/div><\/div>", "s3": "<div class=\"card project\"><div class=\"card-kicker\">Output · the project’s thesis<\/div><div class=\"play-proj-state\"><span class=\"pill ok\">Applied · version 4<\/span><\/div><p class=\"thesis-text\">If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially <mark>264 hours a year<\/mark>, across <b>1,240 active clients<\/b>.<\/p><div class=\"because\"><span class=\"lbl\">Because<\/span> “Tagging reports broke again this week.” <span class=\"muted\">(Priya Patel, in the meeting)<\/span><\/div><div class=\"figures\"><div class=\"fig\"><span class=\"lbl\">Projected impact<\/span><span class=\"fig-v\">264<\/span><span class=\"fig-u\">hours a year<\/span><span class=\"sub\">11 failures a year × 4 agents × 6 hours per agent<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Estimated effort<\/span><span class=\"fig-v\">15<\/span><span class=\"fig-u\">person-days<\/span><span class=\"sub\">Marcus Webb: the shortlist, a migration plan, and importing the ticket history<\/span><\/div><div class=\"fig\"><span class=\"lbl\">Priority<\/span><span class=\"fig-v\">17.6<\/span><span class=\"fig-u\">hours a year per person-day<\/span><span class=\"sub\">£792 a year per person-day at £45 a staff hour · ranked 1st of 1 open project<\/span><\/div><\/div><div class=\"sect\">The numbers behind it <span class=\"count\">4<\/span><\/div><div class=\"nums\"><div class=\"num\"><div class=\"num-v\"><b>11<\/b> failures a year<\/div><div class=\"num-l\">tagging report failures<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Tagging reports failed 11 times over the past year.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>4<\/b> agents<\/div><div class=\"num-l\">support agents<\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“The support rota has 4 agents.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>6<\/b> hours per agent<\/div><div class=\"num-l\">hours each agent loses per failure<\/div><span class=\"chip is-answered\">answered<\/span><div class=\"num-w\"><span class=\"nsrc\">Priya Patel, when asked<\/span><span class=\"nq\">“About 6 hours per agent, rebuilding the queues by hand.”<\/span><\/div><\/div><div class=\"num\"><div class=\"num-v\"><b>1,240<\/b> active clients<\/div><div class=\"num-l\">active clients <span class=\"muted\">· reach<\/span><\/div><span class=\"chip is-found\">found<\/span><div class=\"num-w\"><span class=\"nsrc\">Support metrics<\/span><span class=\"nq\">“Support serves 1,240 active clients.”<\/span><\/div><\/div><\/div><\/div>"}, "log": {"s1": "Change request 2 applied. The service sent the question to <b>Priya Patel<\/b> (event <code>number.asked<\/code>): “When the tagging reports fail, about how many hours does each agent lose?”", "s2": "<b>Priya Patel<\/b> answered: “About 6 hours per agent, rebuilding the queues by hand.” Change request 3, proposed and approved by Priya Patel: one approval is enough.", "s3": "<b>Marcus Webb<\/b> estimated 15 person-days: the shortlist, a migration plan, and importing the ticket history. Change request 4, approved by you. The workspace values a staff hour at £45 (<code>settings.unit_values<\/code>), so the priority can also be read in money."}}</script>
+<div class="card run">
+  <div class="play-cr-head"><div><div class="card-kicker">The knowledge layer</div>
+  <div class="card-title">What it did beside the change set</div></div>
+  <button type="button" class="linkish" id="rs-skip">Show all</button></div>
+  <ol class="steps" id="rs-steps"></ol>
+</div>
+<div class="play" id="rs-play" hidden>
+  <div class="play-left">
+    <div class="card">
+      <div class="play-cr-head">
+        <div><div class="card-kicker">Review · change request 2 · proposed by impact research</div>
+        <div class="card-title">Thesis and its numbers</div></div>
+        <span class="pill open" id="rs-state">open</span>
+      </div>
+      <div class="rs-ops"><div class="op-row static"><span class="op-n">1</span><span class="op-body"><span class="op-label">Thesis: if support moves to a new helpdesk, the support hours lost to broken tagging reports will fall (hours a year)</span><span class="op-quote">Formula: tagging report failures × support agents × hours each agent loses per failure</span></span></div><div class="op-row static"><span class="op-n">2</span><span class="op-body"><span class="op-label">tagging report failures: 11 failures a year</span><span class="op-quote">found in Support metrics: “Tagging reports failed 11 times over the past year.”</span></span></div><div class="op-row static"><span class="op-n">3</span><span class="op-body"><span class="op-label">support agents: 4 agents</span><span class="op-quote">found in Support metrics: “The support rota has 4 agents.”</span></span></div><div class="op-row static"><span class="op-n">4</span><span class="op-body"><span class="op-label">hours each agent loses per failure: ask Priya Patel</span><span class="op-quote">When the tagging reports fail, about how many hours does each agent lose?</span></span></div><div class="op-row static"><span class="op-n">5</span><span class="op-body"><span class="op-label">active clients: 1,240 active clients</span><span class="op-quote">found in Support metrics: “Support serves 1,240 active clients.”</span></span></div></div>
+      <div class="play-actions">
+        <button type="button" class="btn primary" id="rs-approve">Approve change request 2</button>
+        <span class="muted" id="rs-wait">Approve change request 1 first: the project must exist.</span>
+        <button type="button" class="btn ghost" id="rs-reset">Reset</button>
+      </div>
+      <div class="rs-log" id="rs-log-1"></div>
+    </div>
+    <div class="card">
+      <div class="card-kicker">Then the people answer</div>
+      <div class="rs-next">
+        <div><button type="button" class="btn" id="rs-priya">Priya Patel answers the question</button>
+        <div class="rs-log" id="rs-log-2"></div></div>
+        <div><button type="button" class="btn" id="rs-marcus">Marcus Webb estimates the effort</button>
+        <div class="rs-log" id="rs-log-3"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="play-right"><div id="rs-thesis"></div></div>
+</div>
+</div>
+</div><script>
+(() => {
+  const R = JSON.parse(document.getElementById('run-data').textContent);
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  const norm = t => t.replace(/\s+/g, ' ').trim();
+  let timers = [];
+  function stepHtml(st, n) {
+    let body = st.detail ? '<div class="step-detail">' + esc(st.detail) + '</div>' : '';
+    if (st.found) body += '<div class="found">' + st.found.map(f =>
+      '<div class="find"><div class="find-top"><span class="find-q">“' + esc(f.phrase) + '”</span><span class="find-arrow">→</span>' +
+      '<b>' + esc(f.name) + '</b> <span class="pill small">' + esc(f.type.toLowerCase()) + '</span>' +
+      (f.role ? ' <span class="role">' + esc(f.role) + '</span>' : '') + '</div>' +
+      '<div class="find-src">' + esc(f.source) + (f.why ? ' · ' + esc(f.why) : '') + '</div>' +
+      (f.claim && (!f.role || f.claim.toLowerCase() !== ('the ' + f.role).toLowerCase()) ?
+        '<div class="find-claim">' + esc(f.claim) + (f.chain ? '; ' + esc(f.chain) : '') + '</div>' : '') +
+      '</div>').join('') + '</div>';
+    if (st.checks) body += '<ul class="checks">' + st.checks.map(c => '<li>' + esc(c) + '</li>').join('') + '</ul>';
+    if (st.note) body += '<div class="step-note">' + esc(st.note) + '</div>';
+    return '<li class="step"><span class="step-n">' + (n + 1) + '</span><div><div class="step-title">' + esc(st.title) +
+      '</div>' + body + '</div></li>';
+  }
+  function finish() {
+    timers.forEach(clearTimeout); timers = [];
+    $('run-steps').innerHTML = R.steps.map(stepHtml).join('');
+    $('run-skip').hidden = true;
+    $('play-wrap').hidden = false;
+    document.dispatchEvent(new Event('review-ready'));
+  }
+  function start() {
+    $('run').hidden = false; $('run-skip').hidden = false; $('run-steps').innerHTML = '';
+    R.steps.forEach((st, n) => timers.push(setTimeout(() => {
+      $('run-steps').insertAdjacentHTML('beforeend', stepHtml(st, n));
+      if (n === R.steps.length - 1) finish();
+    }, 550 * (n + 1))));
+  }
+  $('submit-form').addEventListener('submit', e => {
+    e.preventDefault();
+    if (norm($('submit-text').value) !== norm(R.text)) { $('submit-warn').hidden = false; return; }
+    $('submit-warn').hidden = true;
+    $('submit-text').readOnly = true; $('submit-go').disabled = true;
+    start();
+  });
+  $('run-skip').addEventListener('click', finish);
+  $('submit-reset').addEventListener('click', () => {
+    timers.forEach(clearTimeout); timers = [];
+    $('submit-text').value = R.text; $('submit-text').readOnly = false; $('submit-go').disabled = false;
+    $('submit-warn').hidden = true; $('run').hidden = true; $('play-wrap').hidden = true;
+    const reset = document.getElementById('play-reset'); if (reset) reset.click();
+  });
+})();
+</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('rs-data').textContent);
+  const $ = id => document.getElementById(id);
+  let stage = 'preview', timers = [];
+  function renderStage() {
+    $('rs-thesis').innerHTML = D.stages[stage];
+    $('rs-state').textContent = stage === 'preview' ? 'open' : 'applied';
+    $('rs-state').className = 'pill ' + (stage === 'preview' ? 'open' : 'ok');
+    const made = $('play-state').textContent.indexOf('applied') === 0;
+    $('rs-approve').disabled = stage !== 'preview' || !made;
+    const rejected = $('play-state').textContent.indexOf('rejected') === 0;
+    $('rs-wait').hidden = made || stage !== 'preview';
+    $('rs-wait').textContent = rejected ? 'Change request 1 was rejected, so there is no project for this to add to.'
+                                        : 'Approve change request 1 first: the project must exist.';
+    $('rs-priya').disabled = stage !== 's1';
+    $('rs-marcus').disabled = stage !== 's2';
+    $('rs-log-1').innerHTML = stage !== 'preview' ? D.log.s1 : '';
+    $('rs-log-2').innerHTML = (stage === 's2' || stage === 's3') ? D.log.s2 : '';
+    $('rs-log-3').innerHTML = stage === 's3' ? D.log.s3 : '';
+  }
+  function showPlay() {
+    timers.forEach(clearTimeout); timers = [];
+    $('rs-steps').innerHTML = D.steps.join('');
+    $('rs-skip').hidden = true; $('rs-play').hidden = false;
+  }
+  function start() {
+    timers.forEach(clearTimeout); timers = [];
+    $('rs').hidden = false; $('rs-play').hidden = true; $('rs-skip').hidden = false; $('rs-steps').innerHTML = '';
+    stage = 'preview'; renderStage();
+    D.steps.forEach((h, n) => timers.push(setTimeout(() => {
+      $('rs-steps').insertAdjacentHTML('beforeend', h);
+      if (n === D.steps.length - 1) showPlay();
+    }, 550 * (n + 1))));
+  }
+  function hide() { timers.forEach(clearTimeout); timers = []; $('rs').hidden = true; stage = 'preview'; }
+  document.addEventListener('review-ready', start);  // the research opens with the review, not after it
+  $('play-approve').addEventListener('click', renderStage);
+  $('play-reject').addEventListener('click', () => { stage = 'preview'; renderStage(); });
+  $('play-reset').addEventListener('click', () => { stage = 'preview'; renderStage(); });
+  $('rs-skip').addEventListener('click', showPlay);
+  $('rs-approve').addEventListener('click', () => { stage = 's1'; renderStage(); });
+  $('rs-priya').addEventListener('click', () => { stage = 's2'; renderStage(); });
+  $('rs-marcus').addEventListener('click', () => { stage = 's3'; renderStage(); });
+  $('rs-reset').addEventListener('click', () => { stage = 'preview'; renderStage(); });
+})();
+</script>
+
+<h2 id="glance">At a glance</h2>
+<div class="glance">
+<div class="card">
+<div class="card-kicker">Input · meeting transcript</div>
+<div class="card-title">Support tooling review, 14 September 2026</div>
+<div class="card-meta"><span class="avs"><span class="av" title="Sarah Chen">SC</span><span class="av" title="Priya Patel">PP</span><span class="av" title="Marcus Webb">MW</span></span> <span class="att">Sarah Chen <span class="role">Ops Manager</span></span> · <span class="att">Priya Patel <span class="role">Support Lead</span></span> · <span class="att">Marcus Webb</span></div>
+<div class="card-meta small-meta">Sent as a transcript, dated 14 Sep 2026</div>
+<div class="bubbles"><div class="said"><span class="av sm" title="Priya Patel">PP</span><b class="who">Priya</b><span class="words">Tagging reports broke again this week. I want us on a new helpdesk before the January peak.</span></div><div class="said"><span class="av sm" title="Sarah Chen">SC</span><b class="who">Sarah</b><span class="words">Agreed. Marcus, can you shortlist three options by 23 September?</span></div><div class="said"><span class="av sm" title="Marcus Webb">MW</span><b class="who">Marcus</b><span class="words">Yes. I&#x27;ll need the current tooling inventory to see what integrates.</span></div><div class="said"><span class="av sm" title="Sarah Chen">SC</span><b class="who">Sarah</b><span class="words">The annual contract will be over £2,000, so it goes to Alex for sign-off.</span></div><div class="said"><span class="av sm" title="Priya Patel">PP</span><b class="who">Priya</b><span class="words">What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.</span></div><div class="said"><span class="av sm" title="Sarah Chen">SC</span><b class="who">Sarah</b><span class="words">We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.</span></div></div>
+</div>
+<div class="card">
+<div class="card-kicker">Input · already in the workspace</div>
+<div class="card-title">What the graph knew before the meeting</div>
+<div class="card-meta">No projects. 10 company documents; the first three are the ones the new
+project links to, the fourth the one its impact research finds numbers in:</div>
+<div class="known four"><div class="doc"><div class="doc-kind">document · org-chart.md</div><div class="doc-title">Org chart</div><p><b>Founder:</b> Alex Doyle. Sets pricing, signs anything customer-facing.</p><p><b>Ops Manager:</b> Sarah Chen. Owns day-to-day operations, budgets and sign-offs.</p><p><b>Support Lead:</b> Priya Patel. Runs the support rota and handles escalations.</p></div><div class="doc"><div class="doc-kind">document · tooling-inventory.md</div><div class="doc-title">Tooling inventory</div><p>The systems the company runs on: helpdesk, payments, accounting, and the shared drive.</p><p>Each entry lists the owner, the billing cycle, and who holds admin access.</p><p>The onboarding process uses this document as its day-one checklist.</p></div><div class="doc"><div class="doc-kind">policy · supplier-payments.md</div><div class="doc-title">Supplier payments</div><p>Supplier invoices are paid on 30-day terms.</p><p>Any payment over £2,000 requires <b>Founder</b> sign-off before it is scheduled.</p><p>New suppliers must be added to the tooling inventory before their first invoice.</p></div><div class="doc"><div class="doc-kind">document · support-metrics.md</div><div class="doc-title">Support metrics</div><p>Support serves 1,240 active clients.</p><p>Tagging reports failed 11 times over the past year.</p><p>The support rota has 4 agents.</p><p>The team answers about 380 tickets a week.</p></div></div>
+</div>
+<div class="between"><span class="arrow">→</span><span class="step">11 changes</span><span class="step">checked</span><span class="step">approved by a person</span><span class="step">impact researched: 3 numbers found, 1 asked and answered</span></div>
+<div class="card project">
+<div class="card-kicker">Output · project, after approval and impact research</div>
+<div class="proj-head">
+  <div><div class="card-title">Helpdesk migration</div><code class="pid">helpdesk-migration</code></div>
+  <span class="pill status">Planning<span class="since">since 14 Sep 2026</span></span>
+</div>
+<p class="desc">Move support to a new helpdesk before the January peak</p>
+<div class="thesis">
+<div class="sect">Thesis</div>
+<p class="thesis-text">If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially <mark>264 hours a year</mark>, across <b>1,240 active clients</b>.</p>
+<div class="because"><span class="lbl">Because</span> “Tagging reports broke again this week.” <span class="muted">(Priya Patel, in the meeting)</span></div>
+<div class="figures"><div class="fig"><span class="lbl">Projected impact</span><span class="fig-v">264</span><span class="fig-u">hours a year</span><span class="sub">11 failures a year × 4 agents × 6 hours per agent</span></div><div class="fig"><span class="lbl">Estimated effort</span><span class="fig-v">15</span><span class="fig-u">person-days</span><span class="sub">Marcus Webb: the shortlist, a migration plan, and importing the ticket history</span></div><div class="fig"><span class="lbl">Priority</span><span class="fig-v">17.6</span><span class="fig-u">hours a year per person-day</span><span class="sub">£792 a year per person-day at £45 a staff hour · ranked 1st of 1 open project</span></div></div>
+<div class="sect">The numbers behind it <span class="count">4</span></div>
+<div class="nums"><div class="num"><div class="num-v"><b>11</b> failures a year</div><div class="num-l">tagging report failures</div><span class="chip is-found">found</span><div class="num-w"><span class="nsrc">Support metrics</span><span class="nq">“Tagging reports failed 11 times over the past year.”</span></div></div><div class="num"><div class="num-v"><b>4</b> agents</div><div class="num-l">support agents</div><span class="chip is-found">found</span><div class="num-w"><span class="nsrc">Support metrics</span><span class="nq">“The support rota has 4 agents.”</span></div></div><div class="num"><div class="num-v"><b>6</b> hours per agent</div><div class="num-l">hours each agent loses per failure</div><span class="chip is-answered">answered</span><div class="num-w"><span class="nsrc">Priya Patel, when asked</span><span class="nq">“About 6 hours per agent, rebuilding the queues by hand.”</span></div></div><div class="num"><div class="num-v"><b>1,240</b> active clients</div><div class="num-l">active clients <span class="muted">· reach</span></div><span class="chip is-found">found</span><div class="num-w"><span class="nsrc">Support metrics</span><span class="nq">“Support serves 1,240 active clients.”</span></div></div></div>
+</div>
+<div class="facts">
+  <div><span class="lbl">Requested by</span><span class="val"><span class="av xs">PP</span>Priya Patel<span class="sub">Support Lead</span></span></div>
+  <div><span class="lbl">Owner</span><span class="val muted">not set yet</span></div>
+  <div><span class="lbl">Due</span><span class="val">before the January peak<span class="sub">no date: Q2 asks for one</span></span></div>
+</div>
+<div class="proj-body">
+<div>
+<div class="sect">Deliverables <span class="count">3</span></div>
+<div class="dls"><div class="dl"><span class="key">D1</span><span class="dl-title">Shortlist of three helpdesks</span><span class="dl-meta"><span class="av xs" title="Marcus Webb">MW</span>Marcus Webb · due 23 Sep 2026</span><span class="pill small">planned</span></div><div class="dl"><span class="key">D2</span><span class="dl-title">Migration plan</span><span class="dl-meta"><span class="muted">no owner</span></span><span class="pill small">planned</span></div><div class="dl"><span class="key">D3</span><span class="dl-title">New helpdesk live with ticket history imported</span><span class="dl-meta"><span class="muted">no owner</span></span><span class="pill small">planned</span></div></div>
+</div>
+<div>
+<div class="sect">Open questions <span class="count">2</span></div>
+<div class="qs"><div class="q"><span class="qmark">?</span><span><b>Q1</b> Does the old helpdesk stay read-only after the move?</span></div><div class="q"><span class="qmark">?</span><span><b>Q2</b> What date does the January peak start?</span></div></div>
+</div>
+</div>
+<div class="deps-grid">
+<div><div class="sect">Needs <span class="count">1</span></div><div class="dep"><div class="dep-head"><span class="kind">Needs</span> <b>Tooling inventory</b></div><div class="dep-row"><span class="dep-lbl">Why</span><span>“I&#x27;ll need the current tooling inventory to see what integrates.” <span class="muted">(Marcus Webb)</span></span></div><div class="dep-row"><span class="dep-lbl">What it is</span><span>The systems the company runs on: helpdesk, payments, accounting and the shared drive</span></div><div class="dep-row"><span class="dep-lbl">What for</span><span>To see which systems a new helpdesk has to work with.</span></div></div></div>
+<div><div class="sect">Rules it must follow <span class="count">1</span></div><div class="dep"><div class="dep-head"><span class="kind">Must follow</span> <b>Supplier payments</b></div><div class="dep-row"><span class="dep-lbl">Why</span><span>“The annual contract will be over £2,000, so it goes to Alex for sign-off.” <span class="muted">(Sarah Chen)</span></span></div><div class="dep-row"><span class="dep-lbl">The rule</span><span>Payments over £2,000 need Founder sign-off before they are scheduled</span></div><div class="dep-row"><span class="dep-lbl">Who signs</span><span>Alex Doyle, the Founder: the “Alex” of the meeting</span></div><div class="dep-row"><span class="dep-lbl">So</span><span>The new helpdesk's contract cannot be paid, and the helpdesk cannot go live, until Alex signs it off.</span></div><div class="dep-row"><span class="dep-lbl">Also</span><span>New suppliers are added to the tooling inventory before their first invoice</span></div></div></div>
+</div>
+<div class="card-foot">Every field cites its line: the project's in <code>2026-09-14-support-tooling-review.md</code>,
+each number in its document or its answer · version 4 · change requests 1 to
+4, each approved by a person</div>
+</div>
+</div>
+
+<div class="answer">
+<p><strong>Result: every expectation met.</strong> A meeting transcript went in with the changes it supports. Out came a
+change request, which applied nothing until a person approved it. After approval, the project was created with its
+status, requester, due date in words, two dependencies, three deliverables and two open questions. Every field cites
+the transcript line it came from, and the graph now answers questions about the project.</p>
+<p><strong>And its thesis:</strong> If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients. Three of its numbers were found in the support team's
+metrics; the fourth was asked of Priya Patel, who asked for the project, and her answer completed it. With Marcus Webb's
+estimate of 15 person-days, that is 17.6 hours a year
+per person-day of effort.</p>
+</div>
+
+<div class="flow">
+<span class="st">Transcript in<small>with 11 proposed changes, each quoting it</small></span><span class="ar">→</span>
+<span class="st">Checked<small>0 problems</small></span><span class="ar">→</span>
+<span class="st gate">Change requests 1 and 2<small>the project, and its impact research: thesis, 3 numbers found, 1 asked; open together, nothing applied yet</small></span><span class="ar">→</span>
+<span class="st gate">A person approves<small>“matches the meeting”, then the research</small></span><span class="ar">→</span>
+<span class="st done">Project created<small>version 1, cited line by line, with its thesis</small></span><span class="ar">→</span>
+<span class="st gate">People answer<small>Priya: 6 hours per agent · Marcus: 15 person-days</small></span><span class="ar">→</span>
+<span class="st done">Thesis complete<small>264 hours a year · 17.6 per person-day</small></span>
+</div>
+
+<h2>Input</h2>
+<h3>What the workspace holds before</h3>
+<p>No projects (0). The graph holds the 10 company documents:
+<code>supplier-payments.md</code>, <code>support-metrics.md</code>, <code>refund-policy-2024.md</code>, <code>delegation-memo.md</code>, <code>refund-policy.md</code>, <code>customer-support-sop.md</code>, <code>tooling-inventory.md</code>, <code>org-chart.md</code>, <code>onboarding-process.md</code>, <code>incident-response.md</code>. That is how it knows who Priya Patel and Alex are, and what
+the tooling inventory and supplier payments policy say. One of them, <code>support-metrics.md</code>
+(<code>tests/fixtures/impact/</code>), holds the support team's figures, where the impact research finds its numbers:</p>
+<pre class="code">---
+type: document
+title: Support metrics
+entities: [Support metrics]
+links: [org-chart, customer-support-sop]
+---
+Support serves 1,240 active clients.
+Tagging reports failed 11 times over the past year.
+The support rota has 4 agents.
+The team answers about 380 tickets a week.</pre>
+<h3>The meeting transcript</h3>
+<p><code>projects/cases/inputs/2026-09-14-support-tooling-review.md</code>, sent as a source of kind
+<code>transcript</code>, dated 14 September 2026:</p>
+<pre class="code"># Support tooling review, 14 September 2026
+Attendees: Sarah Chen, Priya Patel, Marcus Webb
+
+Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.
+Sarah: Agreed. Marcus, can you shortlist three options by 23 September?
+Marcus: Yes. I&#x27;ll need the current tooling inventory to see what integrates.
+Sarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.
+Priya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.
+Sarah: We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.</pre>
+<h3 id="changes">The changes it supports</h3>
+<p>Sent with the transcript (<code>projects/cases/01-new-project/diff.json</code>); in production the service's
+extractor proposes them, from the message shown in <a href="#llm-query">The model calls</a>. Each quotes the transcript word for word, and each quote is checked against it.</p>
+<div class="scroll"><table class="changes"><thead><tr><th>#</th><th>Operation</th><th>What it does</th><th>Quote from the transcript</th></tr></thead><tbody><tr><td>1</td><td><code>create_project</code></td><td>create <b>helpdesk-migration</b>, “Helpdesk migration”</td><td><span class="quote">“I want us on a new helpdesk before the January peak.”</span></td></tr><tr><td>2</td><td><code>set_status</code></td><td>status <b>planning</b> from 2026-09-14</td><td><span class="quote">“Agreed. Marcus, can you shortlist three options by 23 September?”</span></td></tr><tr><td>3</td><td><code>set_field</code></td><td>requested_by = <b>Priya Patel</b></td><td><span class="quote">“Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.”</span></td></tr><tr><td>4</td><td><code>set_field</code></td><td>due = <b>before the January peak</b></td><td><span class="quote">“I want us on a new helpdesk before the January peak.”</span></td></tr><tr><td>5</td><td><code>add_dependency</code></td><td>needs <b>Tooling inventory</b></td><td><span class="quote">“I&#x27;ll need the current tooling inventory to see what integrates.”</span></td></tr><tr><td>6</td><td><code>add_dependency</code></td><td>subject to <b>Supplier payments</b></td><td><span class="quote">“The annual contract will be over £2,000, so it goes to Alex for sign-off.”</span></td></tr><tr><td>7</td><td><code>add_deliverable</code></td><td>deliverable <b>D1</b> Shortlist of three helpdesks, owner Marcus Webb, due 2026-09-23</td><td><span class="quote">“Marcus, can you shortlist three options by 23 September?”</span></td></tr><tr><td>8</td><td><code>add_deliverable</code></td><td>deliverable <b>D2</b> Migration plan</td><td><span class="quote">“a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.”</span></td></tr><tr><td>9</td><td><code>add_deliverable</code></td><td>deliverable <b>D3</b> New helpdesk live with ticket history imported</td><td><span class="quote">“a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.”</span></td></tr><tr><td>10</td><td><code>add_question</code></td><td>question <b>Q1</b>: Does the old helpdesk stay read-only after the move?</td><td><span class="quote">“We haven&#x27;t decided whether to keep the old system read-only afterwards.”</span></td></tr><tr><td>11</td><td><code>add_question</code></td><td>question <b>Q2</b>: What date does the January peak start?</td><td><span class="quote">“before the January peak”</span></td></tr></tbody></table></div>
+
+<h2 id="model-context">How the graph reaches the model</h2>
+<p>Two model calls touch this example. The graph reaches each one by a different route, and neither route is a
+model call itself: both are plain code that reads the graph and writes text into the model's input.</p>
+<div class="scroll"><table class="routes"><thead><tr><th></th><th>The Claude Code session</th><th>The model calls</th></tr></thead><tbody>
+<tr><td>What it is</td><td>The assistant you talk to in Claude Code</td><td>Two headless <code>claude -p</code> calls at once: one writes the change set, the other the new project's thesis</td></tr>
+<tr><td>When the graph goes in</td><td>Before every prompt you submit</td><td>Once per input, written into each call's message, from the graph as last built</td></tr>
+<tr><td>How</td><td>A <code>UserPromptSubmit</code> hook runs <code>src/recall_hook.py</code>; its <code>additionalContext</code> joins your prompt</td><td><code>payload()</code> in <code>projects/ingest.py</code> lists the names the graph knows and the projects the input may be about</td></tr>
+<tr><td>What of the graph</td><td>Up to 8 facts with their chains, claims, and source quotes checked against the files</td><td>Every name with its type, aliases and up to two claims; up to 5 existing projects as cards; for the thesis, the figures its documents state. No triples, no quotes</td></tr>
+<tr><td>Code</td><td><code>hooks.json</code>, <code>src/recall_hook.py</code>, <code>src/recall.py</code></td><td><code>kl/sources.py</code>, <code>kl/extractors.py</code>, <code>projects/ingest.py</code>, <code>projects/ingest-prompt.md</code>, <code>projects/model.py</code></td></tr>
+<tr><td>Model</td><td>The session's own</td><td>The service: <code>KL_EXTRACTOR=claude-cli:&lt;model&gt;</code> (default <code>claude-sonnet-5</code>). The command line: <code>"model"</code> in <code>digest/config.json</code> (<code>sonnet</code>)</td></tr>
+</tbody></table></div>
+<p class="note">In the recorded run above no model was called: the case's change set was sent with the transcript. The two calls below were captured by running the service's own code on this case, with only the <code>claude -p</code> calls swapped for a recorder that kept each call's command line, system prompt and user message, and answered with the case's change set and thesis. So the messages are exactly what the service would send for this workspace. The hook output was captured by running <code>src/recall_hook.py</code> itself against the service holding the same workspace (10 documents, no projects), before the transcript was sent.</p>
+
+<h3 id="hook">1. The hook: facts into the Claude Code session, before the first model call</h3>
+<div class="flow">
+<span class="st">You submit a prompt<small>Claude Code has not called the model yet</small></span><span class="ar">→</span>
+<span class="st">UserPromptSubmit<small>runs <code>python src/recall_hook.py</code>, the prompt as JSON on stdin</small></span><span class="ar">→</span>
+<span class="st">recall()<small>SQLite over the graph, no model call, 500 ms budget</small></span><span class="ar">→</span>
+<span class="st">stdout JSON<small><code>additionalContext</code>: the facts</small></span><span class="ar">→</span>
+<span class="st done">The model call<small>your prompt with the facts beside it</small></span>
+</div>
+<p><b>Where it is wired.</b> <code>hooks.json</code> at the repo root, merged into <code>.claude/settings.json</code>
+(the README's setup step). The recall hook runs on every prompt. The same script with <code>--forget</code> runs on
+<code>PreCompact</code> and <code>SessionStart</code>, so quotes the conversation no longer holds are sent again:</p>
+<pre class="code">{
+  &quot;hooks&quot;: {
+    &quot;UserPromptSubmit&quot;: [
+      {
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;python \&quot;${CLAUDE_PROJECT_DIR}/src/recall_hook.py\&quot;&quot;,
+            &quot;timeout&quot;: 10
+          }
+        ]
+      }
+    ],
+    &quot;PreCompact&quot;: [
+      {
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;python \&quot;${CLAUDE_PROJECT_DIR}/src/recall_hook.py\&quot; --forget&quot;,
+            &quot;timeout&quot;: 10
+          }
+        ]
+      }
+    ],
+    &quot;SessionStart&quot;: [
+      {
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;python \&quot;${CLAUDE_PROJECT_DIR}/src/recall_hook.py\&quot; --forget&quot;,
+            &quot;timeout&quot;: 10
+          },
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;python \&quot;${CLAUDE_PROJECT_DIR}/rag/embedder.py\&quot; --start&quot;,
+            &quot;timeout&quot;: 10
+          },
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;python \&quot;${CLAUDE_PROJECT_DIR}/projects/review.py\&quot; --notice&quot;,
+            &quot;timeout&quot;: 10
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+<p class="note">Only <code>src/recall_hook.py</code> reads the prompt. The other two <code>SessionStart</code> commands warm the embedding model for the RAG fallback and tell you about project changes waiting for review.</p>
+<p><b>What goes in.</b> Claude Code writes a JSON object to the script's stdin. The script reads two fields:
+<code>session_id</code> and <code>prompt</code> (and <code>source</code> on <code>--forget</code>). For a prompt that
+pastes this transcript, it was:</p>
+<pre class="code">{
+ &quot;session_id&quot;: &quot;demo-session&quot;,
+ &quot;hook_event_name&quot;: &quot;UserPromptSubmit&quot;,
+ &quot;prompt&quot;: &quot;Here is the transcript of today&#x27;s support tooling review. Turn it into a project.\n\n# Support tooling review, 14 September 2026\nAttendees: Sarah Chen, Priya Patel, Marcus Webb\n\nPriya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.\nSarah: Agreed. Marcus, can you shortlist three options by 23 September?\nMarcus: Yes. I&#x27;ll need the current tooling inventory to see what integrates.\nSarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.\nPriya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.\nSarah: We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.\n&quot;
+}</pre>
+<p><b>What the script does</b> (<code>src/recall_hook.py</code>, <code>main()</code>):</p>
+<ol class="method">
+<li><b>The service first, when there is one.</b> With <code>KL_API_URL</code> and a key (<code>KL_API_KEY</code>, or
+<code>KL_RUN_TOKEN</code> inside a run) set, it sends <code>POST {KL_API_URL}/v1/context</code> with
+<code>{"question": &lt;the prompt&gt;, "session_id": "claude-code:&lt;session_id&gt;"}</code> and a bearer key. It waits
+at most <code>KL_HOOK_TIMEOUT</code> seconds (3). The service runs the same <code>recall()</code> over the workspace's
+graph and remembers which quotes it has sent this session. If the call fails for any reason, the script answers in
+process instead.</li>
+<li><b>Otherwise, in process.</b> <code>recall(prompt, sent=…)</code> from <code>src/recall.py</code> reads
+<code>graph.db</code> (or <code>GRAPH_MEMORY_DB</code>). It is pure SQLite with no model call, and stops at 500 ms
+and says so. It finds the dates the prompt is about, then looks up the names in the prompt and scores every entity
+by full-text relevance (FTS5, BM25). From the named ones it walks 3 hops, following at most 3 links of each type per
+node, and ranks the top 8 facts. It adds the claims in force and up to 8 source quotes (2,000 characters in all),
+each checked against its file as it is now. Then come projects the prompt names and code it names.</li>
+<li><b>Quotes are sent once per conversation.</b> The quotes already sent are kept in a small file per session in
+the temp folder, for 12 hours. <code>--forget</code> deletes it on compaction and on a new or cleared session, but
+not on a resume, since a resumed conversation still holds them.</li>
+<li><b>A fallback when the graph knows nothing in the prompt.</b> The script adds up to 3 passages from the RAG index
+(<code>rag/rag.db</code>, at most 1,500 characters), labelled “search results, not checked facts”.</li>
+<li><b>What it prints.</b> One JSON object on stdout: <code>systemMessage</code>, the status line shown to you, and
+<code>hookSpecificOutput.additionalContext</code>, the text that goes to the model.</li>
+</ol>
+<p><b>What comes out</b> for that prompt, before any project exists:</p>
+<pre class="code">{
+ &quot;systemMessage&quot;: &quot;memory: 8 facts from the knowledge layer in 8.3 ms&quot;,
+ &quot;hookSpecificOutput&quot;: {
+  &quot;hookEventName&quot;: &quot;UserPromptSubmit&quot;,
+  &quot;additionalContext&quot;: &quot;memory: 8 facts, for all dates\nThese facts come from your documents (10, extracted 2026-09-30). …&quot;
+ }
+}</pre>
+<p><code>additionalContext</code>, as the model receives it:</p>
+<pre class="code">memory: 8 facts, for all dates
+These facts come from your documents (10, extracted 2026-09-30). Quoted lines are the documents&#x27; own words, checked against the files just now: answer from them, and open a file only if its line says it changed or is missing.
+Sarah Chen delegates_to Marcus Webb [delegation-memo.md] (2026-03-01 to 2026-03-31)
+Support Lead held_by Priya Patel [org-chart.md]
+Ops Manager held_by Sarah Chen [org-chart.md]
+Onboarding process references Tooling inventory [onboarding-process.md]
+Supplier payments references Tooling inventory [supplier-payments.md]
+Founder held_by Alex Doyle [org-chart.md]
+Onboarding process references Ops Manager [onboarding-process.md]
+Supplier payments approved_by Founder [supplier-payments.md]
+where:
+Alex Doyle: The Founder
+Founder: &quot;Founder: Alex Doyle. Sets pricing, signs anything customer-facing.&quot; [org-chart.md]
+Founder: Signs off supplier payments over £2,000
+Marcus Webb: &quot;During this period all of her sign-offs and approvals are delegated to Marcus Webb.&quot; [delegation-memo.md] (2026-03-01 to 2026-03-31)
+Onboarding process: &quot;New starters are onboarded over their first week, owned by the Ops Manager.&quot; [onboarding-process.md]
+Onboarding process: Day one covers accounts and access, using the tooling inventory as the checklist
+Ops Manager: &quot;Ops Manager: Sarah Chen. Owns day-to-day operations, budgets and sign-offs.&quot; [org-chart.md]
+Ops Manager: &quot;Refunds over £500 require approval by the Ops Manager before payment is released.&quot; [refund-policy.md] (from 2026-01-01)
+Priya Patel: The Support Lead
+Sarah Chen: The Ops Manager
+Sarah Chen: &quot;Sarah Chen is on leave from 1 to 31 March 2026.&quot; [delegation-memo.md] (2026-03-01 to 2026-03-31)
+Supplier payments: &quot;Any payment over £2,000 requires Founder sign-off before it is scheduled.&quot; [supplier-payments.md]
+Supplier payments: New suppliers are added to the tooling inventory before their first invoice
+Support Lead: Escalation point for complaints
+Support Lead: &quot;Support Lead: Priya Patel. Runs the support rota and handles escalations.&quot; [org-chart.md]
+Tooling inventory: The systems the company runs on: helpdesk, payments, accounting and the shared drive
+Tooling inventory: Each entry lists the owner, the billing cycle and who holds admin access
+Tooling inventory: The onboarding process uses it as its day-one checklist</pre>
+<p class="note">“For all dates” is there because the transcript says “ticket <i>history</i>”, which <code>recall()</code> reads as a history question (the <code>HISTORY</code> pattern in <code>src/recall.py</code>). So facts from every period count, Sarah Chen's March leave among them. Here <code>KL_API_URL</code> was set, so the script asked the service. Without
+it, the script answers in process from <code>graph.db</code> with the same <code>recall()</code>:
+<code>tests/test_kl_live_server.py</code> checks that the two answers are equal apart from the extraction date. After
+approval, the same hook answers questions about the project: see <a href="#answers">The graph now answers questions
+about it</a>.</p>
+<p><b>How Claude Code uses the output</b> (Claude Code's hooks reference). <code>additionalContext</code> is added
+to the model's context for that turn, beside your prompt, before the model is called, and it stays in the
+conversation for later turns. That is why the script sends each source quote only once, and forgets them when the
+conversation is compacted. <code>systemMessage</code> is shown to you, not to the model. The hook has the 10 seconds
+set in <code>hooks.json</code>; past that Claude Code goes on without it. So <code>recall()</code> stops itself at
+500 ms and the service call at 3 s, and a slow graph never holds up a prompt. The exact wrapper Claude Code puts
+around the text is Claude Code's, not this project's.</p>
+
+<h3 id="llm-query">2. The model calls: the change set and the thesis, at once</h3>
+<div class="flow">
+<span class="st">POST /v1/sources<small>kind transcript</small></span><span class="ar">→</span>
+<span class="st">The graph, read<small>as last built: names, projects, figures; no rebuild</small></span><span class="ar">→</span>
+<span class="st done">Two claude -p calls at once<small>the change set; the thesis</small></span><span class="ar">→</span>
+<span class="st gate">Checks<small>parse, tidy, validate; one repair round</small></span><span class="ar">→</span>
+<span class="st gate">Change requests 1 and 2<small>the project; its impact research, beside it</small></span>
+</div>
+<p><b>The chain.</b> When a transcript arrives without a change set, <code>_route()</code> in <code>kl/sources.py</code>
+calls <code>_propose()</code>. That reads the graph once, as it was last built (with <code>graph_updates</code>
+deferred, nothing in this process rebuilds it), and starts two calls on <code>ClaudeCliExtractor</code>
+(<code>kl/extractors.py</code>) at the same time (<code>thesis_call</code> parallel, the default):
+<code>propose_changes()</code>, which hands over to <code>propose()</code> in <code>projects/ingest.py</code> to build its
+message, and <code>draft_thesis_from_input()</code>. When both are back, the change set is checked and opened as
+change request 1, and <code>research_input()</code> (<code>kl/impact.py</code>) turns the thesis into change request 2
+beside it. The hook plays no part: these are separate processes.</p>
+<p><b>What they read from the graph.</b> Three things, all loaded before the calls:</p>
+<ul>
+<li><b>The names the graph knows</b>, from <code>_entities(ws)</code>, which is
+<code>model.entities_from_db(graph, today)</code>: every entity in the workspace's graph except projects and
+deliverables, with its type, its aliases and up to two of its claims still in force, most telling first (threshold,
+responsibility, note, rule, deadline, availability). The claims let the model see which policy covers what: that
+Supplier payments is the rule for “over £2,000”. Here there are 15 names. They go to the change set's call.</li>
+<li><b>The projects the input may be about</b>, from <code>_records(ws)</code>. <code>candidates()</code> ranks them by
+the words of four or more letters they share with the input. Up to 5 go in, each as a card with its status, people,
+due date, dependencies, deliverables, plan, open questions, decisions and the next free D and Q keys. Here there are
+none, so the message says <code>(none yet)</code> and the model must create the project.</li>
+<li><b>The figures the graph holds</b>, from <code>_number_facts(ws)</code>: every claim in its documents that states a
+figure, with the sentence it came from; up to 60. Here there are 13. They go to the thesis call, so the
+thesis names numbers a document states, which the service then looks up without a model.</li>
+</ul>
+<p><b>The calls.</b> Each is lean: the instructions are the whole system prompt (<code>--system-prompt</code> replaces
+Claude Code's own), the user message is the payload, and there are no tools, no settings, no MCP servers and no
+CLAUDE.md, in an empty folder. Before, the model was sent Claude Code's system prompt and 28 tool definitions with
+every call, about 24,000 input tokens; now the first request of the change set's call is about 3,400, and the thesis
+call's about 2,000 (measured in <a href="project-creation-speedups.html">Project creation, faster</a>).</p>
+<style>table.calls td code { white-space: normal; word-break: break-word; }</style>
+<div class="scroll"><table class="routes calls"><thead><tr><th>Part</th><th>The change set's call</th><th>The thesis call</th></tr></thead><tbody>
+<tr><td>Command</td><td colspan="2"><code class="m">claude -p --model claude-sonnet-5 --output-format text --tools &quot;&quot; --system-prompt &quot;&lt;the instructions&gt;&quot; --setting-sources local --strict-mcp-config --no-session-persistence</code>, in an empty folder, the <code>CLAUDE*</code>
+environment variables left out; timeout 600 s (<code>ClaudeCliExtractor._argv()</code>)</td></tr>
+<tr><td>System prompt</td><td><code>projects/ingest-prompt.md</code>, word for word (5,921 characters)</td>
+<td><code>projects/thesis-prompt.md</code>, word for word (2,351 characters)</td></tr>
+<tr><td>User message</td><td>The payload: input name, kind and date; the names the graph knows; the candidate projects;
+the transcript. <code>payload()</code> in <code>projects/ingest.py</code> (2,650 characters)</td>
+<td>JSON: no project yet, the transcript as its source, and the figures the graph holds
+(1,946 characters)</td></tr>
+<tr><td>The answer</td><td><code>{"project": "&lt;id&gt;", "changes": [ … ]}</code>: the project's id once, beside
+the changes</td><td><code>{"change", "outcome", "direction", "unit", "formula", "reach", "because", "numbers"}</code>,
+never an amount</td></tr>
+</tbody></table></div>
+<p><b>The change set's user message, exactly as sent for this case.</b> This is where most of the graph's context sits:</p>
+<pre class="code">Input: 2026-09-14-support-tooling-review.md
+Kind: transcript
+Date: 2026-09-14
+
+Names the graph knows:
+- Alex Doyle (PERSON), also: Alex: The Founder
+- Customer support SOP (PROCESS): Refunds under the approval threshold in the refund approvals policy are processed directly by the agent; Complaints and anything unresolved after two replies escalate to the Support Lead
+- Director (ROLE)
+- Founder (ROLE): Sets pricing, signs anything customer-facing; Signs off supplier payments over £2,000
+- Incident response (PROCESS), also: incident, incidents: Incidents are raised in the ops channel and triaged by the Support Lead; Severity-1 incidents (site down, payments failing) escalate to the Founder immediately
+- Marcus Webb (PERSON), also: Marcus
+- Onboarding process (PROCESS), also: onboarding: New starters are onboarded over their first week, owned by the Ops Manager; Day one covers accounts and access, using the tooling inventory as the checklist
+- Ops Manager (ROLE): Owns day-to-day operations, budgets and sign-offs; Approves refunds over £500
+- Priya Patel (PERSON), also: Priya: The Support Lead
+- Refund approvals (POLICY), also: refund, refunds: Refunds over £500 need Ops Manager approval before payment is released; The 2024 refund policy was superseded on 1 January 2026
+- Sarah Chen (PERSON), also: Sarah: The Ops Manager
+- Supplier payments (POLICY): Payments over £2,000 need Founder sign-off before they are scheduled; New suppliers are added to the tooling inventory before their first invoice
+- Support Lead (ROLE): Escalation point for complaints; Runs the support rota and handles escalations
+- Support metrics (DOCUMENT): Support serves 1,240 active clients; Tagging reports failed 11 times over the past year
+- Tooling inventory (DOCUMENT), also: tooling: The systems the company runs on: helpdesk, payments, accounting and the shared drive; Each entry lists the owner, the billing cycle and who holds admin access
+
+Projects this input may be about:
+(none yet)
+
+The input:
+
+# Support tooling review, 14 September 2026
+Attendees: Sarah Chen, Priya Patel, Marcus Webb
+
+Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.
+Sarah: Agreed. Marcus, can you shortlist three options by 23 September?
+Marcus: Yes. I&#x27;ll need the current tooling inventory to see what integrates.
+Sarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.
+Priya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.
+Sarah: We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.
+</pre>
+<p><b>The thesis call's user message, exactly as sent:</b></p>
+<pre class="code">{
+ &quot;project&quot;: null,
+ &quot;sources&quot;: {
+  &quot;inputs/2026-09-14-support-tooling-review.md&quot;: &quot;# Support tooling review, 14 September 2026\nAttendees: Sarah Chen, Priya Patel, Marcus Webb\n\nPriya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.\nSarah: Agreed. Marcus, can you shortlist three options by 23 September?\nMarcus: Yes. I&#x27;ll need the current tooling inventory to see what integrates.\nSarah: The annual contract will be over £2,000, so it goes to Alex for sign-off.\nPriya: What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.\nSarah: We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.\n&quot;
+ },
+ &quot;facts&quot;: &quot;Severity-1 incidents (site down, payments failing) escalate to the Founder immediately. (docs/incident-response.md)\nEvery incident gets a short write-up within 48 hours of being resolved. (docs/incident-response.md)\nSuperseded on 1 January 2026 by the current refund approvals policy. (docs/refund-policy-2024.md)\nRefunds over £500 require approval by the Ops Manager before payment is released. (docs/refund-policy.md)\nStandard refunds under £500 are processed by any support agent within 48 hours. (docs/refund-policy.md)\nRefunds over £500 require approval by the Ops Manager before payment is released. (docs/refund-policy.md)\nSupplier invoices are paid on 30-day terms. (docs/supplier-payments.md)\nAny payment over £2,000 requires Founder sign-off before it is scheduled. (docs/supplier-payments.md)\nAny payment over £2,000 requires Founder sign-off before it is scheduled. (docs/supplier-payments.md)\nSupport serves 1,240 active clients. (docs/support-metrics.md)\nTagging reports failed 11 times over the past year. (docs/support-metrics.md)\nThe support rota has 4 agents. (docs/support-metrics.md)\nThe team answers about 380 tickets a week. (docs/support-metrics.md)&quot;
+}</pre>
+<details class="more">
+<summary>The change set's system prompt: <code>projects/ingest-prompt.md</code></summary>
+<pre class="code"># How to read an input into project changes
+
+You read one input: a request someone typed, a meeting transcript, or the
+write-up of a working session. You answer with the changes it makes to
+projects, as JSON, and nothing else. Code checks every change before anything
+is written, and a person reviews them, so propose only what the input itself
+says.
+
+Below the line you get the input&#x27;s file name, kind and date; the names the
+knowledge graph knows; the projects this input may be about, as they stand; and
+the input.
+
+## What you answer
+
+    {&quot;changes&quot;: [ ... ]}
+
+or `{&quot;changes&quot;: []}` when the input changes no project. No other text. When the
+changes are all about one project, give its id once, beside them, and leave
+&quot;project&quot; out of each change: `{&quot;project&quot;: &quot;brochure-reprint&quot;, &quot;changes&quot;: [ ... ]}`.
+Write the JSON compactly: no indentation.
+
+Each change is one object with an &quot;op&quot;, its fields, and a &quot;quote&quot;: the shortest
+passage of the input that states the change, copied word for word, at most 300
+characters. Every change needs its own quote; one without is refused.
+
+For example, for a meeting on 2 March where Dee said &quot;The logo files are done,
+the print run starts on 9 March.&quot;, about project brochure-reprint:
+
+    {&quot;changes&quot;: [
+     {&quot;op&quot;: &quot;set_deliverable&quot;, &quot;project&quot;: &quot;brochure-reprint&quot;, &quot;key&quot;: &quot;D1&quot;,
+      &quot;status&quot;: &quot;delivered&quot;, &quot;quote&quot;: &quot;The logo files are done&quot;},
+     {&quot;op&quot;: &quot;set_step&quot;, &quot;project&quot;: &quot;brochure-reprint&quot;, &quot;n&quot;: 2, &quot;status&quot;: &quot;doing&quot;,
+      &quot;due&quot;: &quot;2026-03-09&quot;, &quot;quote&quot;: &quot;the print run starts on 9 March.&quot;}]}
+
+The operations, with their fields:
+
+    create_project   project (the new id: lowercase words joined by hyphens),
+                     title, description (one sentence), aliases (optional list)
+    set_status       project, value, from (optional, YYYY-MM-DD: the input&#x27;s
+                     date when left out)
+    set_field        project, field (title | description | owner |
+                     requested_by | due), value, date (optional, due only)
+    add_dependency   project, on, kind (needs | subject_to | blocked_by)
+    add_deliverable  project, key, title, owner (optional), due (optional)
+    set_deliverable  project, key, status (planned | in_progress | delivered |
+                     accepted | dropped), on (optional)
+    set_step         project, n, and status (todo | doing | done | blocked |
+                     skipped), due, or both; on (optional)
+    add_question     project, key, text
+    close_question   project, key
+    add_decision     project, text
+
+## Statuses
+
+    proposed    asked for, not yet agreed
+    planning    agreed to go ahead, no agreed plan yet
+    active      plan agreed, work under way
+    blocked     cannot move until something outside it happens
+    on_hold     paused by choice
+    done, cancelled   only when the input says so plainly
+
+A new project gets a set_status straight after its create_project: proposed or
+planning. From there: proposed → planning or cancelled; planning → active (only
+once a plan is agreed), on_hold or cancelled; active → blocked, on_hold, done or
+cancelled; blocked → active, on_hold or cancelled; on_hold → planning, active or
+cancelled.
+
+## Rules
+
+- Change only what the input says. A passing mention with nothing new (&quot;on
+  track&quot;, &quot;no news&quot;) changes nothing.
+- When the input is about a project listed below, update it by its id. Create a
+  project only for work none of them covers. A task one person will do this
+  week is not a project.
+- The &quot;project&quot; field is the project&#x27;s id: helpdesk-migration, not
+  project:helpdesk-migration.
+- People, roles, policies and documents are written with their full names from
+  the list. In a dependency&#x27;s &quot;on&quot;, another project is written project:&lt;id&gt;.
+- A dependency is something the project cannot finish without: another project
+  (needs), a document it needs (needs), a policy it must go through
+  (subject_to), or something in its way (blocked_by). The notes beside the
+  names say what each covers: when the input says the work needs an approval
+  or must follow a rule that a listed policy sets, the project is subject_to
+  that policy.
+- What the project is to produce is a deliverable. For a request, that is at
+  least the thing asked for.
+- requested_by is the person who asked for the work: for a request, the person
+  it is from. owner is the person responsible for the whole project, and only
+  when the input says so (&quot;owns&quot;, &quot;leads&quot;, &quot;is responsible for&quot;, &quot;will run
+  it&quot;). Chairing the meeting, agreeing, or handing out tasks does not make
+  someone the owner. Leave either out when the input does not say.
+- Dates are YYYY-MM-DD. Give a date only when the input states it. &quot;from&quot; and
+  &quot;on&quot; are the input&#x27;s own date unless it names another. A deadline in words
+  with no date (&quot;before the January peak&quot;) is the project&#x27;s due (set_field
+  due) with that value and no date, and the missing date is a question. A
+  deliverable&#x27;s or a step&#x27;s due is always a date, or left out.
+- Steps belong to a plan agreed with a person. Never add, remove or reorder
+  steps; you may change an existing step&#x27;s status or due date.
+- When the input leaves open a decision the project needs, add a question
+  quoting the words that leave it open. When it settles an open question,
+  close_question and add_decision.
+- Every decision the input records about a project is an add_decision: under
+  a &quot;Decisions&quot; heading, or said as &quot;we decided&quot;, &quot;agreed&quot;, &quot;we&#x27;ll go with&quot;.
+  A decided date that moves a step is a set_step with the new due date as well.
+- When the input says the blocker is gone (&quot;unblocked&quot;, &quot;moving again&quot;, &quot;we
+  can go ahead&quot;), a blocked project moves back to active.
+- When a deliverable is delivered, the step that delivers it (shown as
+  &quot;delivers&quot;) is done too, and the other way round.
+- New deliverables and questions take the next free key shown for their
+  project (D1, D2 ... and Q1, Q2 ...). A new project starts at D1 and Q1.</pre>
+</details>
+<details class="more">
+<summary>The thesis call's system prompt: <code>projects/thesis-prompt.md</code></summary>
+<pre class="code">You draft the thesis for one project: what should get better if it is done, and which numbers would say by how much.
+
+You are given the project record, the text of the inputs it was created from (&quot;sources&quot;), and facts from the
+workspace&#x27;s knowledge graph (&quot;facts&quot;). Reply with one JSON object and nothing else:
+
+{&quot;change&quot;: &quot;support moves to a new helpdesk&quot;,
+ &quot;outcome&quot;: &quot;the support hours lost to broken tagging reports&quot;,
+ &quot;direction&quot;: &quot;reduce&quot;,
+ &quot;unit&quot;: &quot;hours a year&quot;,
+ &quot;formula&quot;: [&quot;failures_a_year&quot;, &quot;support_agents&quot;, &quot;hours_per_failure&quot;],
+ &quot;reach&quot;: &quot;active_clients&quot;,
+ &quot;because&quot;: {&quot;quote&quot;: &quot;Tagging reports broke again this week.&quot;},
+ &quot;numbers&quot;: [
+  {&quot;key&quot;: &quot;failures_a_year&quot;, &quot;label&quot;: &quot;tagging report failures&quot;, &quot;unit&quot;: &quot;failures a year&quot;},
+  {&quot;key&quot;: &quot;support_agents&quot;, &quot;label&quot;: &quot;support agents&quot;, &quot;unit&quot;: &quot;agents&quot;},
+  {&quot;key&quot;: &quot;hours_per_failure&quot;, &quot;label&quot;: &quot;hours each agent loses per failure&quot;, &quot;unit&quot;: &quot;hours per agent&quot;,
+   &quot;question&quot;: &quot;When the tagging reports fail, about how many hours does each agent lose?&quot;},
+  {&quot;key&quot;: &quot;active_clients&quot;, &quot;label&quot;: &quot;active clients&quot;, &quot;unit&quot;: &quot;active clients&quot;}]}
+
+The thesis reads: &quot;If &lt;change&gt;, &lt;outcome&gt; will &lt;fall | rise | improve&gt; by potentially &lt;amount&gt; &lt;unit&gt;, across
+&lt;reach&gt;.&quot; You never write the amount. It is the product of the formula&#x27;s numbers, which the service looks up
+in the graph or asks people for, so:
+
+- Pick one outcome that can be counted, in a unit a person would say (&quot;hours a year&quot;, &quot;refunds a month&quot;,
+  &quot;clients lost a year&quot;). Direction is &quot;reduce&quot;, &quot;increase&quot; or &quot;improve&quot;.
+- The formula multiplies numbers whose units give that unit: failures a year × agents × hours per agent =
+  hours a year. A constant goes in as {&quot;value&quot;: 52, &quot;label&quot;: &quot;weeks a year&quot;}. A percentage number has unit &quot;%&quot;.
+- Label each number with the words a document stating it would use (&quot;tagging report failures&quot;, &quot;active
+  clients&quot;): the service finds a number by looking for a fact that has every word of its label.
+- &quot;reach&quot; is optional: the number of clients, people or orders the change touches, shown beside the amount.
+- &quot;because&quot; quotes, word for word, the line in the sources that shows why this matters.
+- Give a &quot;question&quot; for any number no document is likely to hold; it is asked of the person the project names.
+- Reply {&quot;change&quot;: null} when the sources give no reason to expect a countable improvement.</pre>
+</details>
+<p><b>What comes back, and what happens to it.</b> In code, in this order:</p>
+<ol class="method">
+<li><code>parse_all()</code> takes the change set's reply from the first <code>{</code> to the last <code>}</code>,
+needs a <code>"changes"</code> list, and gives each change the project given once beside them.</li>
+<li><code>tidy()</code> writes short names in full with the graph's names (“Priya” → “Priya Patel”) and strips a
+<code>project:</code> prefix from an id.</li>
+<li><code>model.validate()</code> runs the checks: each quote is in the transcript word for word, each name is one the
+graph knows, dates are stated, and status moves are allowed.</li>
+<li>If the checks find problems, the change set's call is made once more, with the same instructions and the payload
+plus this text added (then the second answer is kept, marked <code>"repaired"</code>):
+<pre class="code">---
+
+Your answer was:
+
+&lt;the first answer, as JSON&gt;
+
+The checks refused it:
+- &lt;each problem the checks named&gt;
+
+Answer again with the whole change set, corrected: fix what is named and keep the rest. JSON only.</pre></li>
+<li>The service opens change request 1 with the changes and checks them again. Then the research, with no model:
+the thesis's <i>because</i> quote is traced to the transcript, each of its numbers is looked for in the graph's
+figures (found, with its sentence) or asked of the person the project names, and the result is checked against the
+records as change request 1 would leave them and opened as change request 2: see
+<a href="#thesis">Output 3</a>. If the thesis does not pass those checks, nothing is opened before review and the
+research runs after approval instead.</li>
+</ol>
+<p>For this case the change set is the 11 changes in <a href="#changes">The changes it supports</a>. They passed with 0
+problems, so there was no repair round.</p>
+<p class="note"><b>The other settings.</b> <code>thesis_call</code> merged writes the change set and the thesis in one
+call, from both instructions joined (<code>with_thesis()</code> in <code>projects/ingest.py</code>) and a payload that
+also lists the figures; separate drafts the thesis after the change set, from the proposed project.
+<code>research_before_review</code> off opens the research after approval, as the service used to.</p>
+<p class="note"><b>From the command line</b> (<code>/project-new</code>, then
+<code>python projects/ingest.py &lt;file&gt; --kind transcript</code>), the change set's message is built by the same
+<code>payload()</code> with the same instructions, sent as one message with the instructions first. The names come
+from <code>graph.db</code> (or <code>extraction/*.json</code> when no graph is built) and the projects from
+<code>projects/records/</code>. The call goes through <code>ask()</code> in <code>rag/distil.py</code>: <code>claude -p
+--model &lt;model&gt; --output-format text</code>, with the model from <code>digest/config.json</code>, a 300 s
+timeout, in an empty temporary folder with the <code>CLAUDE*</code> environment variables removed. It drafts no
+thesis.</p>
+
+<h2>Output 1: a change request, not yet applied</h2>
+<p>The ingest job opened change request 1. Its state is <b>open</b>, its proposer is the ingest
+job (job), and its checks found 0 problems. Projects listed at this point:
+0. This is the diff a reviewer sees:</p>
+<pre class="code">+ project      Helpdesk migration (helpdesk-migration)
+~ status       helpdesk-migration: planning, from 2026-09-14
+~ requested_by helpdesk-migration: Priya Patel
+~ due          helpdesk-migration: before the January peak
++ needs        helpdesk-migration → Tooling inventory
++ subject to   helpdesk-migration → Supplier payments
++ deliverable  helpdesk-migration D1 Shortlist of three helpdesks, Marcus Webb, due 2026-09-23
++ deliverable  helpdesk-migration D2 Migration plan
++ deliverable  helpdesk-migration D3 New helpdesk live with ticket history imported
+? question     helpdesk-migration Q1: Does the old helpdesk stay read-only after the move?
+? question     helpdesk-migration Q2: What date does the January peak start?</pre>
+
+<h2>Output 2: the project, after a person approves</h2>
+<p>The change request is now <b>applied</b>. The project summary, as <code>GET /v1/projects</code> returns it:</p>
+<pre class="code">{
+ &quot;id&quot;: &quot;helpdesk-migration&quot;,
+ &quot;title&quot;: &quot;Helpdesk migration&quot;,
+ &quot;status&quot;: &quot;planning&quot;,
+ &quot;requested_by&quot;: &quot;Priya Patel&quot;,
+ &quot;owner&quot;: null,
+ &quot;due&quot;: {
+  &quot;text&quot;: &quot;before the January peak&quot;,
+  &quot;date&quot;: null
+ },
+ &quot;deliverables&quot;: [
+  {
+   &quot;key&quot;: &quot;D1&quot;,
+   &quot;title&quot;: &quot;Shortlist of three helpdesks&quot;,
+   &quot;status&quot;: &quot;planned&quot;
+  },
+  {
+   &quot;key&quot;: &quot;D2&quot;,
+   &quot;title&quot;: &quot;Migration plan&quot;,
+   &quot;status&quot;: &quot;planned&quot;
+  },
+  {
+   &quot;key&quot;: &quot;D3&quot;,
+   &quot;title&quot;: &quot;New helpdesk live with ticket history imported&quot;,
+   &quot;status&quot;: &quot;planned&quot;
+  }
+ ],
+ &quot;open_questions&quot;: 2,
+ &quot;version&quot;: 1
+}</pre>
+<h3>Every field, and the line it came from</h3>
+<p>Each value in the record cites <code>inputs/2026-09-14-support-tooling-review.md</code> and quotes the words it rests on:</p>
+<div class="scroll"><table class=""><thead><tr><th>Field</th><th>Value</th><th>Quote</th></tr></thead><tbody><tr><td><b>description</b></td><td>Move support to a new helpdesk before the January peak</td><td><span class="quote">“I want us on a new helpdesk before the January peak.”</span></td></tr><tr><td><b>requested by</b></td><td>Priya Patel</td><td><span class="quote">“Priya: Tagging reports broke again this week. I want us on a new helpdesk before the January peak.”</span></td></tr><tr><td><b>due</b></td><td>before the January peak <span class="small">(no date: the meeting gave none)</span></td><td><span class="quote">“I want us on a new helpdesk before the January peak.”</span></td></tr><tr><td><b>status</b></td><td>planning from 2026-09-14</td><td><span class="quote">“Agreed. Marcus, can you shortlist three options by 23 September?”</span></td></tr><tr><td><b>depends: needs</b></td><td>Tooling inventory</td><td><span class="quote">“I&#x27;ll need the current tooling inventory to see what integrates.”</span></td></tr><tr><td><b>depends: subject to</b></td><td>Supplier payments</td><td><span class="quote">“The annual contract will be over £2,000, so it goes to Alex for sign-off.”</span></td></tr><tr><td><b>deliverable D1</b></td><td>Shortlist of three helpdesks, Marcus Webb, due 2026-09-23 <span class="small">(planned)</span></td><td><span class="quote">“Marcus, can you shortlist three options by 23 September?”</span></td></tr><tr><td><b>deliverable D2</b></td><td>Migration plan <span class="small">(planned)</span></td><td><span class="quote">“a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.”</span></td></tr><tr><td><b>deliverable D3</b></td><td>New helpdesk live with ticket history imported <span class="small">(planned)</span></td><td><span class="quote">“a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.”</span></td></tr><tr><td><b>question Q1</b></td><td>Does the old helpdesk stay read-only after the move?</td><td><span class="quote">“We haven&#x27;t decided whether to keep the old system read-only afterwards.”</span></td></tr><tr><td><b>question Q2</b></td><td>What date does the January peak start?</td><td><span class="quote">“before the January peak”</span></td></tr></tbody></table></div>
+<h3>The source, as the record keeps it</h3>
+<div class="scroll"><table class=""><thead><tr><th>Document</th><th>Kind</th><th>Read on</th><th>SHA-256</th><th>Used for</th></tr></thead><tbody><tr><td><code>inputs/2026-09-14-support-tooling-review.md</code></td><td>transcript</td><td>2026-09-14</td><td><code>0357f4cb29c7205d…</code></td><td>created, status planning, requested_by, due, dependencies, deliverables, questions</td></tr></tbody></table></div>
+<h3>The history: 11 events</h3>
+<p>Each says who made the change and who approved it.</p>
+<div class="scroll"><table class=""><thead><tr><th>Operation</th><th>New value</th><th>By</th><th>At (UTC)</th></tr></thead><tbody><tr><td>create_project</td><td>Helpdesk migration</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>set_status</td><td>planning</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>set_field</td><td>Priya Patel</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>set_field</td><td>before the January peak</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_dependency</td><td>needs Tooling inventory</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_dependency</td><td>subject_to Supplier payments</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_deliverable</td><td>Shortlist of three helpdesks</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_deliverable</td><td>Migration plan</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_deliverable</td><td>New helpdesk live with ticket history imported</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_question</td><td>Does the old helpdesk stay read-only after the move?</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr><tr><td>add_question</td><td>What date does the January peak start?</td><td>ingest job job_sb4vv2jzxy9j68, approved by Acme Admin</td><td>2026-09-30 17:36:33</td></tr></tbody></table></div>
+
+<h2 id="thesis">Output 3: the thesis, researched</h2>
+<p>The impact research ran when the meeting arrived, beside the change set and before any review (workspace setting
+<code>impact_research</code>, and the service's <code>research_before_review</code>, both on by default). It drafted the
+thesis, looked for its 4 numbers in the graph, found 3 in <code>support-metrics.md</code>, and asked
+Priya Patel for the other. It opened change request 2 beside change
+request 1, so the reviewer weighs the impact with the changes. Like every other edit, it applied nothing
+until a person approved it, and it could not be approved before change request 1 had created the
+project.</p>
+<h3>Change request 2, as a reviewer sees it</h3>
+<pre class="code">+ thesis       helpdesk-migration: if support moves to a new helpdesk, the support hours lost to broken tagging reports will fall (hours a year = failures_a_year × support_agents × hours_per_failure)
+# number       helpdesk-migration failures_a_year: 11 failures a year (found, in docs/support-metrics.md)
+# number       helpdesk-migration support_agents: 4 agents (found, in docs/support-metrics.md)
+# number       helpdesk-migration hours_per_failure: hours each agent loses per failure (asked, ask Priya Patel)
+# number       helpdesk-migration active_clients: 1,240 active clients (found, in docs/support-metrics.md)</pre>
+<p class="note">Its reason, written by the research: Research: failures_a_year: found in docs/support-metrics.md (“Tagging reports failed 11 times over the past year.”); support_agents: found in docs/support-metrics.md (“The support rota has 4 agents.”); hours_per_failure: not in the graph, so asked Priya Patel; active_clients: found in docs/support-metrics.md (“Support serves 1,240 active clients.”)</p>
+<h3>The request document the record quotes</h3>
+<p>When it was approved the service wrote this document. Each operation quotes its own line, so each figure's line
+states it. The build also checks every found sentence against the document it names.</p>
+<pre class="code"># Change request 2: Thesis and impact research for helpdesk-migration
+
+Proposed by impact research (service impact-research) on 2026-09-23.
+Approved by Acme Admin (user usr_0nw1mbq4gr9jmd) on 2026-09-23.
+
+Reason: Research: failures_a_year: found in docs/support-metrics.md (“Tagging reports failed 11 times over the past year.”); support_agents: found in docs/support-metrics.md (“The support rota has 4 agents.”); hours_per_failure: not in the graph, so asked Priya Patel; active_clients: found in docs/support-metrics.md (“Support serves 1,240 active clients.”)
+
+1. Thesis for helpdesk-migration: if support moves to a new helpdesk, the support hours lost to broken tagging reports will fall, counted in hours a year.
+   Formula: failures_a_year × support_agents × hours_per_failure
+   Because: Tagging reports broke again this week. (inputs/2026-09-14-support-tooling-review.md)
+2. Number failures_a_year of helpdesk-migration: 11 failures a year, found in docs/support-metrics.md: Tagging reports failed 11 times over the past year.
+3. Number support_agents of helpdesk-migration: 4 agents, found in docs/support-metrics.md: The support rota has 4 agents.
+4. Number hours_per_failure of helpdesk-migration: hours each agent loses per failure (hours per agent), not in the graph; asked Priya Patel: When the tagging reports fail, about how many hours does each agent lose?
+5. Number active_clients of helpdesk-migration: 1,240 active clients, found in docs/support-metrics.md: Support serves 1,240 active clients.</pre>
+<h3>The question, sent when it was approved</h3>
+<p>An event on the feed, the stream and signed webhooks. Whatever routes questions to people (a task app, chat, email)
+takes it from there:</p>
+<pre class="code">{
+ &quot;project&quot;: &quot;helpdesk-migration&quot;,
+ &quot;key&quot;: &quot;hours_per_failure&quot;,
+ &quot;label&quot;: &quot;hours each agent loses per failure&quot;,
+ &quot;unit&quot;: &quot;hours per agent&quot;,
+ &quot;ask&quot;: &quot;Priya Patel&quot;,
+ &quot;question&quot;: &quot;When the tagging reports fail, about how many hours does each agent lose?&quot;,
+ &quot;change_request&quot;: &quot;cr_dsm86twksdck3b&quot;
+}</pre>
+<h3>The answer and the estimate</h3>
+<div class="scroll"><table class=""><thead><tr><th>CR</th><th>Proposed by</th><th>Change</th><th>Approved by</th><th>State</th></tr></thead><tbody><tr><td>3</td><td>Priya Patel</td><td><code># number       helpdesk-migration hours_per_failure: 6 hours per agent (answered, by Priya Patel)</code></td><td>Priya Patel</td><td>applied</td></tr><tr><td>4</td><td>Marcus Webb</td><td><code>~ effort       helpdesk-migration: 15 person-days, by Marcus Webb</code></td><td>Acme Admin (you)</td><td>applied</td></tr></tbody></table></div>
+<p class="note">Priya Patel answered with <code>POST /v1/projects/helpdesk-migration/numbers/hours_per_failure</code> and
+<code>approve=true</code>: in this workspace a proposer may approve their own request. Marcus Webb, an editor, sent
+<code>POST /v1/projects/helpdesk-migration/effort</code>; an approver applied it.</p>
+<h3>The numbers behind the thesis</h3>
+<div class="scroll"><table class=""><thead><tr><th>Number</th><th>Value</th><th>How it was got</th><th>From</th><th>The words it rests on</th></tr></thead><tbody><tr><td><code>failures_a_year</code><br><span class="small">tagging report failures</span></td><td><b>11</b> failures a year</td><td>found in a document</td><td><code>docs/support-metrics.md</code></td><td><span class="quote">“Tagging reports failed 11 times over the past year.”</span></td></tr><tr><td><code>support_agents</code><br><span class="small">support agents</span></td><td><b>4</b> agents</td><td>found in a document</td><td><code>docs/support-metrics.md</code></td><td><span class="quote">“The support rota has 4 agents.”</span></td></tr><tr><td><code>hours_per_failure</code><br><span class="small">hours each agent loses per failure</span></td><td><b>6</b> hours per agent</td><td>asked, then answered</td><td>Priya Patel, via <code>inputs/requests/cr-3.md</code></td><td><span class="quote">“Number hours_per_failure of helpdesk-migration: 6 hours per agent, answered by Priya Patel: About 6 hours per agent, rebuilding the queues by hand.”</span></td></tr><tr><td><code>active_clients</code><br><span class="small">active clients</span></td><td><b>1,240</b> active clients</td><td>found in a document</td><td><code>docs/support-metrics.md</code></td><td><span class="quote">“Support serves 1,240 active clients.”</span></td></tr></tbody></table></div>
+<h3>The thesis at each step</h3>
+<p>The amount appears only once every number is in. Until then the thesis says so, and the project is listed apart
+from the ranking with what it lacks.</p>
+<div class="scroll"><table class=""><thead><tr><th>After</th><th>Thesis</th><th>Working</th><th>Estimated effort</th><th>Priority</th></tr></thead><tbody><tr><td>change request 2 approved</td><td>If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by an amount still being researched (2 of 3 numbers in), across 1,240 active clients.</td><td>11 failures a year × 4 agents × [hours each agent loses per failure]</td><td><span class="muted">not yet</span></td><td>not ranked: numbers still being researched: hours_per_failure</td></tr><tr><td>Priya Patel answered (change request 3)</td><td>If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients.</td><td>11 failures a year × 4 agents × 6 hours per agent = 264 hours a year</td><td><span class="muted">not yet</span></td><td>not ranked: no estimated effort yet</td></tr><tr><td>Marcus Webb’s estimate approved (change request 4)</td><td>If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients.</td><td>11 failures a year × 4 agents × 6 hours per agent = 264 hours a year</td><td>15 person-days</td><td>17.6 hours a year per person-day</td></tr><tr><td>a staff hour valued at £45</td><td>If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients.</td><td>11 failures a year × 4 agents × 6 hours per agent = 264 hours a year</td><td>15 person-days</td><td>17.6 hours a year per person-day (£792 a year)</td></tr></tbody></table></div>
+<h3>What the service returns</h3>
+<p><code>GET /v1/projects/helpdesk-migration/impact</code>:</p>
+<pre class="code">{
+ &quot;project&quot;: &quot;helpdesk-migration&quot;,
+ &quot;thesis&quot;: &quot;If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients.&quot;,
+ &quot;complete&quot;: true,
+ &quot;value&quot;: 264,
+ &quot;unit&quot;: &quot;hours a year&quot;,
+ &quot;working&quot;: &quot;11 failures a year × 4 agents × 6 hours per agent = 264 hours a year&quot;,
+ &quot;reach&quot;: {
+  &quot;key&quot;: &quot;active_clients&quot;,
+  &quot;label&quot;: &quot;active clients&quot;,
+  &quot;value&quot;: 1240,
+  &quot;unit&quot;: &quot;active clients&quot;,
+  &quot;status&quot;: &quot;found&quot;
+ },
+ &quot;effort_days&quot;: 15,
+ &quot;per_day&quot;: 17.6,
+ &quot;money&quot;: 11880,
+ &quot;money_per_day&quot;: 792.0,
+ &quot;currency&quot;: &quot;GBP&quot;,
+ &quot;estimated&quot;: [],
+ &quot;missing&quot;: [],
+ &quot;priority&quot;: {
+  &quot;basis&quot;: &quot;money per person-day&quot;,
+  &quot;place&quot;: 1,
+  &quot;unranked&quot;: null
+ },
+ &quot;numbers&quot;: [
+  {
+   &quot;key&quot;: &quot;failures_a_year&quot;,
+   &quot;label&quot;: &quot;tagging report failures&quot;,
+   &quot;value&quot;: 11,
+   &quot;unit&quot;: &quot;failures a year&quot;,
+   &quot;status&quot;: &quot;found&quot;,
+   &quot;found_in&quot;: {
+    &quot;source&quot;: &quot;docs/support-metrics.md&quot;,
+    &quot;quote&quot;: &quot;Tagging reports failed 11 times over the past year.&quot;
+   }
+  },
+  {
+   &quot;key&quot;: &quot;support_agents&quot;,
+   &quot;label&quot;: &quot;support agents&quot;,
+   &quot;value&quot;: 4,
+   &quot;unit&quot;: &quot;agents&quot;,
+   &quot;status&quot;: &quot;found&quot;,
+   &quot;found_in&quot;: {
+    &quot;source&quot;: &quot;docs/support-metrics.md&quot;,
+    &quot;quote&quot;: &quot;The support rota has 4 agents.&quot;
+   }
+  },
+  {
+   &quot;key&quot;: &quot;hours_per_failure&quot;,
+   &quot;label&quot;: &quot;hours each agent loses per failure&quot;,
+   &quot;value&quot;: 6,
+   &quot;unit&quot;: &quot;hours per agent&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;Priya Patel&quot;,
+   &quot;ask&quot;: &quot;Priya Patel&quot;
+  },
+  {
+   &quot;key&quot;: &quot;active_clients&quot;,
+   &quot;label&quot;: &quot;active clients&quot;,
+   &quot;value&quot;: 1240,
+   &quot;unit&quot;: &quot;active clients&quot;,
+   &quot;status&quot;: &quot;found&quot;,
+   &quot;found_in&quot;: {
+    &quot;source&quot;: &quot;docs/support-metrics.md&quot;,
+    &quot;quote&quot;: &quot;Support serves 1,240 active clients.&quot;
+   }
+  }
+ ]
+}</pre>
+<p><code>GET /v1/priorities</code>, with <code>settings.unit_values = {"hours a year": 45}</code>: open projects
+ranked by projected impact per person-day, in money when every unit has a price:</p>
+<pre class="code">{
+ &quot;basis&quot;: &quot;money per person-day&quot;,
+ &quot;ranked&quot;: [
+  {
+   &quot;project&quot;: &quot;helpdesk-migration&quot;,
+   &quot;title&quot;: &quot;Helpdesk migration&quot;,
+   &quot;status&quot;: &quot;planning&quot;,
+   &quot;thesis&quot;: &quot;If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients.&quot;,
+   &quot;projected_impact&quot;: 264,
+   &quot;unit&quot;: &quot;hours a year&quot;,
+   &quot;estimated_effort_days&quot;: 15,
+   &quot;impact_per_day&quot;: 17.6,
+   &quot;money&quot;: 11880,
+   &quot;money_per_day&quot;: 792.0,
+   &quot;currency&quot;: &quot;GBP&quot;,
+   &quot;estimated&quot;: [],
+   &quot;due&quot;: null
+  }
+ ],
+ &quot;by_unit&quot;: {},
+ &quot;unranked&quot;: []
+}</pre>
+<h3>The graph answers questions about the impact</h3>
+<p><code>POST /v1/context</code> with “What is the projected impact of the helpdesk migration?”:</p>
+<pre class="code">memory: 8 facts, as of 2026-09-23; 1 project
+These facts come from your documents (10, extracted 2026-09-30) and project records (1, updated 2026-09-23). Quoted lines are the sources&#x27; own words, checked against the files just now: answer from them, and open a file only if its line says it changed or is missing.
+Helpdesk migration requested_by Priya Patel [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Helpdesk migration depends_on Tooling inventory [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Helpdesk migration subject_to Supplier payments [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Support Lead held_by Priya Patel [org-chart.md]
+Onboarding process references Tooling inventory [onboarding-process.md]
+Supplier payments references Tooling inventory [supplier-payments.md]
+Supplier payments approved_by Founder [supplier-payments.md]
+Founder held_by Alex Doyle [org-chart.md]
+where:
+Helpdesk migration: &quot;I want us on a new helpdesk before the January peak.&quot; [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Helpdesk migration: Open question: Does the old helpdesk stay read-only after the move? (from 2026-09-14)
+Helpdesk migration: &quot;Thesis for helpdesk-migration: if support moves to a new helpdesk, the support hours lost to broken tagging reports will fall, counted in hours a year.&quot; [inputs/requests/cr-2.md] (from 2026-09-23)
+Helpdesk migration: Projected impact: 264 hours a year (11 failures a year × 4 agents × 6 hours per agent = 264 hours a year) (from 2026-09-23)
+Priya Patel: &quot;Support Lead: Priya Patel.&quot; [org-chart.md]
+Supplier payments: &quot;Supplier invoices are paid on 30-day terms.&quot; [supplier-payments.md]
+Supplier payments: &quot;Any payment over £2,000 requires Founder sign-off before it is scheduled.&quot; [supplier-payments.md]
+Tooling inventory: &quot;The systems the company runs on: helpdesk, payments, accounting, and the shared drive.&quot; [tooling-inventory.md]
+Tooling inventory: &quot;The onboarding process uses this document as its day-one checklist.&quot; [tooling-inventory.md]
+projects:
+Helpdesk migration: no agreed plan yet</pre>
+
+<h2>What the tests check</h2>
+<p>The case's expectations (<code>projects/cases/01-new-project/case.json</code>) against the record:</p>
+<div class="scroll"><table class=""><thead><tr><th>Expectation</th><th>Expected</th><th>Got</th><th></th></tr></thead><tbody><tr><td>projects created</td><td>1</td><td>1</td><td><span class="good">✓ met</span></td></tr><tr><td>status</td><td>&quot;planning&quot;</td><td>&quot;planning&quot;</td><td><span class="good">✓ met</span></td></tr><tr><td>requested by</td><td>&quot;Priya Patel&quot;</td><td>&quot;Priya Patel&quot;</td><td><span class="good">✓ met</span></td></tr><tr><td>owner</td><td>null</td><td>null</td><td><span class="good">✓ met</span></td></tr><tr><td>due date</td><td>null</td><td>null</td><td><span class="good">✓ met</span></td></tr><tr><td>deliverables</td><td>3</td><td>3</td><td><span class="good">✓ met</span></td></tr><tr><td>open questions</td><td>at least 1</td><td>2</td><td><span class="good">✓ met</span></td></tr><tr><td>dependency</td><td>needs Tooling inventory</td><td>needs Tooling inventory</td><td><span class="good">✓ met</span></td></tr><tr><td>dependency</td><td>subject_to Supplier payments or needs Founder or needs Alex Doyle</td><td>subject_to Supplier payments</td><td><span class="good">✓ met</span></td></tr><tr><td>every quote is in the file it cites</td><td>yes</td><td>yes</td><td><span class="good">✓ met</span></td></tr></tbody></table></div>
+<p>And the thesis, as <code>tests/test_kl_impact.py</code> (<code>Flow</code>) checks it on this same run:</p>
+<div class="scroll"><table class=""><thead><tr><th>Expectation</th><th>Expected</th><th>Got</th><th></th></tr></thead><tbody><tr><td>research opened with change request 1, before review</td><td>two open change requests; one proposed by impact research</td><td>2 open; research proposed by impact research</td><td><span class="good">✓ met</span></td></tr><tr><td>number statuses after research</td><td>3 found, 1 asked</td><td>3 found, 1 asked</td><td><span class="good">✓ met</span></td></tr><tr><td>the question goes to</td><td>Priya Patel</td><td>Priya Patel</td><td><span class="good">✓ met</span></td></tr><tr><td>thesis before the answer</td><td>still being researched (2 of 3 numbers in)</td><td>If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by an amount still being researched (2 of 3 numbers in), across 1,240 active clients.</td><td><span class="good">✓ met</span></td></tr><tr><td>thesis after it</td><td>…by potentially 264 hours a year, across 1,240 active clients.</td><td>If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients.</td><td><span class="good">✓ met</span></td></tr><tr><td>working</td><td>11 failures a year × 4 agents × 6 hours per agent = 264 hours a year</td><td>11 failures a year × 4 agents × 6 hours per agent = 264 hours a year</td><td><span class="good">✓ met</span></td></tr><tr><td>impact per person-day</td><td>17.6</td><td>17.6</td><td><span class="good">✓ met</span></td></tr><tr><td>every quote, and every found sentence, is in the file it cites</td><td>yes</td><td>yes</td><td><span class="good">✓ met</span></td></tr></tbody></table></div>
+<p class="note">The expectations allow any one of several readings of the sign-off line: subject to Supplier payments,
+needs the Founder, or needs Alex Doyle. Any of them is a fair reading of “it goes to Alex for sign-off”. Q2 asks for the
+date of the January peak rather than guessing one, as the case requires.</p>
+
+<h2 id="answers">The graph now answers questions about it</h2>
+<p><code>POST /v1/context</code> with “Who asked for the helpdesk migration, and what is it waiting on?” gives what the <a href="#hook">Claude Code hook</a> would inject. It follows the
+project's link to Supplier payments on to the Founder and to Alex Doyle, so the answer says who “Alex” is, though the
+transcript gives only a first name. (“As of 2026-09-23” is the tests' pinned date.)</p>
+<pre class="code">memory: 8 facts, as of 2026-09-23; 1 project
+These facts come from your documents (10, extracted 2026-09-30) and project records (1, updated 2026-09-14). Quoted lines are the sources&#x27; own words, checked against the files just now: answer from them, and open a file only if its line says it changed or is missing.
+Helpdesk migration requested_by Priya Patel [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Helpdesk migration depends_on Tooling inventory [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Helpdesk migration subject_to Supplier payments [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Support Lead held_by Priya Patel [org-chart.md]
+Onboarding process references Tooling inventory [onboarding-process.md]
+Supplier payments references Tooling inventory [supplier-payments.md]
+Supplier payments approved_by Founder [supplier-payments.md]
+Founder held_by Alex Doyle [org-chart.md]
+where:
+Helpdesk migration: &quot;I want us on a new helpdesk before the January peak.&quot; [inputs/2026-09-14-support-tooling-review.md] (from 2026-09-14)
+Helpdesk migration: Status: planning (from 2026-09-14), on the words &quot;Agreed. Marcus, can you shortlist three options by 23 September?&quot; [inputs/2026-09-14-support-tooling-review.md]
+Helpdesk migration: Open question: Does the old helpdesk stay read-only after the move? (from 2026-09-14)
+Helpdesk migration: Open question: What date does the January peak start? (from 2026-09-14)
+Priya Patel: &quot;Support Lead: Priya Patel.&quot; [org-chart.md]
+Supplier payments: &quot;Supplier invoices are paid on 30-day terms.&quot; [supplier-payments.md]
+Supplier payments: &quot;Any payment over £2,000 requires Founder sign-off before it is scheduled.&quot; [supplier-payments.md]
+Tooling inventory: &quot;The systems the company runs on: helpdesk, payments, accounting, and the shared drive.&quot; [tooling-inventory.md]
+Tooling inventory: &quot;The onboarding process uses this document as its day-one checklist.&quot; [tooling-inventory.md]
+projects:
+Helpdesk migration: no agreed plan yet</pre>
+
+<h2>Where it is tested</h2>
+<div class="scroll"><table class=""><thead><tr><th>Test</th><th>What it covers</th></tr></thead><tbody><tr><td><code>tests/test_project_cases.py</code></td><td>The change-set engine on its own: validate and apply, against the case.</td></tr><tr><td><code>tests/test_kl_ingest.py</code><br><span class="small">test_a_transcript_becomes_a_change_request_quoting_it</span></td><td>This flow through the service: the transcript in, the change request, approval, the record citing the transcript.</td></tr><tr><td><code>tests/test_kl_review.py</code><br><span class="small">test_each_case_as_a_change_request</span></td><td>All seven project cases through change requests, this one included, with every quote checked in the file it cites.</td></tr><tr><td><code>tests/test_kl_impact.py</code><br><span class="small">Flow, Portfolio</span></td><td>This run's impact research: the thesis, numbers found and quoted, a question to the right person, the answer completing the thesis; ranking, pricing, estimates, documents that disagree, the HTTP calls.</td></tr><tr><td><code>tests/test_impact.py</code></td><td>The thesis engine on its own: the figures, the operations and their checks, the claims the build makes of them.</td></tr></tbody></table></div>
+<h3>Run it again</h3>
+<pre class="code">python -m unittest discover -s tests -p test_kl_ingest.py
+python -m unittest discover -s tests -p test_kl_review.py
+python -m unittest discover -s tests -p test_kl_impact.py
+python tests/run_parallel.py            # everything</pre>
+</main>
+</body>
+</html>
