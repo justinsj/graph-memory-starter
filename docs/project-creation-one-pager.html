@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Creation One-Pager</title>
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --accent: #2a78d6; --good: #0f8a5f; --good-bg: #e9f7f1; --warn: #c2551f; --warn-bg: #fdf1ea;
+  --code-bg: #f6f7f9;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark; --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --accent: #6aa7ee; --good: #4cc38a; --good-bg: #13241c; --warn: #f08a5d; --warn-bg: #2a1c15;
+    --code-bg: #1d2127;
+  }
+}
+@page { size: Letter; margin: 0.45in; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 8.6pt/1.38 var(--sans); }
+.sheet { width: 8.5in; min-height: 11in; margin: 24px auto; padding: 0.45in; background: var(--surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 8px 30px rgba(0,0,0,.06); }
+@media print {
+  body { background: #fff; }
+  .sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+}
+.eyebrow { font: 600 7pt var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: 17pt; line-height: 1.1; margin: 2px 0 4px; letter-spacing: -.01em; }
+.lede { color: var(--ink-2); margin: 0 0 8px; }
+h2 { font-size: 9pt; margin: 11px 0 4px; padding-top: 6px; border-top: 1px solid var(--hair); display: flex; gap: 6px; align-items: baseline; }
+h2 .n { font: 600 7pt var(--mono); color: #fff; background: var(--accent); border-radius: 3px; padding: 0 4px; }
+h2 .aside { font: 400 7pt var(--sans); color: var(--muted); margin-left: auto; }
+p { margin: 0 0 4px; }
+code { font: 7pt var(--mono); }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.flow { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; font-size: 7.4pt; margin: 0 0 2px; }
+.flow span.s { border: 1px solid var(--hair); border-radius: 4px; padding: 1px 5px; background: var(--code-bg); }
+.flow span.g { border-color: var(--warn); background: var(--warn-bg); }
+.flow span.d { border-color: var(--good); background: var(--good-bg); }
+.flow .a { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 7.4pt; margin: 0 0 4px; }
+th, td { text-align: left; vertical-align: top; padding: 2px 4px; border-bottom: 1px solid var(--hair); }
+th { color: var(--muted); font-weight: 600; }
+.card { border: 1px solid var(--good); background: var(--good-bg); border-radius: 6px; padding: 5px 7px; }
+.card .t { font-weight: 700; font-size: 9.5pt; }
+.kv { display: grid; grid-template-columns: 5.2em 1fr; gap: 1px 6px; font-size: 7.6pt; margin-top: 3px; }
+.kv > b { color: var(--muted); font-weight: 600; }
+.box { background: var(--code-bg); border: 1px solid var(--hair); border-radius: 5px; padding: 3px 6px; margin: 0 0 4px; }
+.tx { display: grid; grid-template-columns: max-content 1fr; gap: 1.5px 8px; font-size: 7.6pt; line-height: 1.32; }
+.tx .hd { grid-column: 1 / -1; color: var(--muted); }
+.tx .hd.t { color: var(--ink); font-weight: 700; }
+.tx .hd:last-of-type { margin-bottom: 2px; }
+.tx b { font-weight: 600; }
+table.in { margin: 0; font-size: 7.3pt; line-height: 1.3; }
+table.in td { padding: 2px 4px; }
+table.in td:first-child { padding-left: 0; }
+table.in td:last-child { padding-right: 0; }
+table.in tr:last-child td { border-bottom: 0; }
+table.flat td { border-bottom: 0; padding-top: 1.5px; padding-bottom: 1.5px; }
+.sym { font: 700 7.3pt var(--mono); width: 1em; }
+.sym.add { color: var(--good); }
+.sym.set { color: var(--warn); }
+.sym.ask { color: var(--accent); }
+.sym.num { color: var(--muted); }
+.kind { color: var(--muted); white-space: nowrap; }
+.ty { font: 600 6.2pt var(--sans); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.formula { font: 6.8pt var(--mono); color: var(--ink-2); }
+.ask { color: var(--warn); font-weight: 600; }
+.nw, td code { white-space: nowrap; }
+.li { display: grid; grid-template-columns: max-content 1fr; gap: 0 5px; }
+.li b { color: var(--ink-2); font-weight: 600; }
+.thesis { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--hair); font-size: 8pt; }
+.src { color: var(--muted); font-size: 7pt; }
+.note { color: var(--ink-2); font-size: 7.4pt; }
+.foot { margin-top: 6px; padding-top: 5px; border-top: 1px solid var(--hair); font-size: 7.4pt; color: var(--ink-2); }
+.ok { color: var(--good); font-weight: 700; }
+.work { font-size: 7.6pt; color: var(--ink); margin: 2px 0; font-variant-numeric: tabular-nums; }
+.est { font: 600 6.8pt var(--sans); color: var(--warn); border: 1px solid var(--warn); background: var(--warn-bg);
+  border-radius: 3px; padding: 0 3px; }
+tr.why td { font-size: 7pt; color: var(--ink-2); padding-bottom: 3px; }
+.pbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left;
+  white-space: nowrap; }
+.pbtn code { color: var(--accent); text-decoration: underline dotted; text-underline-offset: 2px; }
+.pbtn::after { content: " ▸"; font-size: 7pt; }
+.pbtn[aria-expanded="true"]::after { content: " ▾"; }
+.pbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
+.prow td { padding: 1px 0 6px; max-width: 0; }  /* so its unwrapped code lines scroll, not widen the table */
+.prow .phd { font-size: 7pt; color: var(--muted); margin: 0 0 2px; }
+.pbody { font: 6.6pt/1.4 var(--mono); max-height: 3.6in; overflow: auto; padding: 5px 7px; background: var(--code-bg);
+  border: 1px solid var(--hair); border-radius: 5px; color: var(--ink); }
+.pbody .pl { white-space: pre-wrap; overflow-wrap: anywhere; }
+.pbody .cb { white-space: pre; overflow-x: auto; color: var(--ink-2); }
+@media print {
+  .prow, .scr { display: none !important; }
+  .pbtn::after { content: none; }
+  .pbtn code { color: inherit; text-decoration: none; }
+}
+/* last, so it wins over the two columns above */
+@media screen and (max-width: 8.6in) { .sheet { width: auto; margin: 0; padding: 16px; } .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="sheet">
+<div class="eyebrow">knowledge layer · one-page example · case 01 · 30 September 2026</div>
+<h1>A meeting becomes a project, with its thesis</h1>
+<p class="lede">A meeting transcript goes in; the project and its impact research come out, as two change requests for
+a person to approve.</p>
+<div class="flow"><span class="s">Transcript in</span><span class="a">→</span><span class="s">Graph read, as built</span><span class="a">→</span><span class="s">2 model calls at once</span><span class="a">→</span><span class="s">Checks</span><span class="a">→</span><span class="s g">Change requests 1 + 2</span><span class="a">→</span><span class="s g">A person approves</span><span class="a">→</span><span class="s d">Project + thesis</span></div>
+
+<div class="cols">
+<div>
+<h2><span class="n">1</span>Input: the meeting transcript <span class="aside">kind transcript, 14 Sep 2026</span></h2>
+<div class="box tx"><div class="hd t">Support tooling review, 14 September 2026</div><div class="hd">Attendees: Sarah Chen, Priya Patel, Marcus Webb</div><b>Priya</b><span>Tagging reports broke again this week. I want us on a new helpdesk before the January peak.</span><b>Sarah</b><span>Agreed. Marcus, can you shortlist three options by 23 September?</span><b>Marcus</b><span>Yes. I&#x27;ll need the current tooling inventory to see what integrates.</span><b>Sarah</b><span>The annual contract will be over £2,000, so it goes to Alex for sign-off.</span><b>Priya</b><span>What we need at the end: a shortlist, a migration plan, and the new helpdesk live with our ticket history imported.</span><b>Sarah</b><span>We haven&#x27;t decided whether to keep the old system read-only afterwards. Let&#x27;s come back to that.</span></div>
+
+<h2><span class="n">2</span>What the graph supplied <span class="aside">no rebuild: read as last built</span></h2>
+<p class="note">Names the change set's call is given (15 in all; the ones this project rests on):</p>
+<div class="box"><table class="in"><tr><td class="nw"><b>Alex Doyle</b><br><span class="ty">person</span></td><td><span class="src">also “Alex” ·</span> The Founder</td></tr><tr><td class="nw"><b>Founder</b><br><span class="ty">role</span></td><td>Sets pricing, signs anything customer-facing; Signs off supplier payments over £2,000</td></tr><tr><td class="nw"><b>Priya Patel</b><br><span class="ty">person</span></td><td><span class="src">also “Priya” ·</span> The Support Lead</td></tr><tr><td class="nw"><b>Supplier payments</b><br><span class="ty">policy</span></td><td>Payments over £2,000 need Founder sign-off before they are scheduled; New suppliers are added to the tooling inventory before their first invoice</td></tr><tr><td class="nw"><b>Support metrics</b><br><span class="ty">document</span></td><td>Support serves 1,240 active clients; Tagging reports failed 11 times over the past year</td></tr><tr><td class="nw"><b>Tooling inventory</b><br><span class="ty">document</span></td><td><span class="src">also “tooling” ·</span> The systems the company runs on: helpdesk, payments, accounting and the shared drive; Each entry lists the owner, the billing cycle and who holds admin access</td></tr></table></div>
+<p class="note">Figures the thesis call is given (13 in all; the 3 its numbers were found in):</p>
+<div class="box"><table class="in flat"><tr><td>Support serves 1,240 active clients.</td><td class="src nw" rowspan="3">support-metrics.md</td></tr><tr><td>Tagging reports failed 11 times over the past year.</td></tr><tr><td>The support rota has 4 agents.</td></tr></table></div>
+
+<h2><span class="n">3</span>The two model calls, at once <span class="aside">claude -p, no tools</span></h2>
+<table><thead><tr><th>Call</th><th>System prompt</th><th>User message</th><th>Answer</th></tr></thead><tbody>
+<tr><td class="nw">Change set</td><td><button class="pbtn" type="button" aria-expanded="false" aria-controls="p-change" title="Show the full system prompt"><code>ingest-prompt.md</code></button><br><span class="src">5,921 chars</span></td><td>names, projects, transcript<br><span class="src">2,650 chars</span></td><td>11 changes, each with its quote</td></tr>
+<tr class="prow" id="p-change" hidden><td colspan="4"><div class="phd">The change set&#x27;s call: its system prompt as sent, 5,921 characters; wrapped lines rejoined to fit</div><div class="pbody"><div class="pl"># How to read an input into project changes</div><div class="pl"> </div><div class="pl">You read one input: a request someone typed, a meeting transcript, or the write-up of a working session. You answer with the changes it makes to projects, as JSON, and nothing else. Code checks every change before anything is written, and a person reviews them, so propose only what the input itself says.</div><div class="pl"> </div><div class="pl">Below the line you get the input&#x27;s file name, kind and date; the names the knowledge graph knows; the projects this input may be about, as they stand; and the input.</div><div class="pl"> </div><div class="pl">## What you answer</div><div class="pl"> </div><div class="cb">    {&quot;changes&quot;: [ ... ]}</div><div class="pl"> </div><div class="pl">or `{&quot;changes&quot;: []}` when the input changes no project. No other text. When the changes are all about one project, give its id once, beside them, and leave &quot;project&quot; out of each change: `{&quot;project&quot;: &quot;brochure-reprint&quot;, &quot;changes&quot;: [ ... ]}`. Write the JSON compactly: no indentation.</div><div class="pl"> </div><div class="pl">Each change is one object with an &quot;op&quot;, its fields, and a &quot;quote&quot;: the shortest passage of the input that states the change, copied word for word, at most 300 characters. Every change needs its own quote; one without is refused.</div><div class="pl"> </div><div class="pl">For example, for a meeting on 2 March where Dee said &quot;The logo files are done, the print run starts on 9 March.&quot;, about project brochure-reprint:</div><div class="pl"> </div><div class="cb">    {&quot;changes&quot;: [
+     {&quot;op&quot;: &quot;set_deliverable&quot;, &quot;project&quot;: &quot;brochure-reprint&quot;, &quot;key&quot;: &quot;D1&quot;,
+      &quot;status&quot;: &quot;delivered&quot;, &quot;quote&quot;: &quot;The logo files are done&quot;},
+     {&quot;op&quot;: &quot;set_step&quot;, &quot;project&quot;: &quot;brochure-reprint&quot;, &quot;n&quot;: 2, &quot;status&quot;: &quot;doing&quot;,
+      &quot;due&quot;: &quot;2026-03-09&quot;, &quot;quote&quot;: &quot;the print run starts on 9 March.&quot;}]}</div><div class="pl"> </div><div class="pl">The operations, with their fields:</div><div class="pl"> </div><div class="cb">    create_project   project (the new id: lowercase words joined by hyphens),
+                     title, description (one sentence), aliases (optional list)
+    set_status       project, value, from (optional, YYYY-MM-DD: the input&#x27;s
+                     date when left out)
+    set_field        project, field (title | description | owner |
+                     requested_by | due), value, date (optional, due only)
+    add_dependency   project, on, kind (needs | subject_to | blocked_by)
+    add_deliverable  project, key, title, owner (optional), due (optional)
+    set_deliverable  project, key, status (planned | in_progress | delivered |
+                     accepted | dropped), on (optional)
+    set_step         project, n, and status (todo | doing | done | blocked |
+                     skipped), due, or both; on (optional)
+    add_question     project, key, text
+    close_question   project, key
+    add_decision     project, text</div><div class="pl"> </div><div class="pl">## Statuses</div><div class="pl"> </div><div class="cb">    proposed    asked for, not yet agreed
+    planning    agreed to go ahead, no agreed plan yet
+    active      plan agreed, work under way
+    blocked     cannot move until something outside it happens
+    on_hold     paused by choice
+    done, cancelled   only when the input says so plainly</div><div class="pl"> </div><div class="pl">A new project gets a set_status straight after its create_project: proposed or planning. From there: proposed → planning or cancelled; planning → active (only once a plan is agreed), on_hold or cancelled; active → blocked, on_hold, done or cancelled; blocked → active, on_hold or cancelled; on_hold → planning, active or cancelled.</div><div class="pl"> </div><div class="pl">## Rules</div><div class="pl"> </div><div class="pl">- Change only what the input says. A passing mention with nothing new (&quot;on track&quot;, &quot;no news&quot;) changes nothing.</div><div class="pl">- When the input is about a project listed below, update it by its id. Create a project only for work none of them covers. A task one person will do this week is not a project.</div><div class="pl">- The &quot;project&quot; field is the project&#x27;s id: helpdesk-migration, not project:helpdesk-migration.</div><div class="pl">- People, roles, policies and documents are written with their full names from the list. In a dependency&#x27;s &quot;on&quot;, another project is written project:&lt;id&gt;.</div><div class="pl">- A dependency is something the project cannot finish without: another project (needs), a document it needs (needs), a policy it must go through (subject_to), or something in its way (blocked_by). The notes beside the names say what each covers: when the input says the work needs an approval or must follow a rule that a listed policy sets, the project is subject_to that policy.</div><div class="pl">- What the project is to produce is a deliverable. For a request, that is at least the thing asked for.</div><div class="pl">- requested_by is the person who asked for the work: for a request, the person it is from. owner is the person responsible for the whole project, and only when the input says so (&quot;owns&quot;, &quot;leads&quot;, &quot;is responsible for&quot;, &quot;will run it&quot;). Chairing the meeting, agreeing, or handing out tasks does not make someone the owner. Leave either out when the input does not say.</div><div class="pl">- Dates are YYYY-MM-DD. Give a date only when the input states it. &quot;from&quot; and &quot;on&quot; are the input&#x27;s own date unless it names another. A deadline in words with no date (&quot;before the January peak&quot;) is the project&#x27;s due (set_field due) with that value and no date, and the missing date is a question. A deliverable&#x27;s or a step&#x27;s due is always a date, or left out.</div><div class="pl">- Steps belong to a plan agreed with a person. Never add, remove or reorder steps; you may change an existing step&#x27;s status or due date.</div><div class="pl">- When the input leaves open a decision the project needs, add a question quoting the words that leave it open. When it settles an open question, close_question and add_decision.</div><div class="pl">- Every decision the input records about a project is an add_decision: under a &quot;Decisions&quot; heading, or said as &quot;we decided&quot;, &quot;agreed&quot;, &quot;we&#x27;ll go with&quot;. A decided date that moves a step is a set_step with the new due date as well.</div><div class="pl">- When the input says the blocker is gone (&quot;unblocked&quot;, &quot;moving again&quot;, &quot;we can go ahead&quot;), a blocked project moves back to active.</div><div class="pl">- When a deliverable is delivered, the step that delivers it (shown as &quot;delivers&quot;) is done too, and the other way round.</div><div class="pl">- New deliverables and questions take the next free key shown for their project (D1, D2 ... and Q1, Q2 ...). A new project starts at D1 and Q1.</div></div></td></tr>
+<tr><td class="nw">Thesis</td><td><button class="pbtn" type="button" aria-expanded="false" aria-controls="p-thesis" title="Show the full system prompt"><code>thesis-prompt.md</code></button><br><span class="src">2,351 chars</span></td><td>transcript + figures<br><span class="src">1,946 chars</span></td><td>change, outcome, formula; never an amount</td></tr>
+<tr class="prow" id="p-thesis" hidden><td colspan="4"><div class="phd">The thesis call: its system prompt as sent, 2,351 characters; wrapped lines rejoined to fit</div><div class="pbody"><div class="pl">You draft the thesis for one project: what should get better if it is done, and which numbers would say by how much.</div><div class="pl"> </div><div class="pl">You are given the project record, the text of the inputs it was created from (&quot;sources&quot;), and facts from the workspace&#x27;s knowledge graph (&quot;facts&quot;). Reply with one JSON object and nothing else:</div><div class="pl"> </div><div class="cb">{&quot;change&quot;: &quot;support moves to a new helpdesk&quot;,
+ &quot;outcome&quot;: &quot;the support hours lost to broken tagging reports&quot;,
+ &quot;direction&quot;: &quot;reduce&quot;,
+ &quot;unit&quot;: &quot;hours a year&quot;,
+ &quot;formula&quot;: [&quot;failures_a_year&quot;, &quot;support_agents&quot;, &quot;hours_per_failure&quot;],
+ &quot;reach&quot;: &quot;active_clients&quot;,
+ &quot;because&quot;: {&quot;quote&quot;: &quot;Tagging reports broke again this week.&quot;},
+ &quot;numbers&quot;: [
+  {&quot;key&quot;: &quot;failures_a_year&quot;, &quot;label&quot;: &quot;tagging report failures&quot;, &quot;unit&quot;: &quot;failures a year&quot;},
+  {&quot;key&quot;: &quot;support_agents&quot;, &quot;label&quot;: &quot;support agents&quot;, &quot;unit&quot;: &quot;agents&quot;},
+  {&quot;key&quot;: &quot;hours_per_failure&quot;, &quot;label&quot;: &quot;hours each agent loses per failure&quot;, &quot;unit&quot;: &quot;hours per agent&quot;,
+   &quot;question&quot;: &quot;When the tagging reports fail, about how many hours does each agent lose?&quot;},
+  {&quot;key&quot;: &quot;active_clients&quot;, &quot;label&quot;: &quot;active clients&quot;, &quot;unit&quot;: &quot;active clients&quot;}]}</div><div class="pl"> </div><div class="pl">The thesis reads: &quot;If &lt;change&gt;, &lt;outcome&gt; will &lt;fall | rise | improve&gt; by potentially &lt;amount&gt; &lt;unit&gt;, across &lt;reach&gt;.&quot; You never write the amount. It is the product of the formula&#x27;s numbers, which the service looks up in the graph or asks people for, so:</div><div class="pl"> </div><div class="pl">- Pick one outcome that can be counted, in a unit a person would say (&quot;hours a year&quot;, &quot;refunds a month&quot;, &quot;clients lost a year&quot;). Direction is &quot;reduce&quot;, &quot;increase&quot; or &quot;improve&quot;.</div><div class="pl">- The formula multiplies numbers whose units give that unit: failures a year × agents × hours per agent = hours a year. A constant goes in as {&quot;value&quot;: 52, &quot;label&quot;: &quot;weeks a year&quot;}. A percentage number has unit &quot;%&quot;.</div><div class="pl">- Label each number with the words a document stating it would use (&quot;tagging report failures&quot;, &quot;active clients&quot;): the service finds a number by looking for a fact that has every word of its label.</div><div class="pl">- &quot;reach&quot; is optional: the number of clients, people or orders the change touches, shown beside the amount.</div><div class="pl">- &quot;because&quot; quotes, word for word, the line in the sources that shows why this matters.</div><div class="pl">- Give a &quot;question&quot; for any number no document is likely to hold; it is asked of the person the project names.</div><div class="pl">- Reply {&quot;change&quot;: null} when the sources give no reason to expect a countable improvement.</div></div></td></tr>
+</tbody></table>
+<p class="note">Each quote is checked word for word in the transcript; names against the graph (0 problems).
+<span class="scr">Click a prompt's name to read it in full.</span></p>
+</div>
+
+<div>
+<h2><span class="n">4</span>Change request 1: the project <span class="aside">from the transcript</span></h2>
+<div class="box"><table class="in flat"><tr><td class="sym add">+</td><td class="kind">project</td><td>Helpdesk migration (helpdesk-migration)</td></tr><tr><td class="sym set">~</td><td class="kind">status</td><td>planning, from 2026-09-14</td></tr><tr><td class="sym set">~</td><td class="kind">requested_by</td><td>Priya Patel</td></tr><tr><td class="sym set">~</td><td class="kind">due</td><td>before the January peak</td></tr><tr><td class="sym add">+</td><td class="kind">needs</td><td>Tooling inventory</td></tr><tr><td class="sym add">+</td><td class="kind">subject to</td><td>Supplier payments</td></tr><tr><td class="sym add">+</td><td class="kind">deliverable</td><td><b>D1</b> Shortlist of three helpdesks <span class="src nw">Marcus Webb, due 2026-09-23</span></td></tr><tr><td class="sym add">+</td><td class="kind"></td><td><b>D2</b> Migration plan</td></tr><tr><td class="sym add">+</td><td class="kind"></td><td><b>D3</b> New helpdesk live with ticket history imported</td></tr><tr><td class="sym ask">?</td><td class="kind">question</td><td><b>Q1</b> Does the old helpdesk stay read-only after the move?</td></tr><tr><td class="sym ask">?</td><td class="kind"></td><td><b>Q2</b> What date does the January peak start?</td></tr></table></div>
+<p class="note">Every line is on <code>helpdesk-migration</code>: <b class="sym add">+</b> adds, <b class="sym set">~</b> sets,
+<b class="sym ask">?</b> opens a question.</p>
+
+<h2><span class="n">5</span>Change request 2: the research <span class="aside">beside 1, before review</span></h2>
+<div class="box"><table class="in flat"><tr><td class="sym add">+</td><td colspan="3"><span class="kind">thesis</span> if support moves to a new helpdesk, the support hours lost to broken tagging reports will fall<br><span class="formula">hours a year = failures_a_year × support_agents × hours_per_failure</span></td></tr><tr><td class="sym num">#</td><td><code>failures_a_year</code></td><td class="nw">11 failures a year</td><td class="src nw">in support-metrics.md</td></tr><tr><td class="sym num">#</td><td><code>support_agents</code></td><td class="nw">4 agents</td><td class="src nw">in support-metrics.md</td></tr><tr><td class="sym num">#</td><td><code>hours_per_failure</code></td><td class="nw"><b>6 hours per agent</b></td><td class="src nw"><span class="est">estimate</span> by Priya Patel</td></tr><tr class="why"><td></td><td colspan="3">Not stated in any document, so the research asked Priya Patel, who gave this basis: “Each time the tagging reports fail, every agent rebuilds their ticket queues by hand: about 6 hours each.” <i>(A scripted reply, for this example.)</i></td></tr><tr><td class="sym num">#</td><td><code>active_clients</code></td><td class="nw">1,240 active clients</td><td class="src nw">in support-metrics.md</td></tr></table></div>
+<p class="note"><b class="sym num">#</b> a number, found in the graph by code, not by the model. It applies after 1.</p>
+
+<h2><span class="n">6</span>The result, approved <span class="aside">change requests 1 and 2 applied</span></h2>
+<div class="card">
+<div class="t">Helpdesk migration <span class="src">helpdesk-migration · planning</span></div>
+<div class="kv">
+<b>Asked by</b><span>Priya Patel</span>
+<b>Due</b><span>before the January peak <span class="src">(no date given: Q2 asks)</span></span>
+<b>Delivers</b><div class="li"><b>D1</b><span>Shortlist of three helpdesks <span class="src nw">Marcus Webb, due 2026-09-23</span></span><b>D2</b><span>Migration plan</span><b>D3</b><span>New helpdesk live with ticket history imported</span></div>
+<b>Depends</b><span>needs Tooling inventory; must follow Supplier payments</span>
+<b>Open</b><div class="li"><b>Q1</b><span>Does the old helpdesk stay read-only after the move?</span><b>Q2</b><span>What date does the January peak start?</span></div>
+</div>
+<div class="thesis"><b>Thesis:</b> If support moves to a new helpdesk, the support hours lost to broken tagging reports will fall by potentially 264 hours a year, across 1,240 active clients. <span class="est">rests on 1 estimate: see 5</span>
+<div class="work"><b>Working:</b> 11 failures a year × 4 agents × 6 hours per agent (estimated) = 264 hours a year</div></div>
+</div>
+</div>
+</div>
+
+<div class="foot">
+<span class="ok">✓</span> Every field cites its transcript line; the case's expectations: all met.
+The graph was not rebuilt; its 4 changes wait in a pending diff.
+Sonnet 5.5, 15 runs each: <b>10.0 s</b> with the graph (15/15 correct), 17.2 s with the model searching the documents itself (15/15).
+More: <a href="project-creation-example.html">walk-through</a> · <a href="project-creation-speedups.html">speed-ups</a>.
+</div>
+</main>
+<script>
+// a prompt's file name opens and closes its full text, in the row below it
+for (const b of document.querySelectorAll('.pbtn')) {
+  b.addEventListener('click', () => {
+    const open = b.getAttribute('aria-expanded') !== 'true';
+    b.setAttribute('aria-expanded', String(open));
+    document.getElementById(b.getAttribute('aria-controls')).hidden = !open;
+  });
+}
+</script>
+</body>
+</html>
