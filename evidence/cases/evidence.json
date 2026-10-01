@@ -1,0 +1,634 @@
+{
+ "about": "Evidence an analyst gathers from a company's database for a project's thesis, and stores so that later questions and the thesis's numbers can draw on it without the database. Each archive is one OpenSpec evidence change (openspec/schemas/evidence), archived on its date: the older one covers January to June, the newer one July and August and supersedes it for the sets it repeats. Each set has a claim to test, a verdict where the claim can fail, and numbers, each with the SQL that gives it over the views below. `traps` are the values plausible slips give (UTC days, the order header instead of its lines, staff and training left in), so a report can say which slip a run made. `tolerance`, where a number has one, is how far a run's figure may be from the recorded one: 2,359 orders over 62 days is 38.0 or 38.05 by how it is rounded. The brief is what an analyst is told; everything else has to come from the data.",
+ "database": "sales",
+ "now": "2026-09-15",
+ "views": [
+  "CREATE TEMP VIEW london AS SELECT o.*, CASE WHEN o.placed_at >= '2026-03-29 01:00:00' AND o.placed_at < '2026-10-25 01:00:00' THEN datetime(o.placed_at, '+1 hour') ELSE o.placed_at END AS placed_london FROM orders o",
+  "CREATE TEMP VIEW counted AS SELECT l.id, date(l.placed_london) AS day, l.channel, c.kind, l.item_count, l.total_quantity, l.total_amount FROM london l JOIN customers c ON c.id = l.customer_id WHERE l.status = 'completed' AND c.email NOT LIKE '%@kettleandkiln.example' AND c.email <> 'training@till.local'",
+  "CREATE TEMP VIEW lines AS SELECT order_id, COUNT(*) AS n, SUM(quantity) AS units, SUM(line_amount) AS amount FROM order_items GROUP BY order_id",
+  "CREATE TEMP VIEW jul_aug AS SELECT c.*, l.n, l.units, l.amount FROM counted c JOIN lines l ON l.order_id = c.id WHERE c.day BETWEEN '2026-07-01' AND '2026-08-31'",
+  "CREATE TEMP VIEW h1 AS SELECT c.*, l.n, l.units, l.amount FROM counted c JOIN lines l ON l.order_id = c.id WHERE c.day BETWEEN '2026-01-01' AND '2026-06-30'",
+  "CREATE TEMP VIEW jul_aug_days AS SELECT day, SUM(amount) AS sales, COUNT(*) AS orders, SUM(CASE WHEN kind = 'retail' THEN amount ELSE 0 END) AS retail_sales FROM jul_aug GROUP BY day",
+  "CREATE TEMP VIEW h1_days AS SELECT day, SUM(amount) AS sales, COUNT(*) AS orders FROM h1 GROUP BY day"
+ ],
+ "brief": {
+  "project": "bundle-offer",
+  "title": "Evidence for the bundle offer",
+  "thesis": "If we offer a 'complete the set' bundle at checkout, some single-line orders become two-line orders, and sales rise.",
+  "period": "1 July to 31 August 2026",
+  "definitions": [
+   "A day is a London calendar day. orders.placed_at is UTC, and July and August are on British Summer Time (UTC+1).",
+   "Counted orders are completed orders, leaving out staff purchases (customers whose email ends @kettleandkiln.example) and the till's training transactions (training@till.local). Trade orders count.",
+   "Sales are the line amounts (order_items.line_amount) of counted orders, in pounds."
+  ],
+  "asks": [
+   "daily-sales: aggregate sales by day over the period.",
+   "days-ranked: group the days, order them by sales, and say what drives the top of the list.",
+   "lines-per-order: test the claim that each sale contains more than one order item.",
+   "header-totals: test the claim that an order's quantity and amount are always the totals of its lines.",
+   "order-value: the average and the spread of order values, and the average order line."
+  ]
+ },
+ "archives": [
+  {
+   "date": "2026-07-01",
+   "change": "h1-sales-evidence",
+   "period": "1 January to 30 June 2026",
+   "view": "h1",
+   "sets": [
+    {
+     "id": "daily-sales",
+     "title": "Daily sales",
+     "claim": "Daily sales for the first half of 2026.",
+     "numbers": [
+      {
+       "key": "days",
+       "label": "Days in the period",
+       "unit": "days",
+       "sql": "SELECT COUNT(*) FROM h1_days",
+       "value": 181
+      },
+      {
+       "key": "counted_orders",
+       "label": "Counted orders",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM h1",
+       "value": 5853
+      },
+      {
+       "key": "sales",
+       "label": "Sales",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0, 2) FROM h1",
+       "value": 425219.95
+      },
+      {
+       "key": "orders_a_day",
+       "label": "Counted orders a day",
+       "unit": "orders a day",
+       "sql": "SELECT ROUND(COUNT(*) / 181.0, 1) FROM h1",
+       "value": 32.3,
+       "tolerance": 0.05
+      },
+      {
+       "key": "mean_daily_sales",
+       "label": "Mean daily sales",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / 181, 2) FROM h1",
+       "value": 2349.28
+      }
+     ]
+    },
+    {
+     "id": "lines-per-order",
+     "title": "Order lines per order",
+     "claim": "Each sale contains more than one order item.",
+     "numbers": [
+      {
+       "key": "verdict",
+       "label": "Verdict",
+       "unit": "",
+       "value": "does not hold"
+      },
+      {
+       "key": "single_line_share",
+       "label": "Orders with one order line",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(n = 1) / COUNT(*), 1) FROM h1",
+       "value": 23.8
+      },
+      {
+       "key": "mean_lines",
+       "label": "Order lines per order, mean",
+       "unit": "lines",
+       "sql": "SELECT ROUND(AVG(n), 2) FROM h1",
+       "value": 2.34
+      }
+     ]
+    },
+    {
+     "id": "header-totals",
+     "title": "Order header totals",
+     "claim": "An order's quantity and amount are always the totals of its lines.",
+     "numbers": [
+      {
+       "key": "verdict",
+       "label": "Verdict",
+       "unit": "",
+       "value": "holds"
+      },
+      {
+       "key": "checked_orders",
+       "label": "Orders checked",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM h1",
+       "value": 5853
+      },
+      {
+       "key": "quantity_mismatches",
+       "label": "Orders whose total_quantity differs from their lines",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM h1 WHERE units <> total_quantity",
+       "value": 0
+      },
+      {
+       "key": "amount_mismatches",
+       "label": "Orders whose total_amount differs from their lines",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM h1 WHERE amount <> total_amount",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": "order-value",
+     "title": "Order value",
+     "claim": "What a counted order is worth.",
+     "numbers": [
+      {
+       "key": "aov",
+       "label": "Average order value",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / COUNT(*), 2) FROM h1",
+       "value": 72.65
+      },
+      {
+       "key": "average_line_amount",
+       "label": "Average order line",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / SUM(n), 2) FROM h1",
+       "value": 31.1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-09-15",
+   "change": "bundle-evidence",
+   "period": "1 July to 31 August 2026",
+   "view": "jul_aug",
+   "sets": [
+    {
+     "id": "daily-sales",
+     "title": "Daily sales",
+     "claim": "Daily sales for July and August 2026.",
+     "numbers": [
+      {
+       "key": "days",
+       "label": "Days in the period",
+       "unit": "days",
+       "sql": "SELECT COUNT(*) FROM jul_aug_days",
+       "value": 62,
+       "ask": "how many London days the period has"
+      },
+      {
+       "key": "counted_orders",
+       "label": "Counted orders",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM jul_aug",
+       "value": 2359,
+       "traps": [
+        {
+         "why": "staff and the till's training left in",
+         "sql": "SELECT COUNT(*) FROM london l JOIN lines s ON s.order_id = l.id WHERE l.status = 'completed' AND date(l.placed_london) BETWEEN '2026-07-01' AND '2026-08-31'"
+        },
+        {
+         "why": "UTC days instead of London days",
+         "sql": "SELECT COUNT(*) FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'completed' AND c.email NOT LIKE '%@kettleandkiln.example' AND c.email <> 'training@till.local' AND date(o.placed_at) BETWEEN '2026-07-01' AND '2026-08-31'"
+        }
+       ],
+       "ask": "the number of counted orders in the period"
+      },
+      {
+       "key": "sales",
+       "label": "Sales",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0, 2) FROM jul_aug",
+       "value": 178905.3,
+       "traps": [
+        {
+         "why": "the order header's total_amount instead of the lines",
+         "sql": "SELECT ROUND(SUM(total_amount) / 100.0, 2) FROM jul_aug"
+        },
+        {
+         "why": "UTC days instead of London days",
+         "sql": "SELECT ROUND(SUM(s.amount) / 100.0, 2) FROM orders o JOIN customers c ON c.id = o.customer_id JOIN lines s ON s.order_id = o.id WHERE o.status = 'completed' AND c.email NOT LIKE '%@kettleandkiln.example' AND c.email <> 'training@till.local' AND date(o.placed_at) BETWEEN '2026-07-01' AND '2026-08-31'"
+        }
+       ],
+       "ask": "total sales over the period"
+      },
+      {
+       "key": "orders_a_day",
+       "label": "Counted orders a day",
+       "unit": "orders a day",
+       "sql": "SELECT ROUND(COUNT(*) / 62.0, 1) FROM jul_aug",
+       "value": 38.0,
+       "ask": "the mean number of counted orders per day",
+       "tolerance": 0.05
+      },
+      {
+       "key": "mean_daily_sales",
+       "label": "Mean daily sales",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / 62, 2) FROM jul_aug",
+       "value": 2885.57,
+       "ask": "the mean of the daily sales totals"
+      },
+      {
+       "key": "median_daily_sales",
+       "label": "Median daily sales",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(AVG(sales) / 100.0, 2) FROM (SELECT sales FROM jul_aug_days ORDER BY sales LIMIT 2 OFFSET 30)",
+       "value": 2684.78,
+       "ask": "the median of the daily sales totals"
+      }
+     ]
+    },
+    {
+     "id": "days-ranked",
+     "title": "Days ranked by sales",
+     "claim": "The days of the period, grouped and ordered by sales.",
+     "numbers": [
+      {
+       "key": "best_day",
+       "label": "Best day",
+       "unit": "date",
+       "sql": "SELECT day FROM jul_aug_days ORDER BY sales DESC LIMIT 1",
+       "value": "2026-08-14",
+       "ask": "the date with the highest sales"
+      },
+      {
+       "key": "best_day_sales",
+       "label": "Sales on the best day",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(MAX(sales) / 100.0, 2) FROM jul_aug_days",
+       "value": 9185.9,
+       "ask": "that date's sales"
+      },
+      {
+       "key": "best_day_largest_order",
+       "label": "Largest order on the best day",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(MAX(amount) / 100.0, 2) FROM jul_aug WHERE day = (SELECT day FROM jul_aug_days ORDER BY sales DESC LIMIT 1)",
+       "value": 6791.4,
+       "ask": "the value of the biggest single order on that date"
+      },
+      {
+       "key": "best_retail_day",
+       "label": "Best day for retail sales",
+       "unit": "date",
+       "sql": "SELECT day FROM jul_aug_days ORDER BY retail_sales DESC LIMIT 1",
+       "value": "2026-08-29",
+       "ask": "the date with the highest sales when trade accounts are left out"
+      },
+      {
+       "key": "best_retail_day_sales",
+       "label": "Retail sales on the best retail day",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(MAX(retail_sales) / 100.0, 2) FROM jul_aug_days",
+       "value": 6918.5,
+       "ask": "that date's sales without trade"
+      },
+      {
+       "key": "best_weekday",
+       "label": "Weekday with the highest mean sales",
+       "unit": "weekday",
+       "sql": "SELECT CASE strftime('%w', day) WHEN '0' THEN 'Sunday' WHEN '1' THEN 'Monday' WHEN '2' THEN 'Tuesday' WHEN '3' THEN 'Wednesday' WHEN '4' THEN 'Thursday' WHEN '5' THEN 'Friday' ELSE 'Saturday' END FROM jul_aug_days GROUP BY strftime('%w', day) ORDER BY AVG(sales) DESC LIMIT 1",
+       "value": "Saturday",
+       "ask": "the day of the week whose days average the most sales"
+      },
+      {
+       "key": "saturday_mean_sales",
+       "label": "Mean sales on a Saturday",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(AVG(sales) / 100.0, 2) FROM jul_aug_days WHERE strftime('%w', day) = '6'",
+       "value": 3911.11,
+       "ask": "the average sales of the period's Saturdays"
+      },
+      {
+       "key": "lowest_day",
+       "label": "Lowest day",
+       "unit": "date",
+       "sql": "SELECT day FROM jul_aug_days ORDER BY sales LIMIT 1",
+       "value": "2026-07-27",
+       "ask": "the date with the lowest sales"
+      },
+      {
+       "key": "lowest_day_sales",
+       "label": "Sales on the lowest day",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(MIN(sales) / 100.0, 2) FROM jul_aug_days",
+       "value": 1344.0,
+       "ask": "that date's sales"
+      }
+     ]
+    },
+    {
+     "id": "lines-per-order",
+     "title": "Order lines per order",
+     "claim": "Each sale contains more than one order item.",
+     "numbers": [
+      {
+       "key": "verdict",
+       "label": "Verdict",
+       "unit": "",
+       "value": "does not hold",
+       "ask": "holds, holds with exceptions, or does not hold"
+      },
+      {
+       "key": "single_line_orders",
+       "label": "Counted orders with one order line",
+       "unit": "orders",
+       "sql": "SELECT SUM(n = 1) FROM jul_aug",
+       "value": 556,
+       "traps": [
+        {
+         "why": "the header's item_count instead of the lines",
+         "sql": "SELECT SUM(item_count = 1) FROM jul_aug"
+        }
+       ],
+       "ask": "how many counted orders have exactly one row in order_items"
+      },
+      {
+       "key": "single_line_share",
+       "label": "Orders with one order line",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(n = 1) / COUNT(*), 1) FROM jul_aug",
+       "value": 23.6,
+       "ask": "that count as a percentage of counted orders"
+      },
+      {
+       "key": "single_line_share_web",
+       "label": "Web orders with one order line",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(n = 1) / COUNT(*), 1) FROM jul_aug WHERE channel = 'web'",
+       "value": 11.7,
+       "ask": "the same percentage for web orders"
+      },
+      {
+       "key": "single_line_share_shop",
+       "label": "Shop (till) orders with one order line",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(n = 1) / COUNT(*), 1) FROM jul_aug WHERE channel = 'shop'",
+       "value": 47.1,
+       "ask": "the same percentage for the till's orders"
+      },
+      {
+       "key": "single_line_share_phone",
+       "label": "Phone orders with one order line",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(n = 1) / COUNT(*), 1) FROM jul_aug WHERE channel = 'phone'",
+       "value": 19.9,
+       "ask": "the same percentage for phone orders"
+      },
+      {
+       "key": "single_unit_share",
+       "label": "Orders of a single unit",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(units = 1) / COUNT(*), 1) FROM jul_aug",
+       "value": 15.3,
+       "ask": "the percentage of counted orders that are one unit in all"
+      },
+      {
+       "key": "mean_lines",
+       "label": "Order lines per order, mean",
+       "unit": "lines",
+       "sql": "SELECT ROUND(AVG(n), 2) FROM jul_aug",
+       "value": 2.35,
+       "ask": "the mean number of order_items rows per counted order"
+      },
+      {
+       "key": "mean_units",
+       "label": "Units per order, mean",
+       "unit": "units",
+       "sql": "SELECT ROUND(AVG(units), 2) FROM jul_aug",
+       "value": 4.1,
+       "ask": "the mean number of units per counted order"
+      },
+      {
+       "key": "cancelled_without_lines",
+       "label": "Cancelled orders with no lines",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM london l WHERE l.status = 'cancelled' AND date(l.placed_london) BETWEEN '2026-07-01' AND '2026-08-31' AND NOT EXISTS (SELECT 1 FROM order_items i WHERE i.order_id = l.id)",
+       "value": 31,
+       "ask": "how many cancelled orders placed in the period have no order_items rows"
+      }
+     ]
+    },
+    {
+     "id": "header-totals",
+     "title": "Order header totals",
+     "claim": "An order's quantity and amount are always the totals of its lines.",
+     "numbers": [
+      {
+       "key": "verdict",
+       "label": "Verdict",
+       "unit": "",
+       "value": "holds with exceptions",
+       "ask": "holds, holds with exceptions, or does not hold"
+      },
+      {
+       "key": "checked_orders",
+       "label": "Orders checked",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM jul_aug",
+       "value": 2359,
+       "ask": "how many counted orders were checked"
+      },
+      {
+       "key": "quantity_mismatches",
+       "label": "Orders whose total_quantity differs from their lines",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM jul_aug WHERE units <> total_quantity",
+       "value": 23,
+       "ask": "how many have orders.total_quantity different from the sum of their lines' quantities"
+      },
+      {
+       "key": "amount_mismatches",
+       "label": "Orders whose total_amount differs from their lines",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM jul_aug WHERE amount <> total_amount",
+       "value": 23,
+       "ask": "how many have orders.total_amount different from the sum of their line amounts"
+      },
+      {
+       "key": "item_count_mismatches",
+       "label": "Orders whose item_count differs from their lines",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM jul_aug WHERE n <> item_count",
+       "value": 9,
+       "ask": "how many have orders.item_count different from their number of lines"
+      },
+      {
+       "key": "units_missing",
+       "label": "Units the headers leave out",
+       "unit": "units",
+       "sql": "SELECT SUM(units - total_quantity) FROM jul_aug",
+       "value": 36,
+       "ask": "the lines' units less the headers' total_quantity, summed"
+      },
+      {
+       "key": "amount_missing",
+       "label": "Sales the headers leave out",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount - total_amount) / 100.0, 2) FROM jul_aug",
+       "value": 717.5,
+       "ask": "the lines' amounts less the headers' total_amount, summed, in pounds"
+      },
+      {
+       "key": "mismatches_amended",
+       "label": "Mismatched orders that were amended after checkout",
+       "unit": "orders",
+       "sql": "SELECT COUNT(*) FROM jul_aug j WHERE (units <> total_quantity OR amount <> total_amount OR n <> item_count) AND EXISTS (SELECT 1 FROM order_amendments a WHERE a.order_id = j.id)",
+       "value": 23,
+       "ask": "how many of the mismatched orders appear in order_amendments"
+      },
+      {
+       "key": "first_amendment",
+       "label": "First amendment",
+       "unit": "date",
+       "sql": "SELECT date(datetime(MIN(amended_at), '+1 hour')) FROM order_amendments",
+       "value": "2026-07-10",
+       "ask": "the London date of the earliest amendment"
+      },
+      {
+       "key": "lines_checked",
+       "label": "Order lines checked for quantity times unit price",
+       "unit": "lines",
+       "sql": "SELECT SUM(n) FROM jul_aug",
+       "value": 5548,
+       "ask": "how many order lines of counted orders were checked"
+      },
+      {
+       "key": "line_arithmetic_exceptions",
+       "label": "Lines whose amount is not quantity times unit price",
+       "unit": "lines",
+       "sql": "SELECT COUNT(*) FROM order_items i JOIN jul_aug j ON j.id = i.order_id WHERE i.line_amount <> i.quantity * i.unit_price",
+       "value": 0,
+       "ask": "how many of those lines have line_amount different from quantity times unit_price"
+      }
+     ]
+    },
+    {
+     "id": "order-value",
+     "title": "Order value",
+     "claim": "What a counted order is worth, and how order values spread.",
+     "numbers": [
+      {
+       "key": "aov",
+       "label": "Average order value",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / COUNT(*), 2) FROM jul_aug",
+       "value": 75.84,
+       "ask": "sales divided by counted orders"
+      },
+      {
+       "key": "retail_aov",
+       "label": "Average order value, retail only",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / COUNT(*), 2) FROM jul_aug WHERE kind = 'retail'",
+       "value": 65.01,
+       "ask": "the same, retail customers only"
+      },
+      {
+       "key": "median_order_value",
+       "label": "Median order value",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(AVG(amount) / 100.0, 2) FROM (SELECT amount FROM jul_aug ORDER BY amount LIMIT 2 - (SELECT COUNT(*) FROM jul_aug) % 2 OFFSET ((SELECT COUNT(*) FROM jul_aug) - 1) / 2)",
+       "value": 55.5,
+       "ask": "the median of the counted orders' values"
+      },
+      {
+       "key": "under_20_share",
+       "label": "Orders under 20 pounds",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(amount < 2000) / COUNT(*), 1) FROM jul_aug",
+       "value": 11.7,
+       "ask": "the percentage of counted orders worth under 20 pounds"
+      },
+      {
+       "key": "from_20_to_50_share",
+       "label": "Orders from 20 to 50 pounds",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(amount >= 2000 AND amount < 5000) / COUNT(*), 1) FROM jul_aug",
+       "value": 32.1,
+       "ask": "20 pounds up to 50"
+      },
+      {
+       "key": "from_50_to_100_share",
+       "label": "Orders from 50 to 100 pounds",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(amount >= 5000 AND amount < 10000) / COUNT(*), 1) FROM jul_aug",
+       "value": 37.8,
+       "ask": "50 pounds up to 100"
+      },
+      {
+       "key": "over_100_share",
+       "label": "Orders of 100 pounds or more",
+       "unit": "%",
+       "sql": "SELECT ROUND(100.0 * SUM(amount >= 10000) / COUNT(*), 1) FROM jul_aug",
+       "value": 18.4,
+       "ask": "100 pounds or more"
+      },
+      {
+       "key": "average_line_amount",
+       "label": "Average order line",
+       "unit": "GBP",
+       "sql": "SELECT ROUND(SUM(amount) / 100.0 / SUM(n), 2) FROM jul_aug",
+       "value": 32.25,
+       "ask": "sales divided by the number of order lines"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "thesis": {
+  "change": "offer a 'complete the set' bundle at checkout",
+  "outcome": "sales",
+  "direction": "increase",
+  "unit": "pounds a day",
+  "formula": [
+   "orders_a_day",
+   "single_line_share",
+   "bundle_take_up",
+   "average_line_amount"
+  ],
+  "numbers": [
+   {
+    "key": "orders_a_day",
+    "label": "counted orders a day",
+    "unit": "orders a day",
+    "expect": {
+     "set": "daily-sales",
+     "key": "orders_a_day"
+    }
+   },
+   {
+    "key": "single_line_share",
+    "label": "orders with one order line",
+    "unit": "%",
+    "expect": {
+     "set": "lines-per-order",
+     "key": "single_line_share"
+    }
+   },
+   {
+    "key": "bundle_take_up",
+    "label": "share of single-line orders that would add a bundle",
+    "unit": "%",
+    "expect": null
+   },
+   {
+    "key": "average_line_amount",
+    "label": "average order line",
+    "unit": "pounds",
+    "expect": {
+     "set": "order-value",
+     "key": "average_line_amount"
+    }
+   }
+  ]
+ }
+}
