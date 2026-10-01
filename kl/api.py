@@ -9,7 +9,7 @@ import asyncio
 import base64
 import contextlib
 import json
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 
 from fastapi import Body, Depends, FastAPI, File, Form, Header, Query, Request, Response, UploadFile
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
@@ -22,6 +22,8 @@ TAGS = [
     {"name": "workspaces", "description": "Workspaces, members, service accounts and keys."},
     {"name": "sources", "description": "Files in: any set of files, deduplicated, extracted, checked. For input handlers."},
     {"name": "projects", "description": "Projects, read as approved; every write opens a change request. For task apps."},
+    {"name": "impact", "description": "Each project's thesis, the numbers behind it (found, asked, answered, estimated), "
+                                      "estimated effort, and the priorities they give."},
     {"name": "review", "description": "Change requests: approve (all, some, or edited) or reject. Only people approve."},
     {"name": "plans", "description": "A deliverable's plan: a graph of tasks, general or imported from an OpenSpec change."},
     {"name": "execution", "description": "The orchestrator's side of the run protocol: executions and leases."},
@@ -140,10 +142,54 @@ class ProjectPatch(Model):
     reason: str = ""
 
 
+class NumberSpec(Model):
+    key: str = Field(description="lowercase words joined by underscores", examples=["failures_a_year"])
+    label: str = Field(description="The words a document stating it would use: the research looks for a fact with "
+                                   "every one of them", examples=["tagging report failures"])
+    unit: str = Field(examples=["failures a year"])
+    ask: Optional[str] = Field(None, description="Who to ask if no document holds it (a name the graph knows); "
+                                                 "default the project's owner, else whoever asked for it")
+    question: Optional[str] = None
+
+
+class ThesisIn(Model):
+    change: str = Field(description="What is done", examples=["support moves to a new helpdesk"])
+    outcome: str = Field(description="What gets better, countably",
+                         examples=["the support hours lost to broken tagging reports"])
+    direction: Literal["reduce", "increase", "improve"]
+    unit: str = Field(description="The outcome's unit", examples=["hours a year"])
+    formula: list[Union[str, dict]] = Field(description="Number keys multiplied together; a constant as "
+                                                        '{"value": 52, "label": "weeks a year"}',
+                                            examples=[["failures_a_year", "support_agents", "hours_per_failure"]])
+    reach: Optional[str] = Field(None, description="A number key: the clients or people the change touches")
+    because: Optional[dict] = Field(None, description='{"quote": ...}: a line from the project\'s inputs that shows '
+                                                      "why it matters (its source is found for you)")
+    numbers: list[NumberSpec] = []
+    reason: str = ""
+
+
+class NumberIn(Model):
+    value: Union[int, float]
+    status: Literal["answered", "estimated"] = "answered"
+    answer: Optional[str] = Field(None, description="The answer in the person's words; it is quoted, so it should "
+                                                    "state the figure", examples=["About 6 hours per agent."])
+    basis: Optional[str] = Field(None, description="For an estimate: what it rests on")
+    by: Optional[str] = Field(None, description="Who gave it, if not the caller")
+    reason: str = ""
+
+
+class EffortIn(Model):
+    days: Union[int, float] = Field(description="Person-days", examples=[15])
+    basis: Optional[str] = None
+    by: Optional[str] = Field(None, description="Who estimated it, if not the caller")
+    reason: str = ""
+
+
 class ChangesIn(Model):
     ops: list[dict] = Field(description="Operations: projects/model.py's (create_project, set_status, set_field, "
                                         "add_dependency, add_deliverable, set_deliverable, set_step, add_question, "
-                                        "close_question, add_decision, delete_project, restore_project), or "
+                                        "close_question, add_decision, delete_project, restore_project, "
+                                        "set_thesis, set_number, set_effort), or "
                                         "activate_version, retract_source")
     reason: str = ""
     title: Optional[str] = None
@@ -262,8 +308,9 @@ DOCS = {  # route: (summary, description), so the OpenAPI document explains each
     "health": ("Health", "Whether the service is up, and its version."),
     "create_workspace": ("Create a workspace", "The operator's root key only."),
     "get_workspace": ("This workspace", "The caller's workspace and its settings."),
-    "update_settings": ("Change settings", "Admins: self_approval, review_extractions, "
-                                           "near_duplicates, max_concurrent_runs, max_storage_bytes."),
+    "update_settings": ("Change settings", "Admins: self_approval, review_extractions, near_duplicates, "
+                                           "max_concurrent_runs, max_storage_bytes, impact_research, unit_values, "
+                                           "currency."),
     "whoami": ("Who am I", "The caller: kind (user, service, run, root), role, scopes, workspace."),
     "list_members": ("Members", "People in the workspace and their roles."),
     "add_member": ("Add a person", "Admins. The person signs in with the OIDC issuer, matched by email the first time."),
@@ -286,7 +333,25 @@ DOCS = {  # route: (summary, description), so the OpenAPI document explains each
     "restore_source": ("Restore a source", "Its current version is back in the graph, if the graph still builds."),
     "get_job": ("A job", "An ingestion or extraction: stage, status, problems, result."),
     "list_projects": ("Projects", "Approved state. Filters: status, owner, due_before, due_after, q. include=pending "
-                                  "adds open change requests."),
+                                  "adds open change requests; include=impact adds each thesis and its figures. "
+                                  "sort=priority: ranked projects first, by projected impact per person-day."),
+    "propose_thesis": ("Propose a thesis", "If <change>, <outcome> will <reduce|increase|improve> by potentially "
+                                           "<amount> <unit>. The amount is the product of the formula's numbers, "
+                                           "researched at once: each is found in the graph (quoted from its document) "
+                                           "or asked of a person. One change request."),
+    "research": ("Research the numbers", "Look again for a project's missing numbers, and ask people for the rest; "
+                                         "drafts a thesis first if there is none. Opens a change request, or says "
+                                         "there is nothing new."),
+    "answer_number": ("Give a number", "An answer, or an estimate (status=estimated) that stays marked as one. "
+                                       "Opens a change request; approve=true applies it at once."),
+    "estimate_effort": ("Estimate the effort", "Person-days, and what the estimate rests on. Through a change "
+                                               "request."),
+    "project_impact": ("A project's impact", "The thesis as a sentence, projected impact with its working, each "
+                                             "number with where it came from, estimated effort, impact per "
+                                             "person-day, and its place in the priorities."),
+    "priorities": ("Priorities", "Open projects ranked by projected impact per person-day: within each unit, or in "
+                                 "money across units when settings.unit_values prices them. Projects still missing "
+                                 "numbers or an effort are listed apart, with what they lack."),
     "get_project": ("One project", "The record and its summary; the ETag is its version. include=events,plans,pending."),
     "create_project": ("Create a project", "Opens a change request (202). approve=true: a person who may approve "
                                            "applies it at once (200)."),
@@ -495,10 +560,12 @@ def create_app(svc, mcp: bool = True) -> FastAPI:
     @app.get("/v1/projects", tags=["projects"])
     def list_projects(status: Optional[str] = None, owner: Optional[str] = None, due_before: Optional[str] = None,
                       due_after: Optional[str] = None, q: Optional[str] = None, include_deleted: bool = False,
-                      include: Optional[str] = Query(None, description="pending"), limit: int = Query(100, le=500),
+                      include: Optional[str] = Query(None, description="pending,impact"),
+                      sort: Optional[Literal["id", "priority"]] = None, limit: int = Query(100, le=500),
                       cursor: Optional[str] = None, p: Principal = P):
         return svc.list_projects(p, status, owner, due_before, due_after, q, include_deleted,
-                                 "pending" in (include or ""), limit, cursor)
+                                 "pending" in (include or ""), limit, cursor, sort=sort,
+                                 include_impact="impact" in (include or ""))
 
     @app.get("/v1/projects/{pid}", tags=["projects"])
     async def get_project(pid: str, response: Response,
@@ -544,6 +611,36 @@ def create_app(svc, mcp: bool = True) -> FastAPI:
             response.status_code = 200
             return out
         return cr_response(out, response)
+
+    @app.post("/v1/projects/{pid}/thesis", tags=["impact"], status_code=202)
+    async def propose_thesis(pid: str, body: ThesisIn, response: Response, approve: bool = False, p: Principal = P):
+        return cr_response(await run_sync(svc.propose_thesis, p, pid, body.model_dump(exclude_none=True), approve),
+                           response)
+
+    @app.post("/v1/projects/{pid}:research", tags=["impact"])
+    async def research(pid: str, response: Response, p: Principal = P):
+        out = await run_sync(svc.research, p, pid)
+        response.status_code = 202 if out.get("change_request") else 200
+        return out
+
+    @app.post("/v1/projects/{pid}/numbers/{key}", tags=["impact"], status_code=202)
+    async def answer_number(pid: str, key: str, body: NumberIn, response: Response, approve: bool = False,
+                            p: Principal = P):
+        return cr_response(await run_sync(svc.answer_number, p, pid, key, body.model_dump(exclude_none=True), approve),
+                           response)
+
+    @app.post("/v1/projects/{pid}/effort", tags=["impact"], status_code=202)
+    async def estimate_effort(pid: str, body: EffortIn, response: Response, approve: bool = False, p: Principal = P):
+        return cr_response(await run_sync(svc.estimate_effort, p, pid, body.model_dump(exclude_none=True), approve),
+                           response)
+
+    @app.get("/v1/projects/{pid}/impact", tags=["impact"])
+    async def project_impact(pid: str, p: Principal = P):
+        return await run_sync(svc.project_impact, p, pid)
+
+    @app.get("/v1/priorities", tags=["impact"])
+    async def priorities(p: Principal = P):
+        return await run_sync(svc.priorities, p)
 
     @app.get("/v1/projects/{pid}/events", tags=["projects"])
     async def project_events(pid: str, p: Principal = P):

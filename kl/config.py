@@ -19,12 +19,25 @@ class Settings:
     timezone: str = "UTC"           # whose "today": dates on records, and what "as of today" means
     max_upload_bytes: int = 20_000_000
     near_duplicate: float = 0.9     # Jaccard similarity at or above which two documents are near duplicates
+    research_before_review: bool = True  # an input's thesis and numbers are researched when its change request
+                                    # opens, so the reviewer sees the impact; False: after the project is approved
+    thesis_call: str = "parallel"   # parallel: the change set and the thesis in two calls at once (the fastest);
+                                    # merged: both in one call (a little cheaper); separate: the thesis after the
+                                    # change set, from the proposed project
+    graph_updates: str = "deferred"  # deferred: turning an input into a project never rebuilds the graph; what it
+                                    # changes is saved as a pending diff (pending-diff.jsonl), applied by the next
+                                    # read that needs it or projector.apply_pending(); immediate: rebuilt when next read
+    preload_note: bool = True       # tell a model call that what it is given is all there is, so it answers at once:
+                                    # only when nothing was left out (every project, every figure the graph holds)
     defaults: dict = field(default_factory=lambda: {
         "self_approval": True,       # a proposer may approve their own request (one approval applies a request)
         "review_extractions": False,  # facts from documents apply once their quotes check out
         "near_duplicates": "link",   # link | ingest | review
         "max_concurrent_runs": 50,
         "max_storage_bytes": 5_000_000_000,
+        "impact_research": True,     # a new project gets a draft thesis and its numbers researched, for review
+        "unit_values": {},           # what one unit of impact is worth, e.g. {"hours a year": 45}: ranks in money
+        "currency": "GBP",
     })
 
     def with_(self, **kw) -> "Settings":
@@ -49,6 +62,10 @@ def from_env(**overrides) -> Settings:
         "extractor": env("KL_EXTRACTOR", "none"),
         "jobs_inline": env("KL_JOBS_INLINE", "1") not in ("0", "false", "no"),
         "timezone": env("KL_TIMEZONE", "UTC"),
+        "research_before_review": env("KL_RESEARCH_BEFORE_REVIEW", "1") not in ("0", "false", "no"),
+        "thesis_call": env("KL_THESIS_CALL", "parallel"),
+        "graph_updates": env("KL_GRAPH_UPDATES", "deferred"),
+        "preload_note": env("KL_PRELOAD_NOTE", "1") not in ("0", "false", "no"),
     }
     values.update(overrides)
     return Settings(**values)

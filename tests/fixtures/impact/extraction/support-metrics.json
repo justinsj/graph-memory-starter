@@ -1,0 +1,17 @@
+{
+  "source_doc": "support-metrics.md",
+  "nodes": [
+    {"name": "Support metrics", "type": "DOCUMENT", "claims": [
+      {"kind": "note", "text": "Support serves 1,240 active clients",
+       "quote": "Support serves 1,240 active clients.", "amount": 1240, "unit": "active clients"},
+      {"kind": "note", "text": "Tagging reports failed 11 times over the past year",
+       "quote": "Tagging reports failed 11 times over the past year.", "amount": 11, "unit": "failures a year"},
+      {"kind": "note", "text": "The support rota has 4 agents",
+       "quote": "The support rota has 4 agents.", "amount": 4, "unit": "agents"},
+      {"kind": "note", "text": "Support answers about 380 tickets a week",
+       "quote": "The team answers about 380 tickets a week.", "amount": 380, "unit": "tickets a week"}
+    ]}
+  ],
+  "edges": [],
+  "aliases": []
+}

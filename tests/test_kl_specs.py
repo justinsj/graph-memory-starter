@@ -35,7 +35,8 @@ class ServiceSpecs(unittest.TestCase):
         docs, problems = openspec.specs_to_extraction(spec_files())
         self.assertEqual(problems, [])
         self.assertEqual({d["source_doc"].split("/")[2] for d in docs},
-                         {"sources", "review", "plans", "runs", "context", "openspec", "workspaces", "events"})
+                         {"sources", "review", "plans", "runs", "context", "openspec", "workspaces", "events",
+                          "impact"})
 
     def test_every_scenario_is_verified_by_its_test(self):
         scenarios = openspec.scenarios(spec_files())

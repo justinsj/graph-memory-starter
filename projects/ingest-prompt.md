@@ -14,7 +14,10 @@ the input.
 
     {"changes": [ ... ]}
 
-or `{"changes": []}` when the input changes no project. No other text.
+or `{"changes": []}` when the input changes no project. No other text. When the
+changes are all about one project, give its id once, beside them, and leave
+"project" out of each change: `{"project": "brochure-reprint", "changes": [ ... ]}`.
+Write the JSON compactly: no indentation.
 
 Each change is one object with an "op", its fields, and a "quote": the shortest
 passage of the input that states the change, copied word for word, at most 300
@@ -69,8 +72,8 @@ cancelled.
 - When the input is about a project listed below, update it by its id. Create a
   project only for work none of them covers. A task one person will do this
   week is not a project.
-- The "project" field is the project's id: helpdesk-migration, not
-  project:helpdesk-migration.
+- The "project" field is the project's id: brochure-reprint, not
+  project:brochure-reprint.
 - People, roles, policies and documents are written with their full names from
   the list. In a dependency's "on", another project is written project:<id>.
 - A dependency is something the project cannot finish without: another project

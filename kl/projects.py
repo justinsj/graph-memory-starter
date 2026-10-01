@@ -55,13 +55,19 @@ class ProjectsMixin:
 
     def list_projects(self, p, status: str = None, owner: str = None, due_before: str = None, due_after: str = None,
                       q: str = None, include_deleted: bool = False, include_pending: bool = False,
-                      limit: int = 100, cursor: str = None) -> dict:
+                      limit: int = 100, cursor: str = None, sort: str = None, include_impact: bool = False) -> dict:
         p.need("read")
         ws = p.workspace_id
         with self.db.tx(ws) as c:
             rows = c.execute(sa.select(t.project_records).where(t.project_records.c.workspace_id == ws)
                              .order_by(t.project_records.c.project_id)).mappings().all()
         want = set(tokens.words(q)) if q else set()
+        ranked = sort == "priority"
+        if ranked or include_impact:
+            ev, prio = self._evaluations(ws), self._rank(ws)
+            order = [x["project"] for x in prio["ranked"]] + \
+                [x["project"] for xs in prio["by_unit"].values() for x in xs]
+            place = {pid: i for i, pid in enumerate(order, 1)}
         out = []
         for r in rows:
             rec, s = r["record"], summary(r["project_id"], r["record"], r["version"])
@@ -82,11 +88,20 @@ class ProjectsMixin:
                                 *(x["title"] for x in rec["deliverables"])])
                 if not want <= set(tokens.words(hay)):
                     continue
-            if cursor and r["project_id"] <= cursor:
+            if cursor and not ranked and r["project_id"] <= cursor:
                 continue
+            if ranked or include_impact:
+                e = ev.get(r["project_id"]) or {}
+                s["impact"] = {"thesis": e.get("thesis"), "projected_impact": e.get("value"), "unit": e.get("unit"),
+                               "estimated_effort_days": e.get("effort_days"), "impact_per_day": e.get("per_day"),
+                               "money_per_day": e.get("money_per_day"), "missing": e.get("missing", []),
+                               "priority": place.get(r["project_id"])}
             if include_pending:
                 s["pending"] = self._pending_for(ws, r["project_id"])
             out.append(s)
+        if ranked:  # ranked projects in order, then the rest by id
+            out.sort(key=lambda x: (x["impact"]["priority"] is None, x["impact"]["priority"] or 0, x["id"]))
+            return {"items": out[:limit], "next_cursor": None}
         page = out[:limit]
         return {"items": page, "next_cursor": page[-1]["id"] if len(out) > limit else None}
 

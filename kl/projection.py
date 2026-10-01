@@ -42,6 +42,9 @@ _locks: dict = {}
 _guard = threading.Lock()
 
 
+DEFERRED_KINDS = ("transcript", "request", "session")  # sources the project process may leave out of the graph for now
+
+
 def _lock(key: str) -> threading.Lock:
     with _guard:
         return _locks.setdefault(key, threading.Lock())
@@ -296,6 +299,7 @@ class Projector:
             tmp.replace(graphs / name)
             current.write_text(json.dumps({"version": version, "graph": name, "built": self.clock.stamp()}),
                                encoding="utf-8")
+            self._prune_pending(ws, version)
             keep = {name}
             for old in sorted(graphs.glob("graph-*.db"), key=lambda p: p.stat().st_mtime, reverse=True)[2:]:
                 if old.name in keep:
@@ -303,6 +307,59 @@ class Projector:
                 with contextlib.suppress(OSError):  # in use on Windows: removed next time
                     old.unlink()
             return graphs / name, version, folder / "snapshot"
+
+    # ---- deferred updates: the project process reads the graph as built, and notes what it changes ----------
+
+    PENDING = "pending-diff.jsonl"
+
+    def current(self, ws: str) -> tuple:
+        """(graph path, version, snapshot folder) as last built, even if the log has moved on since; built only
+        when there is none yet. What turning an input into a project reads (graph_updates=deferred), so it never
+        waits on a rebuild; what it changes waits in the pending diff."""
+        folder = self.folder(ws)
+        if any(e.get("change") == "source" and e.get("kind") not in DEFERRED_KINDS for e in self.pending(ws)):
+            return self.ensure(ws)  # a document is what the graph is for: never read without it
+        try:
+            got = json.loads((folder / "current.json").read_text(encoding="utf-8"))
+            path = folder / "graphs" / got["graph"]
+            if path.is_file():
+                return path, got["version"], folder / "snapshot"
+        except (OSError, ValueError, KeyError):
+            pass
+        return self.ensure(ws)
+
+    def defer(self, ws: str, entry: dict) -> None:
+        """Note a change the graph does not hold yet: one line of the pending diff, applied later."""
+        with self.db.tx(ws) as c:
+            version = c.execute(sa.select(t.workspaces.c.state_version).where(t.workspaces.c.id == ws)).scalar_one()
+        folder = self.folder(ws)
+        folder.mkdir(parents=True, exist_ok=True)
+        with _lock(ws), open(folder / self.PENDING, "a", encoding="utf-8") as f:
+            f.write(json.dumps({**entry, "version": version, "at": self.clock.stamp()}, ensure_ascii=False) + "\n")
+
+    def pending(self, ws: str) -> list:
+        """The changes the graph does not hold yet, oldest first."""
+        try:
+            text = (self.folder(ws) / self.PENDING).read_text(encoding="utf-8")
+        except OSError:
+            return []
+        return [json.loads(line) for line in text.splitlines() if line.strip()]
+
+    def apply_pending(self, ws: str) -> dict:
+        """Bring the graph up to date with everything noted, and clear the pending diff."""
+        entries = self.pending(ws)
+        _, version, _ = self.ensure(ws)
+        return {"applied": len(entries), "version": version}
+
+    def _prune_pending(self, ws: str, built: int) -> None:
+        """A rebuild takes in everything up to its version: those lines of the pending diff are done."""
+        path = self.folder(ws) / self.PENDING
+        left = [e for e in self.pending(ws) if e.get("version", 0) > built]
+        with contextlib.suppress(OSError):
+            if left:
+                path.write_text("".join(json.dumps(e, ensure_ascii=False) + "\n" for e in left), encoding="utf-8")
+            else:
+                path.unlink()
 
     def drop(self, ws: str) -> None:
         shutil.rmtree(self.folder(ws), ignore_errors=True)
