@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Knowledge Layer Onion</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 :root {
   --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
@@ -144,6 +141,35 @@ h2[id] { scroll-margin-top: 16px; }
   .wrap { padding-block: 28px 56px; } figure { padding: 12px; }
   .facets { grid-template-columns: 1fr; }
 }
+
+.shapes { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 4px 0 18px; font-size: 14px; color: var(--muted); }
+.shapes a, .shapes strong { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--hair); text-decoration: none; }
+.shapes a { color: var(--ink-2); background: var(--surface); }
+.shapes a:hover { border-color: var(--accent); color: var(--accent); }
+.shapes strong { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+[data-theme="dark"] .shapes strong { color: #0f1115; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .shapes strong { color: #0f1115; } }
+#shape-svg { min-width: 740px; max-width: 1040px; margin: 0 auto; }
+svg .axis { font: italic 12.5px var(--sans); fill: var(--muted); }
+svg .t-eyebrow { font: 600 11px var(--mono); letter-spacing: .1em; fill: var(--muted); }
+svg .t-name { font: 650 16px var(--sans); fill: var(--ink); }
+svg .t-state { font: 600 10.5px var(--mono); letter-spacing: .06em; }
+svg .t-state-b { fill: var(--good); } svg .t-state-c { fill: var(--accent); } svg .t-state-d { fill: var(--warn); }
+svg .t-who { font: 12px var(--sans); fill: var(--ink-2); }
+svg .cap { font: 600 10.5px var(--mono); letter-spacing: .08em; fill: var(--muted); }
+svg .divider { stroke: var(--l-line); stroke-width: 1; }
+svg .iface-link { stroke-width: 1.6; fill: none; }
+svg .iface-pill { stroke-width: 1.4; fill: var(--surface); }
+svg .iface-t { font: 11.5px var(--mono); }
+svg .iface-b .iface-link, svg .iface-b .iface-pill { stroke: var(--flow); }
+svg .iface-b .iface-t { fill: var(--flow); }
+svg .iface-d .iface-link, svg .iface-d .iface-pill { stroke: var(--warn); stroke-dasharray: 4 3; }
+svg .iface-d .iface-t { fill: var(--warn); }
+svg .line-d { stroke: var(--warn); stroke-width: 1.4; stroke-dasharray: 4 3; fill: none; }
+svg .warn-head { fill: var(--warn); }
+svg .actor { font: 12px var(--sans); fill: var(--ink-2); }
+svg .actor-d { font: italic 12px var(--sans); fill: var(--warn); }
+[data-level="1"] .caps { display: none; }
 </style>
 </head>
 <body>
@@ -151,6 +177,7 @@ h2[id] { scroll-margin-top: 16px; }
 <main class="wrap">
 <div class="eyebrow">graph-memory-starter · map, 29 September 2026</div>
 <h1>The knowledge layer, layer by layer</h1>
+<nav class="shapes" aria-label="Other shapes of this diagram"><span>Same map, three shapes:</span><strong>Onion</strong><a href="knowledge-layer-pyramid.html">Pyramid</a><a href="knowledge-layer-tiers.html">Three tiers</a></nav>
 <p class="lede">What this repository supports today, drawn as an onion with three layers. At the centre is this project: the knowledge layer. Around it is project management, with OpenSpec as the core workflow for code. Outermost are the business decisions and operations the graph could answer for. Every layer keeps what it knows in the same graph, so a question asked at the outside can be walked all the way in to a quoted line in a document.</p>
 
 <div class="answer">
@@ -599,7 +626,7 @@ h2[id] { scroll-margin-top: 16px; }
 <div class="facet"><h4>Feeds it</h4><p>Documents, transcripts, requests and session notes, sent as any set of files to <code>POST /v1/sources</code>. Each file is deduplicated (the same bytes, the same text, a new version, or a copy at least 90% the same), extracted, and checked against its text. Code is indexed with no model. Archived OpenSpec specs are read in code, with no model.</p></div>
 <div class="facet"><h4>Holds</h4><p>Entities from a closed vocabulary: people, roles, policies, processes, documents, projects, deliverables, code symbols, and the specs' capabilities, requirements and scenarios. Claims of eight kinds, each with its source quote and the dates it holds for. Typed links, dated the same way. Around the core, each workspace has a log (Postgres with row-level security, or SQLite), and its graph is rebuilt from that log.</p></div>
 <div class="facet"><h4>Answers</h4><p>Multi-hop questions as of any date: “£800 refund in March, who signs it off?” is Marcus Webb, 3 hops, in about 3 ms. For code, it traces what a change would reach, both ways, with the requirements at stake. It serves context, search, entities and claims over REST (<code>/v1</code>) and MCP (<code>/mcp</code>), plus an event feed and signed webhooks.</p></div>
-<div class="facet"><h4>Keeps it true</h4><p>The build refuses a quote its document does not contain, two versions of a threshold at once, one name with two types, and an unknown claim kind. Every edit is a change request that a person approves. Agents and service accounts can only propose. The service holds no one else's credentials.</p></div>
+<div class="facet"><h4>Keeps it true</h4><p>The build refuses a quote its document does not contain, two versions of a threshold at once, one name with two types, and an unknown claim kind. A file that passes these checks becomes current, and one that conflicts is held for a person. Every edit to a project, plan or deliverable is a change request that a person approves, and agents and service accounts can only propose. The service holds no one else's credentials.</p></div>
 <div class="facet full"><h4>Not done yet</h4><p>Load testing, backups, an S3 adapter, meaning search inside the service (it has full-text and name search only), and sign-in against a real identity provider (<code>docs/api-results.html</code>).</p></div>
 </div>
 
@@ -712,6 +739,21 @@ h2[id] { scroll-margin-top: 16px; }
 </div>
 <figcaption>A made-up example, like the companies in <code>docs/ceo-questions.html</code>. Layer 3's entity types do not exist yet. Both walks would use today's recall steps: names, relevance, a 3-hop walk, and the dates each fact holds for. The first walk is today's refund example, with a decision in place of the policy.</figcaption>
 </figure>
+
+<h2 id="which-shape">Which shape, when</h2>
+<p>All three pages draw the same three layers with the same status markers. The shape decides which relationship the reader sees first. The pyramid draws the graph memory inside layer 1 and groups layer 3's items so the point stays small. The onion and the tiers draw the core on its own and list every item.</p>
+<div class="scroll">
+<table>
+<colgroup><col style="width:16%"><col style="width:42%"><col style="width:42%"></colgroup>
+<thead><tr><th>Shape</th><th>What it shows best</th><th>Use it for</th></tr></thead>
+<tbody>
+<tr><td><strong>Onion</strong> (this page)</td><td>Containment. Every layer wraps the core and draws on it directly, and the OpenSpec loop visibly reads from the graph and writes back to it.</td><td>Explaining the product, and the pitch told from the outside in: a CEO's question walked to a quoted line.</td></tr>
+<tr><td><a href="knowledge-layer-pyramid.html">Pyramid</a></td><td>Foundation and leverage. Many checked facts at the base and a few big decisions at the top. It is also the build order: the base is built, the middle is partly built, and the top is designed.</td><td>Leadership and roadmaps: why the base comes first, and why the top is only as good as what it rests on.</td></tr>
+<tr><td><a href="knowledge-layer-tiers.html">Three tiers</a></td><td>Boundaries. What crosses from one tier to the next, and who plugs in where. Equal widths weight the tiers equally.</td><td>Engineers and integrators, and onboarding a new client: which interface it uses, and what it may write.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Each shape hides something. The onion makes the outer layer look biggest, when it holds the fewest items. The pyramid makes the top look remote from the base, although the OpenSpec loop and the decision walks cut straight through. The tiers make the layers look independent, but they share one graph, so a question in tier 3 is answered by a walk that reaches tier 1.</p>
 
 <h2>Suggestions</h2>
 
