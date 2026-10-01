@@ -40,6 +40,7 @@ projects/eval-raw/
 bench/project-raw/
 bench/project-create-raw/
 bench/project-create-raw-*/
+bench/code-change-raw*/
 bench/thesis-domains-raw/
 bench/code-raw/
 bench/code-raw-plain/
