@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Query Index Cases</title>
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --ink: #14171c; --ink-2: #48505b; --muted: #6f7783;
+  --hair: #dde1e7; --base: #c3c9d1; --accent: #2a78d6;
+  --warn: #c2551f; --warn-bg: #fdf1ea; --good: #0f8a5f; --good-bg: #e9f7f1;
+  --sans: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+    --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+    --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115; --surface: #171a1f; --ink: #eef1f5; --ink-2: #b6bec9; --muted: #8b94a0;
+  --hair: #272c34; --base: #3b424c; --accent: #6aa7ee;
+  --warn: #f08a5d; --warn-bg: #2a1c15; --good: #4cc38a; --good-bg: #13241c;
+}
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 var(--sans); }
+.wrap { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 80px; }
+.eyebrow { font: 600 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 5.5vw, 48px); line-height: 1.08; letter-spacing: -.02em; margin: 10px 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 23px; line-height: 1.25; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--hair); font-weight: 650; text-wrap: balance; }
+h3 { font-size: 16px; margin: 26px 0 6px; font-weight: 650; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 14px; }
+.lede { font-size: 18px; color: var(--ink-2); }
+ul, ol { padding-left: 22px; margin: 0 0 16px; display: grid; gap: 8px; }
+a { color: var(--accent); }
+code { font: .86em var(--mono); background: var(--surface); border: 1px solid var(--hair); border-radius: 4px; padding: 0 4px; }
+.answer { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px 18px; margin: 18px 0 8px; }
+.answer p:last-child { margin-bottom: 0; }
+.answer strong { color: var(--ink); }
+blockquote { margin: 0 0 16px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; }
+blockquote p { margin: 0; font-size: 15px; }
+blockquote footer { margin-top: 6px; font: 12px var(--mono); color: var(--muted); }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; margin: 0 0 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 620px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 650; border-top: 2px solid var(--hair); }
+.good { color: var(--good); font-weight: 600; }
+.warn { color: var(--warn); font-weight: 600; }
+figure { margin: 8px 0 18px; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 18px; }
+figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 78ch; }
+svg { display: block; width: 100%; height: auto; min-width: 680px; }
+svg text { fill: var(--ink); font: 13px var(--sans); }
+svg .sub { fill: var(--muted); font: 11.5px var(--mono); }
+svg .lane { fill: var(--ink-2); font-weight: 600; font-size: 13px; }
+svg .edge { fill: var(--muted); font: 11px var(--sans); }
+svg .box { fill: var(--bg); stroke: var(--base); stroke-width: 1; }
+svg .box-warn { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 1.5; }
+svg .box-good { fill: var(--good-bg); stroke: var(--good); stroke-width: 1.5; }
+svg .line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .head { fill: var(--muted); }
+.method li { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 720px) { .wrap { padding-block: 28px 56px; } figure { padding: 12px; } }
+
+pre.code { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.55 var(--mono); color: var(--ink-2); white-space: pre; margin: 0 0 16px; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 14px; font-size: 15px; }
+.kv b { color: var(--muted); font-weight: 600; }
+.pill { font: 600 11px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; border-radius: 4px;
+  padding: 3px 6px; border: 1px solid var(--base); color: var(--ink-2); white-space: nowrap; }
+.pill.src { border-color: var(--warn); color: var(--warn); background: var(--warn-bg); }
+td.find code { white-space: pre-wrap; }
+.q { font-size: 18px; font-weight: 600; margin: 4px 0 12px; }
+.small { font-size: 14px; color: var(--ink-2); }
+table.glance td:nth-child(2) { min-width: 220px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="eyebrow">graph-memory-starter · query cases · 30 September 2026</div>
+<h1>Queries the knowledge layer has to index</h1>
+<p class="lede">Five questions about four company databases. Written from the schema, the SQL runs and gives a
+plausible number that is wrong. A query the company already uses, in its code or its notes, gives the right one once
+it is adjusted. These are the cases to build query indexing against.</p>
+<div class="answer">
+<p><strong>The right answer depends on rules the schema does not hold.</strong> The five cases hold 39 rules
+between them. 15 are conventions: choices the company made that a careful analyst could make differently, such as
+“a month is a London month”, “a pause is churn” and “Leeds holds two cases back for wholesale”. Only the company's own
+query and the words around it say which. The rest can be worked out from the schema or the data. The data is built so
+that leaving out any one rule changes the answer, and the tests check this for every rule.</p>
+<p><strong>Live:</strong> With the database and its schema, Sonnet answered 0 of 15 runs right. With the indexed query&#x27;s source file added, it answered 15 of 15, a little faster and for a little less. Every schema-only run got the structural rules right and missed at least one of the company&#x27;s conventions.</p>
+<p><strong>What indexing has to get right:</strong> the query and where it lives; what it answers, and what its neighbours answer instead; its parameters and how to fill them; the dates and filters written into it; and its rules in words, above all the conventions, because a strong model works out the rest for itself.</p>
+</div>
+
+<h2>The cases at a glance</h2>
+<div class="scroll"><table class="glance">
+<thead><tr><th>#</th><th>Question</th><th class="n">Right answer</th><th class="n">Live right: schema only / indexed</th><th class="n">Conventions</th><th>Where the query lives</th></tr></thead><tbody>
+<tr><td>01</td><td>What was our net revenue for August 2026, in pounds?</td><td class='n good'>£7,238.02</td><td class='n'><span class='warn'>0 of 3</span> / <span class='good'>3 of 3</span></td><td class='n'>3 of 8 rules</td><td>Python module, parameterized: :start and :end from month_bounds()</td></tr>
+<tr><td>02</td><td>What was our MRR at the end of August 2026?</td><td class='n good'>$22,771.90</td><td class='n'><span class='warn'>0 of 3</span> / <span class='good'>3 of 3</span></td><td class='n'>3 of 9 rules</td><td>Notion page, Metabase template: {{as_of}} and an optional [[…]]</td></tr>
+<tr><td>03</td><td>What was our logo churn rate for August 2026?</td><td class='n good'>7.69%</td><td class='n'><span class='warn'>0 of 3</span> / <span class='good'>3 of 3</span></td><td class='n'>3 of 5 rules</td><td>Slack thread, July&#x27;s dates written in, below a wrong first attempt</td></tr>
+<tr><td>04</td><td>What share of urgent tickets missed the one-hour first-reply target in August 2026, across both desks?</td><td class='n good'>36.4%</td><td class='n'><span class='warn'>0 of 3</span> / <span class='good'>3 of 3</span></td><td class='n'>4 of 8 rules</td><td>Runbook, July and the Enterprise desk written in</td></tr>
+<tr><td>05</td><td>How many blue enamel mugs can we still promise to customers from the Leeds warehouse? It is 17:00 UTC on 30 September 2026.</td><td class='n good'>694 mugs</td><td class='n'><span class='warn'>0 of 3</span> / <span class='good'>3 of 3</span></td><td class='n'>2 of 9 rules</td><td>Python module, parameterized: :sku, :warehouse, :now, and :safety_cases from a constant</td></tr>
+</tbody></table></div>
+<h2>How a case is built</h2>
+<ul>
+<li><strong>A database</strong>, built by a seed script: months of ordinary rows from a seeded generator, then the rows each
+rule needs, each marked in the seed with its rule. The build is deterministic, so the answers hold.</li>
+<li><strong>The indexed query</strong>, in the kind of place such queries really live: a parameterized query in a Python module,
+a Metabase saved question pasted into a Notion page, a Slack thread whose reply corrects the first attempt, and a runbook
+with last month's dates written in.</li>
+<li><strong>The adjustment</strong> the model has to make: bind the parameters, fill the template, or edit the hard-coded
+dates and filters.</li>
+<li><strong>The rules</strong> the query holds, each with an edit that takes that one rule out, and where else a model could
+find it: in the schema, in the data or in the question's words. The rest are <span class="pill src">convention</span>:
+a choice the company made, which only its own sources settle.</li>
+<li><strong>A query written from the schema alone</strong>, a careful one: it uses the right tables and handles what the
+schema says.</li>
+<li><strong>Decoys</strong>: queries nearby that share the tables and the words, and answer another question.</li>
+</ul>
+<p><code>tests/test_query_cases.py</code> checks all of this with no model. The indexed query, adjusted as the case records, gives the answer. A plain-Python reading of the source's rules over the raw rows, written apart from the SQL, gives the same answer. The schema-only query does not, and taking out any one rule changes the answer. The bound parameters are what the source's own <code>month_bounds()</code> and <code>SAFETY_STOCK_CASES</code> give, the figures quoted in the Slack thread are what its queries return, and every build is identical.</p>
+<h2 id="c01">01 · Net revenue for a month</h2>
+<p class="q">“What was our net revenue for August 2026, in pounds?”</p>
+<div class="kv"><b>Database</b><span>shop: <code>customers</code> 92, <code>orders</code> 247, <code>payments</code> 247, <code>refunds</code> 21, <code>fx_rates</code> 68 rows</span>
+<b>Right answer</b><span class="good">£7,238.02</span>
+<b>Example query from the schema</b><span class="warn">£8,694.51 (+£1,456.49)</span>
+<b>Live, schema only</b><span><span class='warn'>0 of 3</span> right: £8,323.02, £8,323.02, £8,323.02</span>
+<b>Live, indexed</b><span><span class='good'>3 of 3</span> right: £7,238.02, £7,238.02, £7,238.02</span></div>
+<p>An online shop that sells in pounds and euros. The ledger holds three months of orders, card payments, refunds and the daily euro reference rate, all in UTC. About a quarter of cards are captured when the parcel ships, days after the order.</p>
+<h3>Where the query lives: <code>shop/repo/finance/revenue.py</code></h3>
+<p>Finance's module for the board-pack figure. The query takes the month as two UTC instants, and <code>month_bounds()</code> beside it works them out from a London month. The comments carry the rest: net of refunds in the month they happen, minor units, the last published rate, and the staff and QA email domains that are not revenue.</p>
+<pre class="code">&quot;&quot;&quot;Net revenue: the figure finance closes each month on, and the one the board pack shows.&quot;&quot;&quot;
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+LONDON = ZoneInfo(&quot;Europe/London&quot;)
+
+# Captures less refunds, each in the month it happened: a July order refunded in
+# August comes off August. Amounts are in minor units. Euro amounts become pounds
+# at the reference rate of that day, or of the last business day before it.
+# Staff orders (@shop.example) and QA&#x27;s test purchases on production
+# (@mailinator.com) are not revenue: see the month-end close checklist.
+NET_REVENUE_SQL = &quot;&quot;&quot;
+WITH ledger AS (
+    SELECT p.captured_at AS happened_at, p.currency, p.amount
+    FROM payments p
+    JOIN orders o ON o.id = p.order_id
+    JOIN customers c ON c.id = o.customer_id
+    WHERE p.status = &#x27;captured&#x27;
+      AND p.captured_at &gt;= :start AND p.captured_at &lt; :end
+      AND c.email NOT LIKE &#x27;%@shop.example&#x27;
+      AND c.email NOT LIKE &#x27;%@mailinator.com&#x27;
+    UNION ALL
+    SELECT r.created_at, p.currency, -r.amount
+    FROM refunds r
+    JOIN payments p ON p.id = r.payment_id
+    JOIN orders o ON o.id = p.order_id
+    JOIN customers c ON c.id = o.customer_id
+    WHERE r.status = &#x27;succeeded&#x27;
+      AND r.created_at &gt;= :start AND r.created_at &lt; :end
+      AND c.email NOT LIKE &#x27;%@shop.example&#x27;
+      AND c.email NOT LIKE &#x27;%@mailinator.com&#x27;
+)
+SELECT ROUND(SUM(
+         l.amount * CASE l.currency WHEN &#x27;GBP&#x27; THEN 1.0 ELSE (
+             SELECT fx.gbp_per_unit FROM fx_rates fx
+             WHERE fx.currency = l.currency AND fx.rate_date &lt;= date(l.happened_at)
+             ORDER BY fx.rate_date DESC LIMIT 1) END
+       ) / 100.0, 2) AS net_revenue_gbp
+FROM ledger l
+&quot;&quot;&quot;
+
+
+def month_bounds(year: int, month: int) -&gt; tuple[str, str]:
+    &quot;&quot;&quot;A London month as UTC instants, the way the ledger writes them.
+
+    The books close on London months. While the clocks are on BST, August starts
+    at 2026-07-31 23:00 UTC.
+    &quot;&quot;&quot;
+    start = datetime(year, month, 1, tzinfo=LONDON)
+    end = datetime(year + month // 12, month % 12 + 1, 1, tzinfo=LONDON)
+    fmt = &quot;%Y-%m-%d %H:%M:%S&quot;
+    return start.astimezone(timezone.utc).strftime(fmt), end.astimezone(timezone.utc).strftime(fmt)
+
+
+def net_revenue_gbp(conn, year: int, month: int) -&gt; float:
+    &quot;&quot;&quot;Net revenue for one London month, in pounds.&quot;&quot;&quot;
+    start, end = month_bounds(year, month)
+    return conn.execute(NET_REVENUE_SQL, {&quot;start&quot;: start, &quot;end&quot;: end}).fetchone()[0]</pre>
+<h3>Adjusting it for the question</h3>
+<p>Bind :start and :end to what month_bounds(2026, 8) returns: the London month as UTC instants, 2026-07-31 23:00:00 to 2026-08-31 23:00:00 while the clocks are on BST.</p>
+<div class='scroll'><table><thead><tr><th>In the query</th><th>Becomes</th></tr></thead><tbody><tr><td class='find'><code>:start</code></td><td class='find'><code>&#x27;2026-07-31 23:00:00&#x27;</code></td></tr><tr><td class='find'><code>:end</code></td><td class='find'><code>&#x27;2026-08-31 23:00:00&#x27;</code></td></tr></tbody></table></div>
+<h3>The rules it holds</h3>
+<div class="scroll"><table><thead><tr><th>Rule</th><th>Where else to find it</th><th class="n">Answer without it</th><th class="n">Off by</th></tr></thead><tbody>
+<tr><td><code>london-months</code> A month is a London month. The ledger is in UTC, so while the clocks are on BST August runs from 2026-07-31 23:00 to 2026-08-31 23:00 UTC.</td><td><span class='pill src'>convention</span></td><td class='n'>£7,294.02</td><td class='n warn'>+£56.00</td></tr>
+<tr><td><code>captured</code> Revenue is money captured, dated when it was captured. An authorisation can still be voided, and about a quarter of cards are captured when the parcel ships, days after the order.</td><td><span class='pill'>the schema</span></td><td class='n'>£7,790.52</td><td class='n warn'>+£552.50</td></tr>
+<tr><td><code>minor-units</code> Amounts are in minor units: pence and cents.</td><td><span class='pill'>the data</span></td><td class='n'>£723,801.59</td><td class='n warn'>+£716,563.57</td></tr>
+<tr><td><code>euros</code> Euro payments are converted to pounds before they are added up.</td><td><span class='pill'>the schema</span></td><td class='n'>£7,609.51</td><td class='n warn'>+£371.49</td></tr>
+<tr><td><code>fx-as-of</code> At the rate of that day, or of the last business day before it: no rate is published at weekends or on the bank holiday of 31 August.</td><td><span class='pill'>the data</span></td><td class='n'>£6,279.32</td><td class='n warn'>−£958.70</td></tr>
+<tr><td><code>refunds-when</code> A refund comes off the month it was made in, whichever month the order was.</td><td><span class='pill src'>convention</span></td><td class='n'>£7,410.90</td><td class='n warn'>+£172.88</td></tr>
+<tr><td><code>refunds-succeeded</code> Only refunds that went through: a pending or failed refund has not left the account.</td><td><span class='pill'>the schema</span></td><td class='n'>£7,178.02</td><td class='n warn'>−£60.00</td></tr>
+<tr><td><code>not-revenue</code> Staff orders (@shop.example) and QA&#x27;s test purchases on production (@mailinator.com) are not revenue.</td><td><span class='pill src'>convention</span></td><td class='n'>£8,267.02</td><td class='n warn'>+£1,029.00</td></tr>
+</tbody></table></div>
+<h3>An example query written from the schema alone</h3>
+<p>Captured payments less successful refunds, dated by capture and by refund, in UTC months. It handles statuses, dates and minor units. It misses the London month, the euro conversion and the orders that are not revenue.</p>
+<pre class="code">SELECT ROUND((
+    SELECT SUM(amount) FROM payments
+    WHERE status = &#x27;captured&#x27; AND captured_at &gt;= &#x27;2026-08-01&#x27; AND captured_at &lt; &#x27;2026-09-01&#x27;
+  ) - (
+    SELECT SUM(amount) FROM refunds
+    WHERE status = &#x27;succeeded&#x27; AND created_at &gt;= &#x27;2026-08-01&#x27; AND created_at &lt; &#x27;2026-09-01&#x27;
+  )) / 100.0 AS net_revenue_gbp</pre>
+<h3>Nearby, and not it</h3>
+<ul><li><code>shop/repo/reports/sales_dashboard.sql</code>: Sales by the day the order was placed, in each order&#x27;s own currency, for the marketing dashboard. Close in words, and wrong for revenue.</li></ul>
+<h3>In the live runs</h3><p>All three schema-only runs gave £8,323.02. They were right on statuses, capture dates, refunds and minor units, and even used the last published euro rate at weekends and on the bank holiday. They used UTC months, and counted the staff order and QA's £999 test purchase. That is exactly the value with the two conventions <code>london-months</code> and <code>not-revenue</code> taken out. All three indexed runs bound the London month to <code>2026-07-31 23:00:00</code> and <code>2026-08-31 23:00:00</code>, and gave £7,238.02.</p>
+<h2 id="c02">02 · MRR at the end of a month</h2>
+<p class="q">“What was our MRR at the end of August 2026?”</p>
+<div class="kv"><b>Database</b><span>billing: <code>accounts</code> 105, <code>plans</code> 10, <code>subscriptions</code> 107, <code>subscription_history</code> 312, <code>discounts</code> 10 rows</span>
+<b>Right answer</b><span class="good">$22,771.90</span>
+<b>Example query from the schema</b><span class="warn">$23,655.00 (+$883.10)</span>
+<b>Live, schema only</b><span><span class='warn'>0 of 3</span> right: $17,291.30, $17,291.30, $17,291.30</span>
+<b>Live, indexed</b><span><span class='good'>3 of 3</span> right: $22,771.90, $22,771.90, $22,771.90</span></div>
+<p>A SaaS company billing per seat, monthly or yearly, in dollars, euros and pounds. <code>subscription_history</code> holds every state a subscription has been in; <code>subscriptions</code> shows only today. Accounts trial, convert, add seats, fall behind on payment, pause, and cancel at the end of the period they have paid for.</p>
+<h3>Where the query lives: <code>billing/notes/metrics-handbook.md</code></h3>
+<p>The metrics handbook, exported from Notion. The MRR section defines the number in prose and pastes the Metabase saved question behind it, in Metabase's template syntax: <code>{{as_of}}</code>, and an optional <code>[[AND p.id = {{plan}}]]</code> to drop. The same page defines sales' contracted ARR, another number from the same tables.</p>
+<pre class="code">SELECT ROUND(SUM(
+         h.quantity * p.unit_amount
+         / CASE p.billing_interval WHEN &#x27;year&#x27; THEN 12.0 ELSE 1.0 END
+         * (1 - COALESCE(d.percent_off, 0) / 100.0)
+         * CASE p.currency WHEN &#x27;EUR&#x27; THEN 1.10 WHEN &#x27;GBP&#x27; THEN 1.30 ELSE 1.0 END
+       ) / 100.0, 2) AS mrr_usd
+FROM subscription_history h
+JOIN plans p ON p.id = h.plan_id
+LEFT JOIN discounts d
+  ON d.subscription_id = h.subscription_id
+ AND d.starts_at &lt; date({{as_of}}, &#x27;+1 day&#x27;)
+ AND (d.ends_at IS NULL OR d.ends_at &gt;= date({{as_of}}, &#x27;+1 day&#x27;))
+WHERE h.status IN (&#x27;active&#x27;, &#x27;past_due&#x27;)
+  AND h.valid_from &lt; date({{as_of}}, &#x27;+1 day&#x27;)
+  AND (h.valid_to IS NULL OR h.valid_to &gt;= date({{as_of}}, &#x27;+1 day&#x27;))
+  [[AND p.id = {{plan}}]]</pre>
+<h3>Adjusting it for the question</h3>
+<p>A Metabase saved question. Fill {{as_of}} with the date as a quoted literal, and drop the optional [[...]] clause, since no plan was asked for.</p>
+<div class='scroll'><table><thead><tr><th>In the query</th><th>Becomes</th></tr></thead><tbody><tr><td class='find'><code>[[AND p.id = {{plan}}]]</code></td><td class='find'><em>removed</em></td></tr><tr><td class='find'><code>{{as_of}}</code></td><td class='find'><code>&#x27;2026-08-31&#x27;</code></td></tr></tbody></table></div>
+<h3>The rules it holds</h3>
+<div class="scroll"><table><thead><tr><th>Rule</th><th>Where else to find it</th><th class="n">Answer without it</th><th class="n">Off by</th></tr></thead><tbody>
+<tr><td><code>as-it-stood</code> MRR on a date is the subscriptions as they stood at the end of that day, from subscription_history. The subscriptions table shows only today: seats added and plans changed since then.</td><td><span class='pill'>the schema</span></td><td class='n'>$24,975.00</td><td class='n warn'>+$2,203.10</td></tr>
+<tr><td><code>annual</code> An annual plan counts a twelfth of its price.</td><td><span class='pill'>the schema</span></td><td class='n'>$142,561.90</td><td class='n warn'>+$119,790.00</td></tr>
+<tr><td><code>past-due</code> Past due is still paying: the renewal failed and dunning has not ended the subscription.</td><td><span class='pill src'>convention</span></td><td class='n'>$22,281.90</td><td class='n warn'>−$490.00</td></tr>
+<tr><td><code>not-paying</code> Trials and paused subscriptions are not paying.</td><td><span class='pill src'>convention</span></td><td class='n'>$23,352.90</td><td class='n warn'>+$581.00</td></tr>
+<tr><td><code>seats</code> The price is per seat: multiply by the quantity.</td><td><span class='pill'>the schema</span></td><td class='n'>$2,547.20</td><td class='n warn'>−$20,224.70</td></tr>
+<tr><td><code>discounts</code> Discounts come off.</td><td><span class='pill'>the schema</span></td><td class='n'>$23,077.60</td><td class='n warn'>+$305.70</td></tr>
+<tr><td><code>discounts-dated</code> A discount counts only on the days it runs: one that ended on 10 August or starts on 1 September does not change MRR on 31 August.</td><td><span class='pill'>the schema</span></td><td class='n'>$21,826.77</td><td class='n warn'>−$945.13</td></tr>
+<tr><td><code>cents</code> Prices are in cents.</td><td><span class='pill'>the data</span></td><td class='n'>$2,277,190.00</td><td class='n warn'>+$2,254,418.10</td></tr>
+<tr><td><code>budget-rates</code> Euro and sterling plans count in dollars at the budget rates finance fixed for 2026 (€1 = $1.10, £1 = $1.30), not the day&#x27;s rate.</td><td><span class='pill src'>convention</span></td><td class='n'>$21,939.30</td><td class='n warn'>−$832.60</td></tr>
+</tbody></table></div>
+<h3>An example query written from the schema alone</h3>
+<p>Today's subscriptions that had started by 1 September and not ended, per seat, with annual plans divided by twelve. It takes today's seats and statuses, ignores discounts, and adds euros and pounds to dollars as they are.</p>
+<pre class="code">SELECT ROUND(SUM(
+         s.quantity * p.unit_amount / CASE p.billing_interval WHEN &#x27;year&#x27; THEN 12.0 ELSE 1.0 END
+       ) / 100.0, 2) AS mrr_usd
+FROM subscriptions s
+JOIN plans p ON p.id = s.plan_id
+WHERE s.created_at &lt; &#x27;2026-09-01&#x27;
+  AND (s.ended_at IS NULL OR s.ended_at &gt;= &#x27;2026-09-01&#x27;)
+  AND s.status != &#x27;trialing&#x27;</pre>
+<h3>Nearby, and not it</h3>
+<ul><li><code>billing/notes/metrics-handbook.md</code>: Sales&#x27; contracted ARR, on the same page: today&#x27;s subscriptions at list price, trials included. A twelfth of it is not MRR.</li></ul>
+<h3>In the live runs</h3><p>All three schema-only runs worked out the history table, annual plans, seats, running discounts and past due. Then they found no exchange rates, said so, and gave the dollar plans alone: $17,291.30, with €2,809 and £1,839 beside it, unconverted. That is an honest answer to the question they could see, and it is not the company's MRR: the budget rates exist only in the handbook. One run called past due “a judgement call”; the handbook settles it.</p>
+<h2 id="c03">03 · Logo churn for a month</h2>
+<p class="q">“What was our logo churn rate for August 2026?”</p>
+<div class="kv"><b>Database</b><span>billing: <code>accounts</code> 105, <code>plans</code> 10, <code>subscriptions</code> 107, <code>subscription_history</code> 312, <code>discounts</code> 10 rows</span>
+<b>Right answer</b><span class="good">7.69%</span>
+<b>Example query from the schema</b><span class="warn">11.27% (+3.58 points)</span>
+<b>Live, schema only</b><span><span class='warn'>0 of 3</span> right: 4.55%, 4.55%, 4.55%</span>
+<b>Live, indexed</b><span><span class='good'>3 of 3</span> right: 7.69%, 7.69%, 7.69%</span></div>
+<p>The same billing database. Most customers cancel at the end of the period they have paid for, so the day they ask to cancel and the day they stop paying are weeks apart. Billing moves an account from monthly to annual by cancelling one subscription and starting another.</p>
+<h3>Where the query lives: <code>billing/notes/slack-data-help-2026-08-04.md</code></h3>
+<p>A #data-help thread from 4 August. Finance's first attempt counts cancellations by <code>canceled_at</code>. The data team's reply explains why that is wrong, and gives the query used for the June and July board packs, with July's dates written in. Finance's “Using this one” settles which query is the one.</p>
+<pre class="code">WITH paying_at_start AS (
+    SELECT DISTINCT s.account_id
+    FROM subscription_history h
+    JOIN subscriptions s ON s.id = h.subscription_id
+    WHERE h.status IN (&#x27;active&#x27;, &#x27;past_due&#x27;)
+      AND h.valid_from &lt; &#x27;2026-07-01&#x27;
+      AND (h.valid_to IS NULL OR h.valid_to &gt;= &#x27;2026-07-01&#x27;)
+),
+paying_at_end AS (
+    SELECT DISTINCT s.account_id
+    FROM subscription_history h
+    JOIN subscriptions s ON s.id = h.subscription_id
+    WHERE h.status IN (&#x27;active&#x27;, &#x27;past_due&#x27;)
+      AND h.valid_from &lt; &#x27;2026-08-01&#x27;
+      AND (h.valid_to IS NULL OR h.valid_to &gt;= &#x27;2026-08-01&#x27;)
+)
+SELECT COUNT(*) AS churned_logos,
+       (SELECT COUNT(*) FROM paying_at_start) AS logos_at_start,
+       ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM paying_at_start), 2) AS logo_churn_pct
+FROM paying_at_start a
+WHERE a.account_id NOT IN (SELECT account_id FROM paying_at_end);</pre>
+<h3>Adjusting it for the question</h3>
+<p>The thread&#x27;s second query, the one it settled on, has July&#x27;s dates written in. Move the end of the month first: changing 1 July to 1 August first, then every 1 August to 1 September, puts both ends on 1 September and gives 0% churn.</p>
+<div class='scroll'><table><thead><tr><th>In the query</th><th>Becomes</th></tr></thead><tbody><tr><td class='find'><code>&#x27;2026-08-01&#x27;</code></td><td class='find'><code>&#x27;2026-09-01&#x27;</code></td></tr><tr><td class='find'><code>&#x27;2026-07-01&#x27;</code></td><td class='find'><code>&#x27;2026-08-01&#x27;</code></td></tr></tbody></table></div>
+<h3>The rules it holds</h3>
+<div class="scroll"><table><thead><tr><th>Rule</th><th>Where else to find it</th><th class="n">Answer without it</th><th class="n">Off by</th></tr></thead><tbody>
+<tr><td><code>stopped-paying</code> An account churns in the month it stops paying, not the month it asks to cancel: most cancel at the end of the period they have paid for.</td><td><span class='pill'>the schema</span></td><td class='n'>7.94%</td><td class='n warn'>+0.25 points</td></tr>
+<tr><td><code>logos</code> Churn counts accounts, not subscriptions. A second office&#x27;s subscription ending is not churn, nor is a move from monthly to annual, which billing does as a cancel and a new subscription.</td><td><span class='pill'>the question</span></td><td class='n'>10.61%</td><td class='n warn'>+2.92 points</td></tr>
+<tr><td><code>past-due</code> Past due is still paying, at the start of the month and at the end.</td><td><span class='pill src'>convention</span></td><td class='n'>9.38%</td><td class='n warn'>+1.69 points</td></tr>
+<tr><td><code>paused</code> A pause is churn that month, and a win-back if they come back.</td><td><span class='pill src'>convention</span></td><td class='n'>4.55%</td><td class='n warn'>−3.14 points</td></tr>
+<tr><td><code>trials</code> A trial that never converted was never paying, so it is not churn and not in the denominator.</td><td><span class='pill src'>convention</span></td><td class='n'>10%</td><td class='n warn'>+2.31 points</td></tr>
+</tbody></table></div>
+<h3>An example query written from the schema alone</h3>
+<p>Accounts that asked to cancel in August, over the accounts live on 1 August. It dates churn by the request, counts a trial that ran out and a second subscription ending, and misses the pause.</p>
+<pre class="code">SELECT ROUND(100.0 * (
+    SELECT COUNT(DISTINCT account_id) FROM subscriptions
+    WHERE canceled_at &gt;= &#x27;2026-08-01&#x27; AND canceled_at &lt; &#x27;2026-09-01&#x27;
+  ) / (
+    SELECT COUNT(DISTINCT account_id) FROM subscriptions
+    WHERE created_at &lt; &#x27;2026-08-01&#x27; AND (ended_at IS NULL OR ended_at &gt;= &#x27;2026-08-01&#x27;)
+  ), 2) AS logo_churn_pct</pre>
+<h3>Nearby, and not it</h3>
+<ul><li><code>billing/notes/slack-data-help-2026-08-04.md</code>: The query that opened the thread. The reply below it explains why it is wrong.</li></ul>
+<h3>In the live runs</h3><p>All three schema-only runs found the right shape: accounts paying going into the month and not going out of it, dated by when they stopped paying. They did not count the move to annual or the second office. All three kept a paused account as a customer, and gave 4.55%, the value with <code>paused</code> taken out. All three indexed runs moved the dates in the right order. One of them also “fixed” the thread's boundary test, judging <code>valid_to &gt;= '2026-08-01'</code> a bug. On this data that made no difference, but it is a reason for the index to mark the query as the approved one.</p>
+<h2 id="c04">04 · Urgent tickets that missed the first-reply target</h2>
+<p class="q">“What share of urgent tickets missed the one-hour first-reply target in August 2026, across both desks?”</p>
+<div class="kv"><b>Database</b><span>helpdesk: <code>users</code> 82, <code>tickets</code> 256, <code>ticket_comments</code> 822, <code>ticket_field_changes</code> 1,008 rows</span>
+<b>Right answer</b><span class="good">36.4%</span>
+<b>Example query from the schema</b><span class="warn">7.7% (−28.70 points)</span>
+<b>Live, schema only</b><span><span class='warn'>0 of 3</span> right: 81.8%, 81.82%, 30.77%</span>
+<b>Live, indexed</b><span><span class='good'>3 of 3</span> right: 36.4%, 36.4%, 36.4%</span></div>
+<p>A help desk with a standard and an enterprise desk. Every email and web ticket gets an automatic acknowledgement from the Support Bot, which posts from an agent seat. Tickets are raised to urgent after they come in, taken down a level at triage, merged when a customer writes twice, and deleted when they are spam.</p>
+<h3>Where the query lives: <code>helpdesk/notes/support-ops-runbook.md</code></h3>
+<p>The support lead's runbook. The monthly report's rules are written out in prose, and the query below them was run for July and the Enterprise desk. A weekly backlog query on the same page uses the same idea of a reply for another question.</p>
+<pre class="code">-- Urgent first reply, Enterprise desk, July 2026
+WITH became_urgent AS (
+    SELECT ticket_id, MIN(changed_at) AS urgent_at
+    FROM ticket_field_changes
+    WHERE field = &#x27;priority&#x27; AND new_value = &#x27;urgent&#x27;
+    GROUP BY ticket_id
+),
+first_human_reply AS (
+    SELECT c.ticket_id, MIN(c.created_at) AS replied_at
+    FROM ticket_comments c
+    JOIN users u ON u.id = c.author_id
+    WHERE c.public = 1 AND u.role IN (&#x27;agent&#x27;, &#x27;admin&#x27;) AND c.via != &#x27;rule&#x27;
+    GROUP BY c.ticket_id
+),
+report AS (
+    SELECT t.id, t.created_at, b.urgent_at, r.replied_at
+    FROM tickets t
+    JOIN became_urgent b ON b.ticket_id = t.id
+    LEFT JOIN first_human_reply r ON r.ticket_id = t.id
+    WHERE t.brand = &#x27;enterprise&#x27;
+      AND t.merged_into IS NULL AND t.status != &#x27;deleted&#x27;
+      AND b.urgent_at &gt;= &#x27;2026-07-01&#x27; AND b.urgent_at &lt; &#x27;2026-08-01&#x27;
+      AND (r.replied_at IS NULL OR r.replied_at &gt; b.urgent_at)
+)
+SELECT COUNT(*) AS urgent_tickets,
+       SUM(replied_at IS NULL OR replied_at &gt; datetime(urgent_at, &#x27;+60 minutes&#x27;)) AS missed,
+       ROUND(100.0 * SUM(replied_at IS NULL OR replied_at &gt; datetime(urgent_at, &#x27;+60 minutes&#x27;))
+             / COUNT(*), 1) AS missed_pct
+FROM report;</pre>
+<h3>Adjusting it for the question</h3>
+<p>The runbook&#x27;s query was run for July and the Enterprise desk. Move both dates on a month, end first, and take out the brand filter for both desks.</p>
+<div class='scroll'><table><thead><tr><th>In the query</th><th>Becomes</th></tr></thead><tbody><tr><td class='find'><code>&#x27;2026-08-01&#x27;</code></td><td class='find'><code>&#x27;2026-09-01&#x27;</code></td></tr><tr><td class='find'><code>&#x27;2026-07-01&#x27;</code></td><td class='find'><code>&#x27;2026-08-01&#x27;</code></td></tr><tr><td class='find'><code>t.brand = &#x27;enterprise&#x27;
+      AND</code></td><td class='find'><em>removed</em></td></tr></tbody></table></div>
+<h3>The rules it holds</h3>
+<div class="scroll"><table><thead><tr><th>Rule</th><th>Where else to find it</th><th class="n">Answer without it</th><th class="n">Off by</th></tr></thead><tbody>
+<tr><td><code>human-reply</code> The Support Bot&#x27;s acknowledgement is not a reply, though it posts from an agent seat.</td><td><span class='pill'>the data</span></td><td class='n'>12.5%</td><td class='n warn'>−23.90 points</td></tr>
+<tr><td><code>public-reply</code> An internal note is not a reply.</td><td><span class='pill'>the schema</span></td><td class='n'>22.7%</td><td class='n warn'>−13.70 points</td></tr>
+<tr><td><code>team-reply</code> A reply comes from the team: the requester chasing on their own ticket is not one.</td><td><span class='pill'>the schema</span></td><td class='n'>31.8%</td><td class='n warn'>−4.60 points</td></tr>
+<tr><td><code>clock-from-urgent</code> The hour runs from when the ticket became urgent, not from when it was opened.</td><td><span class='pill src'>convention</span></td><td class='n'>68.2%</td><td class='n warn'>+31.80 points</td></tr>
+<tr><td><code>urgent-by-history</code> A ticket that was urgent counts even if triage took it down a level later.</td><td><span class='pill src'>convention</span></td><td class='n'>35.3%</td><td class='n warn'>−1.10 points</td></tr>
+<tr><td><code>already-answered</code> A ticket someone had already replied to before it became urgent is left out.</td><td><span class='pill src'>convention</span></td><td class='n'>30.8%</td><td class='n warn'>−5.60 points</td></tr>
+<tr><td><code>not-counted</code> Merged tickets and deleted spam are left out.</td><td><span class='pill'>the schema</span></td><td class='n'>46.2%</td><td class='n warn'>+9.80 points</td></tr>
+<tr><td><code>no-reply-is-missed</code> No reply at all is a miss.</td><td><span class='pill src'>convention</span></td><td class='n'>30%</td><td class='n warn'>−6.40 points</td></tr>
+</tbody></table></div>
+<h3>An example query written from the schema alone</h3>
+<p>Tickets created in August whose priority is now urgent, timed from creation to the first comment by an agent or admin. It takes the bot's acknowledgement for a reply, drops tickets nobody answered, and times an escalated ticket from when it was opened.</p>
+<pre class="code">WITH first_reply AS (
+    SELECT c.ticket_id, MIN(c.created_at) AS replied_at
+    FROM ticket_comments c
+    JOIN users u ON u.id = c.author_id
+    WHERE u.role IN (&#x27;agent&#x27;, &#x27;admin&#x27;)
+    GROUP BY c.ticket_id
+)
+SELECT ROUND(100.0 * SUM(r.replied_at &gt; datetime(t.created_at, &#x27;+60 minutes&#x27;)) / COUNT(*), 1) AS missed_pct
+FROM tickets t
+JOIN first_reply r ON r.ticket_id = t.id
+WHERE t.priority = &#x27;urgent&#x27;
+  AND t.created_at &gt;= &#x27;2026-08-01&#x27; AND t.created_at &lt; &#x27;2026-09-01&#x27;</pre>
+<h3>Nearby, and not it</h3>
+<ul><li><code>helpdesk/notes/support-ops-runbook.md</code>: The weekly backlog of tickets waiting on a first reply: the same idea of a reply, a different question.</li></ul>
+<h3>In the live runs</h3><p>Every schema-only run handled the bot, internal notes, merges, spam and unanswered tickets. Two of them took each ticket's current priority and timed it from creation, which gives 81.8%. The third found the escalation history, timed from it, and kept downgraded tickets. It still missed one convention, that a ticket already answered before it became urgent is left out, so it counted 26 tickets instead of 22 and gave 30.8%. One run wrote: “I made these choices, and each one changes the number.”</p>
+<h2 id="c05">05 · Stock the storefront can still promise</h2>
+<p class="q">“How many blue enamel mugs can we still promise to customers from the Leeds warehouse? It is 17:00 UTC on 30 September 2026.”</p>
+<div class="kv"><b>Database</b><span>warehouse: <code>products</code> 4, <code>locations</code> 13, <code>stock_moves</code> 2,376, <code>stock_snapshot</code> 146, <code>reservations</code> 152 rows</span>
+<b>Right answer</b><span class="good">694 mugs</span>
+<b>Example query from the schema</b><span class="warn">657 mugs (−37)</span>
+<b>Live, schema only</b><span><span class='warn'>0 of 3</span> right: 700 mugs, 700 mugs, 700 mugs</span>
+<b>Live, indexed</b><span><span class='good'>3 of 3</span> right: 694 mugs, 694 mugs, 694 mugs</span></div>
+<p>Two warehouses, Leeds and Manchester. The ledger records every move, some in cases of six. A snapshot is taken at 02:00 for the valuation. Reservations hold stock for paid orders, for checkouts in progress (15 minutes) and for wholesale call-offs. On 30 September at Leeds, stock arrives, is put away, ships, is damaged, comes back, and sets off from Manchester.</p>
+<h3>Where the query lives: <code>warehouse/repo/inventory/atp.py</code></h3>
+<p>The storefront's available-to-promise function. The query takes <code>:sku</code>, <code>:warehouse</code> and <code>:now</code>, and <code>:safety_cases</code>, which the function fills from a constant above the query. Leeds holds two cases of every line back for wholesale, and wholesale reservations come out of that held-back stock.</p>
+<pre class="code">&quot;&quot;&quot;Available to promise: how many units the storefront may still sell from one warehouse.
+
+The storefront asks before it shows &quot;In stock&quot;, and again before it takes a reservation.
+&quot;&quot;&quot;
+
+# Leeds holds two cases of every line back for wholesale call-offs. Wholesale orders
+# (WS-) are allocated from that ring-fenced stock, so the storefront does not take
+# their reservations off again.
+SAFETY_STOCK_CASES = {&quot;LDS&quot;: 2, &quot;MAN&quot;: 0}
+
+# On hand comes from the move ledger: stock_snapshot is the 02:00 valuation snapshot.
+# Only bulk and pick stock can be promised. A move in cases is units_per_case units.
+ATP_SQL = &quot;&quot;&quot;
+WITH ledger AS (
+    SELECT m.to_location AS location_id,
+           m.qty * CASE m.uom WHEN &#x27;case&#x27; THEN p.units_per_case ELSE 1 END AS units
+    FROM stock_moves m
+    JOIN products p ON p.sku = m.sku
+    WHERE m.sku = :sku AND m.state = &#x27;done&#x27; AND m.moved_at &lt;= :now AND m.to_location IS NOT NULL
+    UNION ALL
+    SELECT m.from_location,
+           -m.qty * CASE m.uom WHEN &#x27;case&#x27; THEN p.units_per_case ELSE 1 END
+    FROM stock_moves m
+    JOIN products p ON p.sku = m.sku
+    WHERE m.sku = :sku AND m.state = &#x27;done&#x27; AND m.moved_at &lt;= :now AND m.from_location IS NOT NULL
+),
+sellable AS (
+    SELECT COALESCE(SUM(g.units), 0) AS units
+    FROM ledger g
+    JOIN locations l ON l.id = g.location_id
+    WHERE l.warehouse = :warehouse AND l.kind IN (&#x27;bulk&#x27;, &#x27;pick&#x27;)
+),
+promised AS (
+    SELECT COALESCE(SUM(r.qty_units), 0) AS units
+    FROM reservations r
+    WHERE r.sku = :sku AND r.warehouse = :warehouse
+      AND r.released_at IS NULL AND r.expires_at &gt; :now
+      AND r.order_ref NOT LIKE &#x27;WS-%&#x27;
+)
+SELECT sellable.units - promised.units
+       - :safety_cases * (SELECT units_per_case FROM products WHERE sku = :sku) AS available_to_promise
+FROM sellable, promised
+&quot;&quot;&quot;
+
+
+def available_to_promise(conn, sku: str, warehouse: str, now: str) -&gt; int:
+    &quot;&quot;&quot;Units of one SKU the storefront may still sell from one warehouse (LDS, MAN).&quot;&quot;&quot;
+    params = {&quot;sku&quot;: sku, &quot;warehouse&quot;: warehouse, &quot;now&quot;: now, &quot;safety_cases&quot;: SAFETY_STOCK_CASES[warehouse]}
+    return conn.execute(ATP_SQL, params).fetchone()[0]</pre>
+<h3>Adjusting it for the question</h3>
+<p>Bind :sku to the blue mug&#x27;s SKU from products, :warehouse to Leeds&#x27; code from locations, :now to the time in the question in the ledger&#x27;s format, and :safety_cases to SAFETY_STOCK_CASES[&quot;LDS&quot;], the constant above the query, as available_to_promise() does.</p>
+<div class='scroll'><table><thead><tr><th>In the query</th><th>Becomes</th></tr></thead><tbody><tr><td class='find'><code>:sku</code></td><td class='find'><code>&#x27;MUG-BLU&#x27;</code></td></tr><tr><td class='find'><code>:warehouse</code></td><td class='find'><code>&#x27;LDS&#x27;</code></td></tr><tr><td class='find'><code>:now</code></td><td class='find'><code>&#x27;2026-09-30 17:00:00&#x27;</code></td></tr><tr><td class='find'><code>:safety_cases</code></td><td class='find'><code>2</code></td></tr></tbody></table></div>
+<h3>The rules it holds</h3>
+<div class="scroll"><table><thead><tr><th>Rule</th><th>Where else to find it</th><th class="n">Answer without it</th><th class="n">Off by</th></tr></thead><tbody>
+<tr><td><code>ledger-not-snapshot</code> On hand comes from the move ledger. stock_snapshot is taken at 02:00 for the valuation, and misses everything that has moved since.</td><td><span class='pill'>the schema</span></td><td class='n'>653 mugs</td><td class='n warn'>−41</td></tr>
+<tr><td><code>cases</code> A move counted in cases is units_per_case units each.</td><td><span class='pill'>the schema</span></td><td class='n'>-311 mugs</td><td class='n warn'>−1,005</td></tr>
+<tr><td><code>sellable</code> Only stock in bulk and pick locations can be promised: not what is on the dock waiting to be put away, returns waiting for inspection, damaged stock in quarantine, or stock in transit.</td><td><span class='pill'>the data</span></td><td class='n'>780 mugs</td><td class='n warn'>+86</td></tr>
+<tr><td><code>done-only</code> Only moves that are done: a cancelled move never happened.</td><td><span class='pill'>the schema</span></td><td class='n'>754 mugs</td><td class='n warn'>+60</td></tr>
+<tr><td><code>both-ends</code> A move takes stock from where it came from, as well as adding it where it went.</td><td><span class='pill'>the schema</span></td><td class='n'>1,751 mugs</td><td class='n warn'>+1,057</td></tr>
+<tr><td><code>expired-holds</code> A checkout holds stock for 15 minutes; a hold that has expired promises nothing.</td><td><span class='pill'>the schema</span></td><td class='n'>689 mugs</td><td class='n warn'>−5</td></tr>
+<tr><td><code>released</code> A released reservation (shipped or cancelled) holds nothing.</td><td><span class='pill'>the schema</span></td><td class='n'>647 mugs</td><td class='n warn'>−47</td></tr>
+<tr><td><code>safety-stock</code> Leeds holds two cases of every line back for wholesale call-offs.</td><td><span class='pill src'>convention</span></td><td class='n'>706 mugs</td><td class='n warn'>+12</td></tr>
+<tr><td><code>wholesale-ring-fenced</code> Wholesale reservations (WS-) are allocated from that held-back stock, so they are not taken off again.</td><td><span class='pill src'>convention</span></td><td class='n'>688 mugs</td><td class='n warn'>−6</td></tr>
+</tbody></table></div>
+<h3>An example query written from the schema alone</h3>
+<p>The 02:00 snapshot for Leeds, every location, less every reservation not yet released. It misses the day's moves, counts stock that cannot be sold, and takes off expired checkouts and the wholesale call-off.</p>
+<pre class="code">SELECT (
+    SELECT SUM(s.qty_units)
+    FROM stock_snapshot s
+    JOIN locations l ON l.id = s.location_id
+    WHERE s.sku = &#x27;MUG-BLU&#x27; AND l.warehouse = &#x27;LDS&#x27;
+      AND s.taken_at = (SELECT MAX(taken_at) FROM stock_snapshot)
+  ) - (
+    SELECT COALESCE(SUM(qty_units), 0) FROM reservations
+    WHERE sku = &#x27;MUG-BLU&#x27; AND warehouse = &#x27;LDS&#x27; AND released_at IS NULL
+  ) AS available</pre>
+<h3>Nearby, and not it</h3>
+<ul><li><code>warehouse/repo/reports/stock_valuation.sql</code>: Month-end stock valuation: every unit we own, from the 02:00 snapshot, in every location.</li></ul>
+<h3>In the live runs</h3><p>All three schema-only runs rolled the 02:00 snapshot forward through the day's moves. They counted units on bulk and pick shelves only, left out the expired checkouts, and reached the same 717 on the shelves as the indexed runs. Then they took off every live reservation, the wholesale call-off included, and held nothing back: 700. The safety stock and the ring-fence are written only in <code>atp.py</code>.</p>
+<h2 id="live">Live: a model with the database, with and without the indexed query</h2>
+<p>Both conditions ran Sonnet through <code>claude -p</code> in an empty folder. The folder held a copy of the database and <code>query.py</code>, a script that runs one read-only query; running it was the only tool allowed. Both conditions got the question and the schema. The indexed condition also got the source file that holds the case's query, whole, as the knowledge layer would hand it over, with the decoys in the same file and the dates and parameters still to adjust. Each run was graded by running the last SQL block of its answer against the database. The runner is <code>bench/query_eval.py</code>.</p>
+<div class="scroll"><table><thead><tr><th>Case</th><th>Schema only</th><th>Answers given</th><th>With the indexed query</th><th>Answers given</th></tr></thead><tbody>
+<tr><td>01</td><td class='n'><span class='warn'>0 of 3</span></td><td>£8,323.02, £8,323.02, £8,323.02</td><td class='n'><span class='good'>3 of 3</span></td><td>£7,238.02, £7,238.02, £7,238.02</td></tr>
+<tr><td>02</td><td class='n'><span class='warn'>0 of 3</span></td><td>$17,291.30, $17,291.30, $17,291.30</td><td class='n'><span class='good'>3 of 3</span></td><td>$22,771.90, $22,771.90, $22,771.90</td></tr>
+<tr><td>03</td><td class='n'><span class='warn'>0 of 3</span></td><td>4.55%, 4.55%, 4.55%</td><td class='n'><span class='good'>3 of 3</span></td><td>7.69%, 7.69%, 7.69%</td></tr>
+<tr><td>04</td><td class='n'><span class='warn'>0 of 3</span></td><td>81.8%, 81.82%, 30.77%</td><td class='n'><span class='good'>3 of 3</span></td><td>36.4%, 36.4%, 36.4%</td></tr>
+<tr><td>05</td><td class='n'><span class='warn'>0 of 3</span></td><td>700 mugs, 700 mugs, 700 mugs</td><td class='n'><span class='good'>3 of 3</span></td><td>694 mugs, 694 mugs, 694 mugs</td></tr>
+<tr class='total'><td>Schema only</td><td class='n'>0 of 15</td><td colspan='3'>median 25.8 s and 5 tool calls a run; $1.05 in all</td></tr>
+<tr class='total'><td>With the indexed query</td><td class='n'>15 of 15</td><td colspan='3'>median 20.3 s and 4 tool calls a run; $0.99 in all</td></tr>
+</tbody></table></div>
+<h3>What the live runs show</h3>
+<ul>
+<li><strong>The failures are conventions, not SQL.</strong> The schema-only runs got the joins, the history tables, the units, the as-of rates, the bot and the merges right. Each case went wrong on a choice the company had made and written down elsewhere: which month, which customers, what a pause is, when the clock starts, what is held back.</li>
+<li><strong>The model knows it is guessing, and guesses anyway.</strong> It lists its “judgement calls” and gives a number. Only the MRR runs stopped short, because there was no rate to guess from.</li>
+<li><strong>The runs agree with each other.</strong> In four of the five cases, all three schema-only runs gave the same wrong number, and in the fifth two of them did. Asking again does not catch these errors.</li>
+<li><strong>Adjusting was not the hard part.</strong> Every indexed run filled the parameters, dropped the unused template clause, moved the dates in the right order and took out the Enterprise filter.</li>
+</ul>
+<h3>An earlier version of two cases</h3>
+<p>In the first version, cases 02 and 05 held only rules that are common practice: past due still counts in MRR, and dock, quarantine and transit stock cannot be sold. Sonnet worked all of them out from the schema and the data, and answered both cases right from the schema alone, 2 of 2 each. The rules were real, but they were not the company's own. Each case then got a convention a finance or operations team really sets: budget exchange rates for MRR, and a safety stock with a ring-fenced wholesale allocation. So an indexed query is worth most for its conventions, because a strong model derives the rest. In that round, both indexed warehouse runs read “17:00” as Leeds time (16:00 UTC) and gave 709; the question now says UTC. The first round's runs are in <code>bench/query-raw/round1/</code>.</p>
+
+<h2 id="index">What the index has to hold</h2>
+<ol>
+<li><strong>The query, and where it lives</strong>: a file and a constant, a page and a section, a thread and a message. One place can hold several queries. The Slack thread holds the wrong query and the right one, and finance's “Using this one” says which to use (<a href="#c03">03</a>). The handbook holds MRR and contracted ARR side by side (<a href="#c02">02</a>), and the runbook holds the monthly report and the weekly backlog (<a href="#c04">04</a>).</li>
+<li><strong>What it answers, in the words people ask with</strong>, and what its neighbours answer instead. “Net revenue” and “the board-pack figure” mean <code>NET_REVENUE_SQL</code>, not the sales dashboard's order value (<a href="#c01">01</a>). Stock for the storefront means available to promise, not the valuation (<a href="#c05">05</a>).</li>
+<li><strong>Its parameters, and what fills them</strong>. <code>:start</code> and <code>:end</code> are a London month as UTC instants, worked out by <code>month_bounds()</code> (<a href="#c01">01</a>). <code>{{as_of}}</code> is a quoted date, and <code>[[…]]</code> is dropped when unused (<a href="#c02">02</a>). <code>:safety_cases</code> comes from the constant above the query (<a href="#c05">05</a>). Each parameter should link to the helper or constant that fills it, because the query alone does not say.</li>
+<li><strong>The literals that are parameters in disguise</strong>: July's dates and the Enterprise desk, written into the query (<a href="#c03">03</a>, <a href="#c04">04</a>). Moving the dates has an order: move the end of the month first. Otherwise both ends land on 1 September and churn comes out at 0%.</li>
+<li><strong>Its rules, in words, tied to their clauses</strong>, from the comments and the prose around the query. The conventions matter most. The live model worked out the structural rules from the schema and the data, and missed the conventions. With the rules in words, a question the query was not written for can still borrow them.</li>
+<li><strong>Its standing</strong>: approved, the one used for the board pack, superseding the first attempt. The model should adjust an approved query's parameters and leave its rules alone. One indexed run rewrote a boundary test it judged a bug (<a href="#c03">03</a>).</li>
+<li><strong>The tables and columns it reads</strong>, linked to the schema, so that a question about those tables finds the query even when it uses none of the query's words.</li>
+</ol>
+
+<h2>Files and commands</h2>
+<ul>
+<li><code>querygraph/cases/questions.json</code>: the five cases, with their answers, adjustments, rules and decoys.</li>
+<li><code>querygraph/cases/&lt;database&gt;/schema.sql</code> and <code>seed.py</code>: each database. The seed marks each rule's rows.</li>
+<li>The sources: <code>shop/repo/finance/revenue.py</code>, <code>billing/notes/metrics-handbook.md</code>, <code>billing/notes/slack-data-help-2026-08-04.md</code>, <code>helpdesk/notes/support-ops-runbook.md</code>, <code>warehouse/repo/inventory/atp.py</code>, and the decoys <code>shop/repo/reports/sales_dashboard.sql</code> and <code>warehouse/repo/reports/stock_valuation.sql</code>.</li>
+<li><code>querygraph/cases/build.py</code> and <code>check.py</code>; <code>tests/test_query_cases.py</code>; <code>bench/query_eval.py</code>, which writes <code>bench/query-report.md</code>.</li>
+<li><code>querygraph/README.md</code>: the same cases, briefly, beside the code.</li>
+</ul>
+<pre class="code">python querygraph/cases/build.py            # the four databases, into each case's folder
+python querygraph/cases/check.py            # every value on this page, from a fresh build
+python -m unittest tests.test_query_cases   # the claims, checked, no model
+python bench/query_eval.py --reps 3         # live: about $2 on Sonnet, 30 runs</pre>
+</main>
+</body>
+</html>

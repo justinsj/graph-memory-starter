@@ -1,0 +1,196 @@
+{
+ "about": "Questions about a company's own database whose right answer depends on rules the schema does not show. Each rule is already written into a query the company uses, in its code or in its notes, and that query answers the question once it is adjusted. The data holds rows that make every rule change the answer. `adjust` is what the model has to do by hand: bind a parameter, fill a template variable, or edit a hard-coded date or filter. Each rule's `without` takes that one rule out of the indexed query. `visible` says where a model could find the rule without the indexed query: in the schema, in the data, or in the question's own words. `convention` marks a choice the company made that a careful analyst could make differently; only the company's own sources settle it.",
+ "now": "2026-09-30 17:00:00",
+ "cases": [
+  {
+   "id": "01-net-revenue",
+   "database": "shop",
+   "question": "What was our net revenue for August 2026, in pounds?",
+   "answer": 7238.02,
+   "tolerance": 0.005,
+   "unit": "GBP",
+   "source": {
+    "kind": "code",
+    "form": "parameterized",
+    "path": "shop/repo/finance/revenue.py",
+    "extract": {"python_constant": "NET_REVENUE_SQL"},
+    "params": {"start": "2026-07-31 23:00:00", "end": "2026-08-31 23:00:00"},
+    "how": "Bind :start and :end to what month_bounds(2026, 8) returns: the London month as UTC instants, 2026-07-31 23:00:00 to 2026-08-31 23:00:00 while the clocks are on BST."
+   },
+   "decoys": [
+    {"path": "shop/repo/reports/sales_dashboard.sql", "extract": {}, "why": "Sales by the day the order was placed, in each order's own currency, for the marketing dashboard. Close in words, and wrong for revenue."}
+   ],
+   "naive_sql": "SELECT ROUND((\n    SELECT SUM(amount) FROM payments\n    WHERE status = 'captured' AND captured_at >= '2026-08-01' AND captured_at < '2026-09-01'\n  ) - (\n    SELECT SUM(amount) FROM refunds\n    WHERE status = 'succeeded' AND created_at >= '2026-08-01' AND created_at < '2026-09-01'\n  )) / 100.0 AS net_revenue_gbp",
+   "rules": [
+    {"id": "london-months", "visible": "convention", "rule": "A month is a London month. The ledger is in UTC, so while the clocks are on BST August runs from 2026-07-31 23:00 to 2026-08-31 23:00 UTC.",
+     "without": {"params": {"start": "2026-08-01 00:00:00", "end": "2026-09-01 00:00:00"}}},
+    {"id": "captured", "visible": "schema", "rule": "Revenue is money captured, dated when it was captured. An authorisation can still be voided, and about a quarter of cards are captured when the parcel ships, days after the order.",
+     "without": {"edits": [["p.status = 'captured'", "p.status != 'failed'"], ["p.captured_at >= :start AND p.captured_at < :end", "p.created_at >= :start AND p.created_at < :end"]]}},
+    {"id": "minor-units", "visible": "data", "rule": "Amounts are in minor units: pence and cents.",
+     "without": {"edits": [[") / 100.0, 2)", "), 2)"]]}},
+    {"id": "euros", "visible": "schema", "rule": "Euro payments are converted to pounds before they are added up.",
+     "without": {"edits": [["WHEN 'GBP' THEN 1.0 ELSE", "WHEN 'GBP' THEN 1.0 WHEN 'EUR' THEN 1.0 ELSE"]]}},
+    {"id": "fx-as-of", "visible": "data", "rule": "At the rate of that day, or of the last business day before it: no rate is published at weekends or on the bank holiday of 31 August.",
+     "without": {"edits": [["fx.rate_date <= date(l.happened_at)", "fx.rate_date = date(l.happened_at)"]]}},
+    {"id": "refunds-when", "visible": "convention", "rule": "A refund comes off the month it was made in, whichever month the order was.",
+     "without": {"edits": [["r.created_at >= :start AND r.created_at < :end", "p.captured_at >= :start AND p.captured_at < :end"]]}},
+    {"id": "refunds-succeeded", "visible": "schema", "rule": "Only refunds that went through: a pending or failed refund has not left the account.",
+     "without": {"edits": [["r.status = 'succeeded'", "r.status != 'failed'"]]}},
+    {"id": "not-revenue", "visible": "convention", "rule": "Staff orders (@shop.example) and QA's test purchases on production (@mailinator.com) are not revenue.",
+     "without": {"edits": [["c.email NOT LIKE '%@shop.example'", "1 = 1"], ["c.email NOT LIKE '%@mailinator.com'", "1 = 1"]]}}
+   ]
+  },
+  {
+   "id": "02-mrr",
+   "database": "billing",
+   "question": "What was our MRR at the end of August 2026?",
+   "answer": 22771.9,
+   "tolerance": 0.005,
+   "unit": "USD",
+   "source": {
+    "kind": "text",
+    "form": "template",
+    "path": "billing/notes/metrics-handbook.md",
+    "extract": {"sql_block": 1},
+    "adjust": [["\n  [[AND p.id = {{plan}}]]", ""], ["{{as_of}}", "'2026-08-31'"]],
+    "how": "A Metabase saved question. Fill {{as_of}} with the date as a quoted literal, and drop the optional [[...]] clause, since no plan was asked for."
+   },
+   "decoys": [
+    {"path": "billing/notes/metrics-handbook.md", "extract": {"sql_block": 2}, "why": "Sales' contracted ARR, on the same page: today's subscriptions at list price, trials included. A twelfth of it is not MRR."}
+   ],
+   "naive_sql": "SELECT ROUND(SUM(\n         s.quantity * p.unit_amount / CASE p.billing_interval WHEN 'year' THEN 12.0 ELSE 1.0 END\n       ) / 100.0, 2) AS mrr_usd\nFROM subscriptions s\nJOIN plans p ON p.id = s.plan_id\nWHERE s.created_at < '2026-09-01'\n  AND (s.ended_at IS NULL OR s.ended_at >= '2026-09-01')\n  AND s.status != 'trialing'",
+   "rules": [
+    {"id": "as-it-stood", "visible": "schema", "rule": "MRR on a date is the subscriptions as they stood at the end of that day, from subscription_history. The subscriptions table shows only today: seats added and plans changed since then.",
+     "without": {"edits": [["h.valid_from < date('2026-08-31', '+1 day')", "1 = 1"], ["(h.valid_to IS NULL OR h.valid_to >= date('2026-08-31', '+1 day'))", "h.valid_to IS NULL"]]}},
+    {"id": "annual", "visible": "schema", "rule": "An annual plan counts a twelfth of its price.",
+     "without": {"edits": [["\n         / CASE p.billing_interval WHEN 'year' THEN 12.0 ELSE 1.0 END", ""]]}},
+    {"id": "past-due", "visible": "convention", "rule": "Past due is still paying: the renewal failed and dunning has not ended the subscription.",
+     "without": {"edits": [["h.status IN ('active', 'past_due')", "h.status = 'active'"]]}},
+    {"id": "not-paying", "visible": "convention", "rule": "Trials and paused subscriptions are not paying.",
+     "without": {"edits": [["h.status IN ('active', 'past_due')", "h.status IN ('active', 'past_due', 'trialing', 'paused')"]]}},
+    {"id": "seats", "visible": "schema", "rule": "The price is per seat: multiply by the quantity.",
+     "without": {"edits": [["h.quantity * p.unit_amount", "p.unit_amount"]]}},
+    {"id": "discounts", "visible": "schema", "rule": "Discounts come off.",
+     "without": {"edits": [["\n         * (1 - COALESCE(d.percent_off, 0) / 100.0)", ""]]}},
+    {"id": "discounts-dated", "visible": "schema", "rule": "A discount counts only on the days it runs: one that ended on 10 August or starts on 1 September does not change MRR on 31 August.",
+     "without": {"edits": [["\n AND d.starts_at < date('2026-08-31', '+1 day')\n AND (d.ends_at IS NULL OR d.ends_at >= date('2026-08-31', '+1 day'))", ""]]}},
+    {"id": "cents", "visible": "data", "rule": "Prices are in cents.",
+     "without": {"edits": [[") / 100.0, 2)", "), 2)"]]}},
+    {"id": "budget-rates", "visible": "convention", "rule": "Euro and sterling plans count in dollars at the budget rates finance fixed for 2026 (€1 = $1.10, £1 = $1.30), not the day's rate.",
+     "without": {"edits": [["\n         * CASE p.currency WHEN 'EUR' THEN 1.10 WHEN 'GBP' THEN 1.30 ELSE 1.0 END", ""]]}}
+   ]
+  },
+  {
+   "id": "03-logo-churn",
+   "database": "billing",
+   "question": "What was our logo churn rate for August 2026?",
+   "answer": 7.69,
+   "answer_column": "logo_churn_pct",
+   "tolerance": 0.005,
+   "unit": "percent",
+   "source": {
+    "kind": "text",
+    "form": "hard-coded",
+    "path": "billing/notes/slack-data-help-2026-08-04.md",
+    "extract": {"sql_block": 2},
+    "adjust": [["'2026-08-01'", "'2026-09-01'"], ["'2026-07-01'", "'2026-08-01'"]],
+    "how": "The thread's second query, the one it settled on, has July's dates written in. Move the end of the month first: changing 1 July to 1 August first, then every 1 August to 1 September, puts both ends on 1 September and gives 0% churn."
+   },
+   "decoys": [
+    {"path": "billing/notes/slack-data-help-2026-08-04.md", "extract": {"sql_block": 1}, "why": "The query that opened the thread. The reply below it explains why it is wrong."}
+   ],
+   "naive_sql": "SELECT ROUND(100.0 * (\n    SELECT COUNT(DISTINCT account_id) FROM subscriptions\n    WHERE canceled_at >= '2026-08-01' AND canceled_at < '2026-09-01'\n  ) / (\n    SELECT COUNT(DISTINCT account_id) FROM subscriptions\n    WHERE created_at < '2026-08-01' AND (ended_at IS NULL OR ended_at >= '2026-08-01')\n  ), 2) AS logo_churn_pct",
+   "rules": [
+    {"id": "stopped-paying", "visible": "schema", "rule": "An account churns in the month it stops paying, not the month it asks to cancel: most cancel at the end of the period they have paid for.",
+     "without": {"edits": [["      AND (h.valid_to IS NULL OR h.valid_to >= '2026-08-01')\n)", "      AND (h.valid_to IS NULL OR h.valid_to >= '2026-08-01')\n      AND (s.canceled_at IS NULL OR s.canceled_at >= '2026-08-01')\n)"], ["      AND (h.valid_to IS NULL OR h.valid_to >= '2026-09-01')\n)", "      AND (h.valid_to IS NULL OR h.valid_to >= '2026-09-01')\n      AND (s.canceled_at IS NULL OR s.canceled_at >= '2026-09-01')\n)"]]}},
+    {"id": "logos", "visible": "question", "rule": "Churn counts accounts, not subscriptions. A second office's subscription ending is not churn, nor is a move from monthly to annual, which billing does as a cancel and a new subscription.",
+     "without": {"edits": [["SELECT DISTINCT s.account_id", "SELECT DISTINCT h.subscription_id AS account_id"]]}},
+    {"id": "past-due", "visible": "convention", "rule": "Past due is still paying, at the start of the month and at the end.",
+     "without": {"edits": [["h.status IN ('active', 'past_due')", "h.status = 'active'"]]}},
+    {"id": "paused", "visible": "convention", "rule": "A pause is churn that month, and a win-back if they come back.",
+     "without": {"edits": [["h.status IN ('active', 'past_due')", "h.status IN ('active', 'past_due', 'paused')"]]}},
+    {"id": "trials", "visible": "convention", "rule": "A trial that never converted was never paying, so it is not churn and not in the denominator.",
+     "without": {"edits": [["h.status IN ('active', 'past_due')", "h.status IN ('active', 'past_due', 'trialing')"]]}}
+   ]
+  },
+  {
+   "id": "04-urgent-first-reply",
+   "database": "helpdesk",
+   "question": "What share of urgent tickets missed the one-hour first-reply target in August 2026, across both desks?",
+   "answer": 36.4,
+   "answer_column": "missed_pct",
+   "tolerance": 0.05,
+   "unit": "percent",
+   "source": {
+    "kind": "text",
+    "form": "hard-coded",
+    "path": "helpdesk/notes/support-ops-runbook.md",
+    "extract": {"sql_block": 1},
+    "adjust": [["'2026-08-01'", "'2026-09-01'"], ["'2026-07-01'", "'2026-08-01'"], ["t.brand = 'enterprise'\n      AND ", ""]],
+    "how": "The runbook's query was run for July and the Enterprise desk. Move both dates on a month, end first, and take out the brand filter for both desks."
+   },
+   "decoys": [
+    {"path": "helpdesk/notes/support-ops-runbook.md", "extract": {"sql_block": 2}, "why": "The weekly backlog of tickets waiting on a first reply: the same idea of a reply, a different question."}
+   ],
+   "naive_sql": "WITH first_reply AS (\n    SELECT c.ticket_id, MIN(c.created_at) AS replied_at\n    FROM ticket_comments c\n    JOIN users u ON u.id = c.author_id\n    WHERE u.role IN ('agent', 'admin')\n    GROUP BY c.ticket_id\n)\nSELECT ROUND(100.0 * SUM(r.replied_at > datetime(t.created_at, '+60 minutes')) / COUNT(*), 1) AS missed_pct\nFROM tickets t\nJOIN first_reply r ON r.ticket_id = t.id\nWHERE t.priority = 'urgent'\n  AND t.created_at >= '2026-08-01' AND t.created_at < '2026-09-01'",
+   "rules": [
+    {"id": "human-reply", "visible": "data", "rule": "The Support Bot's acknowledgement is not a reply, though it posts from an agent seat.",
+     "without": {"edits": [[" AND c.via != 'rule'", ""]]}},
+    {"id": "public-reply", "visible": "schema", "rule": "An internal note is not a reply.",
+     "without": {"edits": [["c.public = 1 AND ", ""]]}},
+    {"id": "team-reply", "visible": "schema", "rule": "A reply comes from the team: the requester chasing on their own ticket is not one.",
+     "without": {"edits": [["u.role IN ('agent', 'admin')", "c.created_at > (SELECT t0.created_at FROM tickets t0 WHERE t0.id = c.ticket_id)"]]}},
+    {"id": "clock-from-urgent", "visible": "convention", "rule": "The hour runs from when the ticket became urgent, not from when it was opened.",
+     "without": {"edits": [["datetime(urgent_at, '+60 minutes')", "datetime(created_at, '+60 minutes')"]]}},
+    {"id": "urgent-by-history", "visible": "convention", "rule": "A ticket that was urgent counts even if triage took it down a level later.",
+     "without": {"edits": [["WHERE t.merged_into IS NULL", "WHERE t.priority = 'urgent' AND t.merged_into IS NULL"]]}},
+    {"id": "already-answered", "visible": "convention", "rule": "A ticket someone had already replied to before it became urgent is left out.",
+     "without": {"edits": [["\n      AND (r.replied_at IS NULL OR r.replied_at > b.urgent_at)", ""]]}},
+    {"id": "not-counted", "visible": "schema", "rule": "Merged tickets and deleted spam are left out.",
+     "without": {"edits": [["t.merged_into IS NULL AND t.status != 'deleted'", "1 = 1"]]}},
+    {"id": "no-reply-is-missed", "visible": "convention", "rule": "No reply at all is a miss.",
+     "without": {"edits": [["LEFT JOIN first_human_reply", "JOIN first_human_reply"]]}}
+   ]
+  },
+  {
+   "id": "05-available-to-promise",
+   "database": "warehouse",
+   "question": "How many blue enamel mugs can we still promise to customers from the Leeds warehouse? It is 17:00 UTC on 30 September 2026.",
+   "answer": 694,
+   "tolerance": 0,
+   "unit": "units",
+   "source": {
+    "kind": "code",
+    "form": "parameterized",
+    "path": "warehouse/repo/inventory/atp.py",
+    "extract": {"python_constant": "ATP_SQL"},
+    "params": {"sku": "MUG-BLU", "warehouse": "LDS", "now": "2026-09-30 17:00:00", "safety_cases": 2},
+    "how": "Bind :sku to the blue mug's SKU from products, :warehouse to Leeds' code from locations, :now to the time in the question in the ledger's format, and :safety_cases to SAFETY_STOCK_CASES[\"LDS\"], the constant above the query, as available_to_promise() does."
+   },
+   "decoys": [
+    {"path": "warehouse/repo/reports/stock_valuation.sql", "extract": {}, "why": "Month-end stock valuation: every unit we own, from the 02:00 snapshot, in every location."}
+   ],
+   "naive_sql": "SELECT (\n    SELECT SUM(s.qty_units)\n    FROM stock_snapshot s\n    JOIN locations l ON l.id = s.location_id\n    WHERE s.sku = 'MUG-BLU' AND l.warehouse = 'LDS'\n      AND s.taken_at = (SELECT MAX(taken_at) FROM stock_snapshot)\n  ) - (\n    SELECT COALESCE(SUM(qty_units), 0) FROM reservations\n    WHERE sku = 'MUG-BLU' AND warehouse = 'LDS' AND released_at IS NULL\n  ) AS available",
+   "rules": [
+    {"id": "ledger-not-snapshot", "visible": "schema", "rule": "On hand comes from the move ledger. stock_snapshot is taken at 02:00 for the valuation, and misses everything that has moved since.",
+     "without": {"edits": [["m.moved_at <= :now", "m.moved_at < '2026-09-30 02:00:00'"]]}},
+    {"id": "cases", "visible": "schema", "rule": "A move counted in cases is units_per_case units each.",
+     "without": {"edits": [[" * CASE m.uom WHEN 'case' THEN p.units_per_case ELSE 1 END", ""]]}},
+    {"id": "sellable", "visible": "data", "rule": "Only stock in bulk and pick locations can be promised: not what is on the dock waiting to be put away, returns waiting for inspection, damaged stock in quarantine, or stock in transit.",
+     "without": {"edits": [["l.kind IN ('bulk', 'pick')", "1 = 1"]]}},
+    {"id": "done-only", "visible": "schema", "rule": "Only moves that are done: a cancelled move never happened.",
+     "without": {"edits": [["m.state = 'done'", "1 = 1"]]}},
+    {"id": "both-ends", "visible": "schema", "rule": "A move takes stock from where it came from, as well as adding it where it went.",
+     "without": {"edits": [["-m.qty", "0 * m.qty"]]}},
+    {"id": "expired-holds", "visible": "schema", "rule": "A checkout holds stock for 15 minutes; a hold that has expired promises nothing.",
+     "without": {"edits": [[" AND r.expires_at > :now", ""]]}},
+    {"id": "released", "visible": "schema", "rule": "A released reservation (shipped or cancelled) holds nothing.",
+     "without": {"edits": [["r.released_at IS NULL AND ", ""]]}},
+    {"id": "safety-stock", "visible": "convention", "rule": "Leeds holds two cases of every line back for wholesale call-offs.",
+     "without": {"params": {"safety_cases": 0}}},
+    {"id": "wholesale-ring-fenced", "visible": "convention", "rule": "Wholesale reservations (WS-) are allocated from that held-back stock, so they are not taken off again.",
+     "without": {"edits": [["\n      AND r.order_ref NOT LIKE 'WS-%'", ""]]}}
+   ]
+  }
+ ]
+}

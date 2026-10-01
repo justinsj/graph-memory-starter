@@ -107,6 +107,7 @@ installed.
     projects/          projects from requests, meetings and sessions: records, plans, cases, evals
     commands/          /project-new, /project-plan, /project-review, copy into .claude/commands/
     codegraph/         a codebase in the graph: the indexer, a sample shop, eleven code questions
+    querygraph/        a company's own database queries: five cases on four databases, the indexer to come
     corpus/            8 modelled docs (front matter)
     corpus-before/     12 unstructured docs (the A/B control)
     extraction/        LLM output per doc: nodes, edges, aliases
