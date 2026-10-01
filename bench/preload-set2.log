@@ -1,0 +1,81 @@
+sonnet fast-parallel 1: 9.1 s, 2 calls
+sonnet preloaded-parallel 1: 9.0 s, 2 calls
+sonnet preloaded-parallel 2: 9.3 s, 2 calls
+sonnet fast-parallel 2: 11.5 s, 2 calls
+sonnet fast-parallel 3: 7.3 s, 2 calls
+sonnet preloaded-parallel 3: 6.8 s, 2 calls
+sonnet preloaded-parallel 4: 6.9 s, 2 calls
+sonnet fast-parallel 4: 9.7 s, 2 calls
+sonnet fast-parallel 5: 10.4 s, 2 calls
+sonnet preloaded-parallel 5: 9.9 s, 2 calls
+sonnet preloaded-parallel 6: 9.2 s, 2 calls
+sonnet fast-parallel 6: 8.4 s, 2 calls
+sonnet fast-parallel 7: 9.7 s, 2 calls
+sonnet preloaded-parallel 7: 9.1 s, 2 calls
+sonnet preloaded-parallel 8: 6.3 s, 2 calls
+sonnet fast-parallel 8: 9.8 s, 2 calls
+sonnet fast-parallel 9: 8.9 s, 2 calls
+sonnet preloaded-parallel 9: 8.9 s, 2 calls
+sonnet preloaded-parallel 10: 9.8 s, 2 calls
+sonnet fast-parallel 10: 12.2 s, 2 calls
+sonnet-nothink fast-parallel 1: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 1: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 1: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 1: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 2: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 2: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 2: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 2: 2 check problems; 3 expectations missed; thesis NO (because quote not in transcript); numbers found 0 of 3, asked 0
+sonnet-nothink fast-parallel 3: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 3: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 3: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 3: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 4: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 4: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 4: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 4: 0 check problems; 2 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 5: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 5: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 5: 1 check problems; 3 expectations missed; thesis NO (because quote not in transcript); numbers found 0 of 3, asked 0
+haiku-nothink preloaded-parallel 5: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 6: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 6: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 6: 1 check problems; 2 expectations missed; thesis NO (because quote not in transcript); numbers found 0 of 3, asked 0
+haiku-nothink fast-parallel 6: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 7: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 7: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 7: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 7: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 8: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 8: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 8: 0 check problems; 2 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 8: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 9: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 9: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 9: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 9: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink preloaded-parallel 10: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet-nothink fast-parallel 10: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink preloaded-parallel 10: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+haiku-nothink fast-parallel 10: 0 check problems; 1 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet fast-parallel 1: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet preloaded-parallel 1: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet preloaded-parallel 2: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet fast-parallel 2: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet fast-parallel 3: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet preloaded-parallel 3: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet preloaded-parallel 4: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet fast-parallel 4: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet fast-parallel 5: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet preloaded-parallel 5: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet preloaded-parallel 6: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1
+sonnet fast-parallel 6: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet fast-parallel 7: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet preloaded-parallel 7: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet preloaded-parallel 8: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet fast-parallel 8: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet fast-parallel 9: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet preloaded-parallel 9: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet preloaded-parallel 10: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+sonnet fast-parallel 10: 0 check problems; 0 expectations missed; thesis yes; numbers found 2 of 3, asked 1
+wrote bench\project-create-report-preload.md

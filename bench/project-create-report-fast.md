@@ -1,0 +1,59 @@
+# Live eval: a transcript to a full project and thesis, graph against search
+
+Run 2026-09-30 13:14. Made by `python bench/project_create_eval.py`. Case 01, in the workspace of docs/project-creation-example.html (the nine corpus documents and support-metrics.md, no projects). Today pinned to 2026-09-28. Approvals are instant: a person's review time is left out of both.
+
+| Model | Condition | Runs | Correct | Median total | Range | Model time (median) | Other time (median) | Model calls | Tool calls | Cost per run |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| sonnet | search | 15 | 15 of 15 | 17.2 s | 14.0 s to 22.1 s | 17.2 s | 0.0 s | 1.0 | 6.6 | $0.056 |
+| sonnet | fast-merged | 15 | 15 of 15 | 12.1 s | 10.7 s to 13.8 s | 11.9 s | 0.2 s | 1.0 | 0.0 | $0.025 |
+| sonnet | fast-parallel | 15 | 15 of 15 | 10.0 s | 8.8 s to 15.0 s | 9.8 s | 0.2 s | 2.1 | 0.0 | $0.027 |
+
+## Each run
+
+| Model | Condition | Rep | Total | Calls (label: wall, first token, turns, tools) | Stages | Outcome |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| sonnet | search | 1 | 17.3 s | search: 17.3 s, 2.9 s, 3, 6 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 1 | 11.6 s | extract+thesis: 11.4 s, 2.4 s, 1, 0 | change request 1 open 11.5 s; project created, research done 11.5 s; change request 2 applied 11.6 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 1 | 9.2 s | thesis: 4.5 s, 2.1 s, 1, 0; extract: 9.0 s, 2.6 s, 1, 0 | change request 1 open 9.1 s; project created, research done 9.1 s; change request 2 applied 9.2 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 2 | 9.0 s | thesis: 4.5 s, 2.0 s, 1, 0; extract: 8.8 s, 2.9 s, 1, 0 | change request 1 open 8.9 s; project created, research done 8.9 s; change request 2 applied 9.0 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 2 | 10.8 s | extract+thesis: 10.6 s, 2.3 s, 1, 0 | change request 1 open 10.7 s; project created, research done 10.7 s; change request 2 applied 10.8 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 2 | 16.8 s | search: 16.8 s, 2.7 s, 3, 6 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 3 | 15.9 s | search: 15.9 s, 2.2 s, 3, 6 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 3 | 13.1 s | extract+thesis: 12.9 s, 2.6 s, 1, 0 | change request 1 open 13.0 s; project created, research done 13.1 s; change request 2 applied 13.1 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 3 | 8.8 s | thesis: 4.4 s, 2.0 s, 1, 0; extract: 8.6 s, 2.6 s, 1, 0 | change request 1 open 8.7 s; project created, research done 8.8 s; change request 2 applied 8.8 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 4 | 10.0 s | thesis: 5.0 s, 2.4 s, 1, 0; extract: 9.8 s, 2.4 s, 1, 0 | change request 1 open 9.9 s; project created, research done 10.0 s; change request 2 applied 10.0 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 4 | 11.4 s | extract+thesis: 11.1 s, 2.2 s, 1, 0 | change request 1 open 11.3 s; project created, research done 11.3 s; change request 2 applied 11.4 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 4 | 16.1 s | search: 16.1 s, 2.1 s, 3, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 5 | 18.9 s | search: 18.9 s, 3.2 s, 3, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 5 | 11.7 s | extract+thesis: 11.5 s, 2.2 s, 1, 0 | change request 1 open 11.6 s; project created, research done 11.7 s; change request 2 applied 11.7 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 5 | 15.0 s | thesis: 4.3 s, 1.9 s, 1, 0; extract: 9.8 s, 2.7 s, 1, 0; thesis: 4.9 s, 2.4 s, 1, 0 | change request 1 open 9.9 s; project created, research done 15.0 s; change request 2 applied 15.0 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 6 | 9.3 s | thesis: 4.6 s, 2.1 s, 1, 0; extract: 9.1 s, 2.7 s, 1, 0 | change request 1 open 9.2 s; project created, research done 9.2 s; change request 2 applied 9.3 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 6 | 11.6 s | extract+thesis: 11.4 s, 3.0 s, 1, 0 | change request 1 open 11.5 s; project created, research done 11.5 s; change request 2 applied 11.6 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 6 | 21.0 s | search: 21.0 s, 7.3 s, 3, 6 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 7 | 19.1 s | search: 19.1 s, 4.2 s, 4, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 7 | 13.8 s | extract+thesis: 13.5 s, 3.1 s, 1, 0 | change request 1 open 13.7 s; project created, research done 13.7 s; change request 2 applied 13.8 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 7 | 10.1 s | thesis: 6.0 s, 2.9 s, 1, 0; extract: 9.9 s, 3.1 s, 1, 0 | change request 1 open 10.0 s; project created, research done 10.1 s; change request 2 applied 10.1 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 8 | 12.4 s | thesis: 6.7 s, 4.3 s, 1, 0; extract: 12.2 s, 4.6 s, 1, 0 | change request 1 open 12.3 s; project created, research done 12.3 s; change request 2 applied 12.4 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 8 | 13.7 s | extract+thesis: 13.4 s, 2.9 s, 1, 0 | change request 1 open 13.6 s; project created, research done 13.6 s; change request 2 applied 13.7 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 8 | 22.1 s | search: 22.1 s, 4.9 s, 4, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 9 | 16.9 s | search: 16.9 s, 2.5 s, 4, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 9 | 12.5 s | extract+thesis: 12.2 s, 3.0 s, 1, 0 | change request 1 open 12.4 s; project created, research done 12.4 s; change request 2 applied 12.5 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 9 | 9.8 s | thesis: 4.6 s, 2.1 s, 1, 0; extract: 9.6 s, 2.5 s, 1, 0 | change request 1 open 9.7 s; project created, research done 9.7 s; change request 2 applied 9.8 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 10 | 10.2 s | thesis: 4.3 s, 2.1 s, 1, 0; extract: 9.9 s, 2.5 s, 1, 0 | change request 1 open 10.1 s; project created, research done 10.1 s; change request 2 applied 10.2 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 10 | 12.1 s | extract+thesis: 11.9 s, 2.5 s, 1, 0 | change request 1 open 12.0 s; project created, research done 12.0 s; change request 2 applied 12.1 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 10 | 17.7 s | search: 17.7 s, 2.5 s, 3, 6 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 11 | 14.0 s | search: 14.0 s, 2.0 s, 4, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 11 | 12.7 s | extract+thesis: 12.4 s, 2.6 s, 1, 0 | change request 1 open 12.6 s; project created, research done 12.6 s; change request 2 applied 12.7 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 11 | 9.6 s | thesis: 4.8 s, 2.5 s, 1, 0; extract: 9.4 s, 2.6 s, 1, 0 | change request 1 open 9.5 s; project created, research done 9.5 s; change request 2 applied 9.6 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 12 | 13.8 s | thesis: 6.4 s, 3.5 s, 1, 0; extract: 13.5 s, 4.3 s, 1, 0 | change request 1 open 13.7 s; project created, research done 13.7 s; change request 2 applied 13.8 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 12 | 13.1 s | extract+thesis: 12.9 s, 3.3 s, 1, 0 | change request 1 open 13.0 s; project created, research done 13.1 s; change request 2 applied 13.1 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 12 | 16.4 s | search: 16.4 s, 2.0 s, 3, 6 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 13 | 15.2 s | search: 15.2 s, 2.3 s, 4, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 13 | 10.7 s | extract+thesis: 10.5 s, 3.4 s, 1, 0 | change request 1 open 10.6 s; project created, research done 10.7 s; change request 2 applied 10.7 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 13 | 10.5 s | thesis: 5.1 s, 3.0 s, 1, 0; extract: 10.1 s, 2.8 s, 1, 0 | change request 1 open 10.3 s; project created, research done 10.4 s; change request 2 applied 10.5 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 14 | 8.9 s | thesis: 4.4 s, 2.0 s, 1, 0; extract: 8.7 s, 2.5 s, 1, 0 | change request 1 open 8.9 s; project created, research done 8.9 s; change request 2 applied 8.9 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 14 | 13.0 s | extract+thesis: 12.7 s, 2.6 s, 1, 0 | change request 1 open 12.9 s; project created, research done 12.9 s; change request 2 applied 13.0 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 14 | 17.2 s | search: 17.2 s, 2.0 s, 3, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | search | 15 | 17.8 s | search: 17.8 s, 2.7 s, 3, 7 | — | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-merged | 15 | 10.8 s | extract+thesis: 10.6 s, 2.4 s, 1, 0 | change request 1 open 10.7 s; project created, research done 10.7 s; change request 2 applied 10.8 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
+| sonnet | fast-parallel | 15 | 10.2 s | thesis: 4.5 s, 2.0 s, 1, 0; extract: 10.0 s, 2.7 s, 1, 0 | change request 1 open 10.1 s; project created, research done 10.2 s; change request 2 applied 10.2 s | ok: 0 check problems; 0 expectations missed; thesis yes; numbers found 3 of 3, asked 1 |
