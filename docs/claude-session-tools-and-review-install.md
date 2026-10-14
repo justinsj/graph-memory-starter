@@ -1,17 +1,17 @@
-# Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review skill, the review loop, the run guard, and plain status text
+# Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review skill, the review loop, the run guard, plain status text, the claude-hud status line, and the rule for asking questions
 
-These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file: seventeen files to create, three settings changes, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
+These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file (apart from one third-party plugin, installed from its own marketplace): eighteen files to create, five settings changes, one section added to `CLAUDE.md`, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
 
-The file has five parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks and records the outcome as a comment. **Part C** is a second skill that fixes a pull request until Part B's review passes. **Part D** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part E** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". Parts A, B, D and E are independent of each other; Part C needs Part B, as installed from this file.
+The file has seven parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks and records the outcome as a comment. **Part C** is a second skill that fixes a pull request until Part B's review passes. **Part D** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part E** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part F** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part G** is a section of `CLAUDE.md` that sets how the agent asks you a question: laid out as the question, its context and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. Parts A, B, D, E, F and G are independent of each other; Part C needs Part B, as installed from this file.
 
-Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and C are prose only — no Python, no runtime. Parts D and E need Python 3.10 or newer; Part E was tested on Claude Code 2.1.296.
+Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B, C and G are prose only — no Python, no runtime. Parts D and E need Python 3.10 or newer; Part E was tested on Claude Code 2.1.296. Part F was installed on Claude Code 2.1.288 with Node.js 25.3.0 on Windows 10 (claude-hud 0.10.0); it needs Node.js (or Bun on macOS and Linux), not Python.
 
 ## What gets installed
 
 | # | Item | Path | Kind | What it does |
 |---|------|------|------|--------------|
-| 1 | `session_archive.py` | `<CLAUDE_DIR>/skills/archive/session_archive.py` | Python script | Does the work for `/archive` and `/restore`: moves a session's transcript out of `/resume` and back, lists archived sessions, and runs as a hook to keep archived sessions archived. |
-| 2 | `/archive` | `<CLAUDE_DIR>/skills/archive/SKILL.md` | User skill (slash command) | Archives the current session so it stops showing in `/resume`. |
+| 1 | `session_archive.py` | `<CLAUDE_DIR>/skills/archive/session_archive.py` | Python script | Does the work for `/archive` and `/restore`: moves a session's transcript out of `/resume` and back, lists archived sessions, and keeps archived sessions archived as a hook. |
+| 2 | `/archive` | `<CLAUDE_DIR>/skills/archive/SKILL.md` | User skill (slash command) | Archives the current session so it stops showing in `/resume`, and leaves Claude Code open so `/clear` starts a new session. |
 | 3 | `/restore` | `<CLAUDE_DIR>/skills/restore/SKILL.md` | User skill (slash command) | Lists archived sessions and puts the ones you pick back into `/resume`. |
 | 4 | `wait_for_background.py` | `<CLAUDE_DIR>/hooks/wait_for_background.py` | Stop hook script | Keeps the spinner (with the status text "Waiting for background tasks…") showing while background shells, subagents, monitors or workflows are still running, so the session doesn't look idle when it isn't. |
 | 5 | Hook registrations | `<CLAUDE_DIR>/settings.json` under `"hooks"` | Settings | Wire item 1 into the `Stop`, `SessionEnd` and `SessionStart` events, and item 4 into `Stop`. |
@@ -27,8 +27,11 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 15 | `runguard.pth` | `site-packages/` of each Python environment that runs data scripts | Path file | Lets those scripts `import safe_db`. |
 | 16 | `turn_timer.py` | `<CLAUDE_DIR>/hooks/turn_timer.py` | Hook script | Records when each turn starts and prints "Took Nm Ns" when it ends, in place of the built-in "Cooked for Nm Ns". |
 | 17 | Status text settings | `<CLAUDE_DIR>/settings.json` (`showTurnDuration`, `spinnerVerbs`, `"hooks"`) | Settings | Turns off the built-in end-of-turn line, sets the spinner word to "Working", and wires item 16 into `UserPromptSubmit` and `Stop`. |
+| 18 | claude-hud | `<CLAUDE_DIR>/plugins/cache/claude-hud/` (plugin) and `<CLAUDE_DIR>/plugins/claude-hud/` (launcher) | Third-party plugin | Status line showing the model, project and git branch, context use and subscriber rate limits; optionally tool, agent and todo activity. |
+| 19 | Status line registration | `<CLAUDE_DIR>/settings.json` under `"statusLine"`, `"enabledPlugins"` and `"extraKnownMarketplaces"` | Settings | Written by the plugin's own installer and setup helper; not edited by hand. |
+| 20 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as question, context and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
 
-Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–8 are one unit — item 6 reads items 7 and 8 at runtime by relative path, so all three go in together. Items 9–10 are a second unit that calls items 6–8 by name, so install them after items 6–8, in the same `<SKILLS_DIR>`, and from this file rather than from another copy of `taskloop-review` (see step 9). Items 11–15 are a third unit: the hook (14) runs a script from item 11, which reads item 12, and the skill (13) and the hook's messages both point at item 11. Items 16–17 are a fourth unit: the settings (17) run the script (16), and the `spinnerVerbs` line in item 17 works on its own without the script.
+Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–8 are one unit — item 6 reads items 7 and 8 at runtime by relative path, so all three go in together. Items 9–10 are a second unit that calls items 6–8 by name, so install them after items 6–8, in the same `<SKILLS_DIR>`, and from this file rather than from another copy of `taskloop-review` (see step 9). Items 11–15 are a third unit: the hook (14) runs a script from item 11, which reads item 12, and the skill (13) and the hook's messages both point at item 11. Items 16–17 are a fourth unit: the settings (17) run the script (16), and the `spinnerVerbs` line in item 17 works on its own without the script. Items 18–19 are a fifth unit and come from the plugin's own installer; nothing for them is reproduced in this file. Item 20 stands alone: it is text the agent reads, with no script behind it.
 
 ## Before you start
 
@@ -42,6 +45,7 @@ Items 1–3 depend on each other: `/restore` calls the script inside the `archiv
 4. **Back up `settings.json`** (for example to `settings.json.bak`) before editing it in step 5.
 5. **Decide where Parts B and C go** (both go in the same place), and read step 6's note on the choice before making it. This document calls that directory `<SKILLS_DIR>`: either `<project>/.claude/skills/` for one project, or `<CLAUDE_DIR>/skills/` for every project on the machine.
 6. **For Part D, check the Python version** is 3.10 or newer (`<PYTHON> --version`), and list the virtual environments that run data scripts or tests. Step 15 adds one small file to each. `/script-preflight` goes in the same `<SKILLS_DIR>` as Parts B and C.
+7. **Decide where Part G goes.** `<CLAUDE_MD>` is the `CLAUDE.md` the rule is added to: `<project>/CLAUDE.md` for one project, or `<CLAUDE_DIR>/CLAUDE.md` for every project on the machine. `<DECISIONS_DIR>` is the folder the question records are written to, relative to the project the agent is working in; `docs/decisions` unless the project already keeps decisions somewhere. Part G only.
 
 ---
 
@@ -63,6 +67,8 @@ Other details worth knowing:
 - **Titles:** `list` shows the same title `/resume` would (agent name, custom title, AI title or summary, or failing those the first prompt). Sessions are listed most recently active first.
 - **Restored sessions are touched** (their mtime set to now), so they show at the top of `/resume` and don't get removed early by Claude Code's `cleanupPeriodDays` cleanup.
 - **Hooks never fail the session:** any error in `hook` mode is printed to stderr and swallowed.
+
+**Archiving the session you are in leaves Claude Code running.** Carrying on in an archived session is rarely wanted, so the next step is a new session, but nothing can start one for you: Claude Code has no hook output, skill option or tool that does what `/clear` does, and the only way to end a session from outside is to kill the process, which also quits Claude Code. So `archive` stops at telling you to type `/clear`. That ends the archived session cleanly, its `SessionEnd` hook folds the turn's last transcript lines into the archive, and you carry on in a fresh session without leaving Claude Code. If you keep talking instead, everything said is archived along with the session by the `Stop` hook.
 
 CLI (the skills call it for you):
 
@@ -89,6 +95,11 @@ been moved, so a session archived while it is still open leaves a tail behind in
 projects/. The `hook` command, run from the Stop, SessionEnd and SessionStart
 hooks, appends that tail onto the archived copy so the session stays out of
 /resume.
+
+Archiving the session you are in leaves Claude Code running. Nothing can start
+a new session for you (only typing /clear does that), so `archive` ends by
+saying to type /clear. /clear ends the archived session, and its SessionEnd hook
+folds the last tail into the archive.
 
 usage:
   session_archive.py archive [SESSION_ID]   inside Claude Code, only the session running it
@@ -286,6 +297,8 @@ def cmd_archive(sid):
     if not transcripts:
         if list(ARCHIVE.glob(f"*/{sid}.jsonl")):
             print(f"Session {sid} is already archived. /restore brings it back.")
+            if sid == current:
+                print("Type /clear to start a new session.")
             return
         fail(f"no transcript for session {sid} under {PROJECTS}")
     for transcript in transcripts:  # normally just one
@@ -296,7 +309,7 @@ def cmd_archive(sid):
     print(f'Archived "{info["title"]}" ({sid}).')
     print("It no longer shows in /resume; /restore brings it back.")
     if sid == current:
-        print("This session is still open: anything more said in it is archived along with it.")
+        print("Type /clear to start a new session; anything more said in this one is archived along with it.")
 
 
 def cmd_list():
@@ -390,12 +403,14 @@ if __name__ == "__main__":
 
 The body tells Claude to run the script with no session id, because the script reads the id from the environment, and to relay the result in a line or two.
 
+It also tells Claude to make that reply the last thing it does in the turn: no further tool calls and no follow-up question. Anything more said in the session is archived with it, so the next useful step is yours: type `/clear` to start a new session.
+
 **Install.** Create `<CLAUDE_DIR>/skills/archive/SKILL.md` with exactly this content:
 
 ````markdown
 ---
 name: archive
-description: Archive the current Claude Code session so it no longer shows in /resume. /restore brings it back.
+description: Archive the current Claude Code session so it no longer shows in /resume, leaving Claude Code open so /clear starts a new session. /restore brings it back.
 disable-model-invocation: true
 allowed-tools: Bash(python *session_archive.py*)
 ---
@@ -409,6 +424,8 @@ python "${CLAUDE_SKILL_DIR}/session_archive.py" archive
 Don't add a session id: the script reads it from the environment Claude Code sets.
 
 Then reply with what it printed, in a line or two, and nothing else. If it failed, show the error.
+
+Make that reply the last thing you do in this turn: no further tool calls, no follow-up questions. Anything more said here is archived with this session, so the user's next step is typing /clear to start a new one.
 ````
 
 ## Step 3: the `/restore` skill
@@ -623,9 +640,9 @@ if __name__ == "__main__":
 
 | Event | Command | Why |
 |-------|---------|-----|
-| `Stop` | `session_archive.py hook` | After every turn, moves the tail an archived-but-still-open session just wrote back into the archive. Without it, a session you archived reappears in `/resume` as soon as you say anything more in it. |
+| `Stop` | `session_archive.py hook` | After every turn, moves the tail an archived-but-still-open session just wrote back into the archive, Without it, a session you archived reappears in `/resume` as soon as you say anything more in it. |
 | `Stop` | `wait_for_background.py` | Holds the spinner while background tasks run (step 4). `timeout: 7260` is the hook's limit in seconds, kept just above the script's own 7200 s cap so the script always ends itself first. `statusMessage` is the text shown beside the spinner. |
-| `SessionEnd` | `session_archive.py hook` | Last sweep for the closing session, catching anything written after its final Stop. |
+| `SessionEnd` | `session_archive.py hook` | Last sweep for the closing session, catching anything written after its final Stop. This is what runs when you type `/clear` after `/archive`. |
 | `SessionStart` | `session_archive.py hook` | Sweeps all archived sessions that aren't open and folds in any stray tails (from a crash, or a session closed without a clean SessionEnd). |
 
 Claude Code runs all hooks for an event in parallel, so the two `Stop` hooks don't hold each other up: the archive hook finishes in milliseconds while the wait hook may block for a long time.
@@ -2702,6 +2719,160 @@ Changes take effect in **new** Claude Code sessions. If an open session keeps th
 
 ---
 
+# Part F — the claude-hud status line
+
+claude-hud is a third-party plugin (`jarrodwatts/claude-hud` on GitHub, MIT licensed), not something this export wrote, so its files are not reproduced here: install it from its own marketplace and let its setup helper write the settings. It is a [status line](https://code.claude.com/docs/en/statusline) command — Claude Code pipes session data to it on stdin and shows what it prints — so it needs no hooks and no extra window. The default display is two lines:
+
+```
+[Opus] │ my-project git:(main*)
+Context █████░░░░░ 45% │ Usage ██░░░░░░░░ 25% (resets in 1h 30m)
+```
+
+## Step 18: install the plugin
+
+Check for a JavaScript runtime first: `node --version`. On Windows it must be Node.js (Bun is not supported there); on macOS and Linux either Node.js or Bun works. If neither is found, install Node.js LTS (`winget install OpenJS.NodeJS.LTS` on Windows) and restart the shell.
+
+Then, from a terminal:
+
+```bash
+claude plugin marketplace add jarrodwatts/claude-hud
+claude plugin install claude-hud@claude-hud
+```
+
+or the same from inside a Claude Code session:
+
+```
+/plugin marketplace add jarrodwatts/claude-hud
+/plugin install claude-hud@claude-hud
+/reload-plugins
+```
+
+This registers the marketplace under `"extraKnownMarketplaces"` in `settings.json`, enables the plugin under `"enabledPlugins"`, and puts the plugin in `<CLAUDE_DIR>/plugins/cache/claude-hud/claude-hud/<version>/`.
+
+## Step 19: point the status line at it
+
+In a Claude Code session, run:
+
+```
+/claude-hud:setup
+```
+
+It works out the shell Claude Code will run the status line through, finds the runtime, backs up `settings.json` to `settings.json.bak.<timestamp>`, copies a launcher to `<CLAUDE_DIR>/plugins/claude-hud/statusline.mjs`, and writes the `"statusLine"` entry. If a status line is already configured it asks before replacing it. The launcher always runs the newest installed version, so plugin updates never need setup run again. Don't write the `statusLine` entry by hand — the command it needs differs by platform.
+
+On Windows with Git Bash installed (Claude Code then runs the status line through Git Bash), the result is this, plus a `statusline.cmd` shim next to the launcher that stops Git Bash stranding idle `node.exe` processes:
+
+```json
+"statusLine": {
+  "type": "command",
+  "command": "exec \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/claude-hud/statusline.cmd\""
+}
+```
+
+**An agent installing this without a session to type into** can run the same helper the slash command runs. `<SHELL>` is `posix` on macOS, Linux and WSL; `gitbash` on Windows when `echo $OSTYPE` in bash prints `msys` or `cygwin`; otherwise `powershell`:
+
+```bash
+node "<CLAUDE_DIR>/plugins/cache/claude-hud/claude-hud/<version>/scripts/setup.mjs" inspect --shell <SHELL>
+node "<CLAUDE_DIR>/plugins/cache/claude-hud/claude-hud/<version>/scripts/setup.mjs" install --shell <SHELL>
+```
+
+`inspect` changes nothing; it prints the command it would install and whether a status line already exists (`existing`: `none`, `claude-hud` or `other`). If it says `other`, ask the user before running `install`. Claude Code picks up the change to `settings.json` on its own, so the HUD appears without a restart.
+
+To change what it shows — compact layout, the tool, agent and todo lines, git details — run `/claude-hud:configure`, or edit `<CLAUDE_DIR>/plugins/claude-hud/config.json`.
+
+---
+
+# Part G — the rule for asking questions
+
+A question an agent asks mid-task is usually written for itself: it names the file it was reading, uses the abbreviation it has been using for an hour, and asks "should I do X?" with no alternative and no reason. You then either answer blind or spend a turn asking what it means. And the answer lives only in the conversation, so the next session asks again, or decides the other way. Worse, when an agent asks three questions and you reply about one of them, the other two tend to vanish: the conversation moves on, and they are never answered, or are quietly decided by default. Part G is one section of `CLAUDE.md` that sets six requirements on every question. The first lays every question out the same way — the question, its context, its options — so you can answer it at a glance. The fifth writes the question and its answer to a file the next session can read. The sixth uses those files to keep every unanswered question open, and asks it again once whatever you raised has been dealt with.
+
+## Step 20: add the section to `CLAUDE.md`
+
+Open `<CLAUDE_MD>`, creating it if it does not exist, and add the section below at the end, verbatim. Replace `<DECISIONS_DIR>` with the folder chosen in "Before you start" (for example `docs/decisions`), in both places it appears. If the file already has a section about asking questions, don't add a second one: tell the user, and ask which should stand.
+
+````markdown
+## Asking questions
+
+Every question you ask the user — a decision, a missing fact, a choice between
+approaches — meets all six of these. A question that does not is not ready to
+ask.
+
+0. **Lay every question out the same way, in three labelled parts, in this
+   order:** **The question** (one sentence, ending in a question mark), then
+   **Context**, then **Options**. Several questions are numbered, each a heading
+   of its own (`### Question 1: <short title>`) with its own three parts, and
+   with the file it is recorded in under the heading. This holds every time a
+   question is asked, including when it is asked again.
+
+   ```markdown
+   ### Question 1: <short title>
+   *Recorded in `<DECISIONS_DIR>/<file>.md`*
+
+   **The question:** <one sentence?>
+
+   **Context:**
+   - <what you were doing and what you found>
+   - **The answer decides** <which work it unblocks, and what changes with it>
+
+   **Options:**
+   1. **<option> (recommended).** <what it involves, what it leads to, why recommended>
+   2. **<option>.** <what it involves, what it leads to>
+   ```
+1. **Context first.** Before the question, say what you were doing, what you
+   found, and what the answer decides: which work it unblocks and what you will
+   do differently depending on it. Write it so it can be understood from this
+   response alone, by someone who has not read the rest of the conversation.
+2. **Spell out every acronym the first time it appears in the response**, then
+   use the short form: "row-level security (RLS)". Do this in every response
+   that uses it, even if it was spelled out earlier in the conversation.
+3. **Give options, and recommend one.** Offer two to four concrete options. For
+   each, say what it involves and what it leads to. Mark one "(recommended)" and
+   say why. Ask an open question only when no options can be named, and say so.
+4. **Write it down.** Before asking, write `<DECISIONS_DIR>/<YYYY-MM-DD>-<slug>.md`
+   with the question, its context, the options and your recommendation, and
+   `Status: open`. When the user answers, update the same file: the decision,
+   who made it and when, anything they said in explaining it, and
+   `Status: decided`. If the answer changes an earlier decision, link the earlier
+   file from the new one and set the earlier one to
+   `Status: superseded by <file>`. Read `<DECISIONS_DIR>` before asking: a
+   question already decided there is not asked again unless something has
+   changed, and then the record says what.
+5. **An open question stays open until it is answered.** When you have asked
+   several questions and the user replies about only some of them — answers
+   one, asks you about another, or changes the subject — the rest stay
+   `Status: open` in their files. Do not take silence, or an answer to a
+   different question, as a decision. Deal with what the user raised, record
+   any elaboration it adds to its file, and then ask the questions still open
+   again, each in full by rules 0–3, listed with the file it is recorded in.
+   Before you finish a task, check `<DECISIONS_DIR>` for questions still open
+   from it, and ask them.
+
+A record looks like this:
+
+```markdown
+# <the question, as asked>
+
+Status: open | decided | superseded by <file>
+Asked: <YYYY-MM-DD>, while <what you were doing>
+
+## Context
+<what was found, and what the answer decides>
+
+## Options
+1. <option> (recommended): <what it involves, what it leads to, why recommended>
+2. <option>: <what it involves, what it leads to>
+
+## Decision
+<the option chosen, or the answer given> — <who>, <YYYY-MM-DD>
+
+## Elaboration
+<anything the user said in explaining the decision, in their words where possible>
+```
+````
+
+The section is read at the start of every session, so it takes effect in the next one. Nothing else is installed and there is nothing to restart. `<DECISIONS_DIR>` is created by the first question that needs it; commit its records like any other project file, so they reach the sessions that work from other checkouts.
+
+---
+
 ## Verify
 
 Run these from a terminal. Each should succeed quietly or print what's shown:
@@ -2768,12 +2939,29 @@ echo '{"session_id":"verify"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" sto
 
 # 16. A stop with no recorded start prints nothing.
 echo '{"session_id":"never-started"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" stop
+
+# --- Part F ---
+# 17. The plugin is installed and enabled.
+claude plugin list
+#    -> claude-hud@claude-hud ... enabled
+
+# 18. The status line command prints the HUD from sample input.
+#    Use the "command" from settings.json; this is the Git Bash one.
+echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":12,"context_window_size":200000}}' \
+  | bash -c 'exec "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/claude-hud/statusline.cmd"'
+#    -> [Opus]
+#       Context █░░░░░░░░░ 12%
+
+# --- Part G ---
+# 19. The section is in CLAUDE.md, once.
+grep -c "^## Asking questions" "<CLAUDE_MD>"
+#    -> 1
 ```
 
 Then in a **new** Claude Code session:
 
 1. Type `/` and confirm `archive`, `restore`, `taskloop-review` and `pr-review-loop` all appear in the command list.
-2. Say something, then run `/archive`. It should reply `Archived "<title>" (<id>).` Open `/resume` from another session (or after exiting) and confirm the session isn't listed.
+2. Say something, then run `/archive`. It should reply `Archived "<title>" (<id>).` It should tell you to type `/clear`, and Claude Code should stay open. Type `/clear`, open `/resume`, and confirm the archived session isn't listed. If it is, check the `SessionEnd` and `Stop` hooks from step 5.
 3. Run `/restore`. Pick the session, and confirm it's back at the top of `/resume`.
 4. Ask Claude to run `sleep 30` as a background command and finish its turn. The spinner should stay up with "Waiting for background tasks…" until the command completes, and then Claude should report the result.
 5. Run `/taskloop-review --pr <n>` on a pull request you can write to. Confirm one comment appeared, that its first line is `<!-- automated-review: <sha> -->`, that every check it asked is listed with a reason, and that it closes by saying nothing was merged and nothing was approved.
@@ -2799,6 +2987,15 @@ For Part E:
 
 15. Send any prompt. While Claude works, the spinner should read "Working…". When the turn ends, a line "Took Ns" (or "Took Nm Ns") should appear, and no "Cooked for…" line. The first turn after installing may show neither, because its start was not recorded; check the second turn.
 
+For Part F:
+
+16. Look below the input field. The HUD should show the model, the project and git branch, and a context bar that grows as the session does. If it shows nothing, run Verify step 18 above; if that prints nothing, the launcher found no installed plugin — reinstall with step 18.
+
+For Part G:
+
+17. Ask Claude something with two reasonable answers that it cannot settle alone, for example "set up a database for this project". Before it does anything, it should ask you a question laid out as **The question**, **Context** and **Options**, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 19 finds the section and that you are in a new session.
+18. Ask for something that needs two decisions, for example "set up a database and a deploy pipeline for this project", and let it ask both. Reply only with a question about the first ("what would the second option cost?"). It should answer that, add what it said to the first question's file, and then ask both questions again, each with its file, with both files still `Status: open`.
+
 ## Uninstall
 
 **Part A.**
@@ -2815,9 +3012,13 @@ For Part E:
 
 **Part B.** Uninstall Part C first, since it calls this skill. Then delete `<SKILLS_DIR>/taskloop-review/`. There is no settings change to undo and no state to clean up — every record it wrote is a pull request comment, and those stay unless you delete them.
 
-## Not included: the status line
+**Part F.**
 
-The source environment also shows a custom status line (model, context use and so on) at the bottom of Claude Code. That comes from the third-party **claude-hud** plugin (`jarrodwatts/claude-hud` on GitHub), not from these hooks, so it isn't reproduced here. To get it, run `/plugin marketplace add jarrodwatts/claude-hud`, then `/plugin install claude-hud@claude-hud`, then `/claude-hud:setup`, which writes the `statusLine` entry for the local platform.
+1. Remove the `"statusLine"` entry from `settings.json` (or copy back the `settings.json.bak.<timestamp>` that setup made, if nothing else has changed since).
+2. Run `claude plugin uninstall claude-hud@claude-hud`, then `claude plugin marketplace remove claude-hud`.
+3. Delete `<CLAUDE_DIR>/plugins/claude-hud/` (the launcher and `config.json`).
+
+**Part G.** Delete the `## Asking questions` section from `<CLAUDE_MD>`. Leave `<DECISIONS_DIR>`: the records in it are the project's decisions, not part of the install.
 
 ## Not included: the rest of the work loop
 
