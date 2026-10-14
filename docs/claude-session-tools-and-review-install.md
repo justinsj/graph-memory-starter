@@ -1,10 +1,10 @@
-# Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review skill, and the review loop
+# Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review skill, the review loop, the run guard, and plain status text
 
-These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file: nine files to create, one settings change, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
+These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file: seventeen files to create, three settings changes, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
 
-The file has three parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks and records the outcome as a comment. **Part C** is a second skill that fixes a pull request until Part B's review passes. Parts A and B are independent of each other; Part C needs Part B, as installed from this file.
+The file has five parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks and records the outcome as a comment. **Part C** is a second skill that fixes a pull request until Part B's review passes. **Part D** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part E** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". Parts A, B, D and E are independent of each other; Part C needs Part B, as installed from this file.
 
-Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and C are prose only — no Python, no runtime.
+Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and C are prose only — no Python, no runtime. Parts D and E need Python 3.10 or newer; Part E was tested on Claude Code 2.1.296.
 
 ## What gets installed
 
@@ -20,8 +20,15 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 8 | The outcome comment | `<SKILLS_DIR>/taskloop-review/reference/review-comment.md` | Spec read by item 6 | The comment body, and the hidden marker that stops a sweep paying to review the same commit twice. |
 | 9 | `/pr-review-loop` | `<SKILLS_DIR>/pr-review-loop/SKILL.md` | Skill (slash command) | Runs item 6 on a pull request, fixes what it objected to, pushes, and re-reviews, until every check passes or 3 fix rounds are spent. Never merges and never approves. |
 | 10 | The fix playbook | `<SKILLS_DIR>/pr-review-loop/reference/fix-playbook.md` | Spec read by item 9 | Sorts every blocker and check item 6 can produce into fix, stop or ask, with the remedies allowed and forbidden. |
+| 11 | The run guard scripts | `<CLAUDE_DIR>/runguard/` (`runguard_common.py`, `run_bounded.py`, `ledger.py`, `preflight_gate.py`, `safe_db.py`) | Python scripts | Run a command inside a time budget and kill its process tree when the budget runs out; keep a ledger of every run; check each shell command before it runs; open read-only database connections with lock and statement timeouts. |
+| 12 | `config.json` | `<CLAUDE_DIR>/runguard/config.json` | Settings read by item 11 | Warn or block mode, default budgets, and the 30-minute line above which a budget needs the user's approval. |
+| 13 | `/script-preflight` | `<SKILLS_DIR>/script-preflight/SKILL.md` | Skill (slash command) | The optimization pass before a run: the usual causes of slow scripts, timing a slice, choosing a budget, and what to do after `SLOW` or `BUDGET EXCEEDED`. |
+| 14 | Hook registration | `<CLAUDE_DIR>/settings.json` under `"hooks"` | Settings | Wires `preflight_gate.py` into `PreToolUse` for the Bash and PowerShell tools. |
+| 15 | `runguard.pth` | `site-packages/` of each Python environment that runs data scripts | Path file | Lets those scripts `import safe_db`. |
+| 16 | `turn_timer.py` | `<CLAUDE_DIR>/hooks/turn_timer.py` | Hook script | Records when each turn starts and prints "Took Nm Ns" when it ends, in place of the built-in "Cooked for Nm Ns". |
+| 17 | Status text settings | `<CLAUDE_DIR>/settings.json` (`showTurnDuration`, `spinnerVerbs`, `"hooks"`) | Settings | Turns off the built-in end-of-turn line, sets the spinner word to "Working", and wires item 16 into `UserPromptSubmit` and `Stop`. |
 
-Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–8 are one unit — item 6 reads items 7 and 8 at runtime by relative path, so all three go in together. Items 9–10 are a second unit that calls items 6–8 by name, so install them after items 6–8, in the same `<SKILLS_DIR>`, and from this file rather than from another copy of `taskloop-review` (see step 9).
+Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–8 are one unit — item 6 reads items 7 and 8 at runtime by relative path, so all three go in together. Items 9–10 are a second unit that calls items 6–8 by name, so install them after items 6–8, in the same `<SKILLS_DIR>`, and from this file rather than from another copy of `taskloop-review` (see step 9). Items 11–15 are a third unit: the hook (14) runs a script from item 11, which reads item 12, and the skill (13) and the hook's messages both point at item 11. Items 16–17 are a fourth unit: the settings (17) run the script (16), and the `spinnerVerbs` line in item 17 works on its own without the script.
 
 ## Before you start
 
@@ -34,6 +41,7 @@ Items 1–3 depend on each other: `/restore` calls the script inside the `archiv
    Don't change anything else in the files.
 4. **Back up `settings.json`** (for example to `settings.json.bak`) before editing it in step 5.
 5. **Decide where Parts B and C go** (both go in the same place), and read step 6's note on the choice before making it. This document calls that directory `<SKILLS_DIR>`: either `<project>/.claude/skills/` for one project, or `<CLAUDE_DIR>/skills/` for every project on the machine.
+6. **For Part D, check the Python version** is 3.10 or newer (`<PYTHON> --version`), and list the virtual environments that run data scripts or tests. Step 15 adds one small file to each. `/script-preflight` goes in the same `<SKILLS_DIR>` as Parts B and C.
 
 ---
 
@@ -1648,6 +1656,1052 @@ fixing the check, or pushing until the wording changes, is not.
 
 ---
 
+# Part D — the run guard
+
+## Step 11: the scripts
+
+**Explanation.** A script that gathers data, runs a backtest or runs a test suite can take an hour when two minutes would do. A background run has no time limit at all, and Part A's wait hook will hold the turn open for up to two hours waiting on it. Against a database, a long read also does harm by what queues behind it. Part D gives every such run three things:
+
+- **A time budget.** `run_bounded.py` runs the command, kills its whole process tree when the budget runs out (on Windows through `taskkill /T /F`, because killing only the parent leaves children running), exits with 124, and logs the run to a ledger: the command, the script and its sha256, the budget, the time taken and how it ended.
+- **A gate before the run.** `preflight_gate.py` is a PreToolUse hook on Bash and PowerShell. For commands that match a heavy pattern (`pytest`, `python some_script.py`, `jupyter nbconvert`, `sqlcmd`, `mysql`, `psql`, `aws redshift-data execute-statement`), it checks three things: the command runs through `run_bounded.py`; the script did not overrun its budget last time with the same sha256 (an overrun script must change before it runs again, unless the user clears it with `ledger.py clear`); and a script that imports a database driver also imports `safe_db`.
+- **Database connections that cannot hold locks for long.** `safe_db.py` opens connections with autocommit, a statement timeout and a lock timeout, read-only where the engine allows, and refuses any statement but a single read. It refuses a SQL Server host without `readonly` in its name and a MySQL login without `read-only` in `CURRENT_USER()` before running anything. The markers are arguments, so another naming scheme works too.
+
+Why each engine needs its own settings:
+
+| Engine | How a long read does harm | What `safe_db` sets |
+|---|---|---|
+| SQL Server | On a readable secondary, a long read holds a schema lock that stalls redo of DDL, and grows the version store and the replica lag. | `ApplicationIntent=ReadOnly`, autocommit, a query timeout, `SET LOCK_TIMEOUT 5000`, `SET DEADLOCK_PRIORITY LOW`. |
+| MySQL | A `SELECT` takes no row locks but holds a metadata lock. An `ALTER` waits on it, and every later query on the table queues behind the `ALTER`. | Autocommit, `TRANSACTION READ ONLY`, `MAX_EXECUTION_TIME`, `lock_wait_timeout` and `innodb_lock_wait_timeout` of 5 seconds. |
+| Postgres | A `SELECT` holds an AccessShareLock, which blocks DDL, `TRUNCATE` and `VACUUM FULL`. | Autocommit, a read-only session, `statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`. |
+| Redshift | The same AccessShareLock blocks materialized view refreshes and ETL loads. | Autocommit and `statement_timeout`. A Data API statement is cancelled at its deadline. |
+
+The hook has two modes, set in `config.json`. In **warn** mode the command runs and the model is told what was wrong; in **block** mode the call is denied with the same text. It ships as warn: run it that way for about a week, read `ledger.py report --all` to see what it flagged and whether the budgets fit, then switch to block.
+
+**Limits.** The hook reads the command text. A script started by another script, or a `.bat` file that runs Python, gets past it. So does a model that passes `--approved` (the flag a budget over 30 minutes needs) without asking the user. The driver check reads import lines, so a driver loaded through `importlib` is not seen. Treat the guard as a check on habits, not a sandbox.
+
+All five scripts are standard library only and need Python 3.10 or newer. `safe_db` loads `pyodbc`, `pymysql` or `psycopg2` only when one of its `connect_*` functions is called. A config or ledger that cannot be read makes the hook fail with an error, rather than letting the command through quietly.
+
+**Install.** Create the folder `<CLAUDE_DIR>/runguard/` and these five files in it, exactly as shown. They import each other by name, so all five go in the same folder.
+
+`<CLAUDE_DIR>/runguard/runguard_common.py`:
+
+````python
+"""What the run guard's scripts share: the config, budgets, the ledger, the script a command runs."""
+
+import hashlib
+import json
+import os
+import re
+import shlex
+from datetime import datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+CONFIG = Path(os.environ.get("RUNGUARD_CONFIG") or HERE / "config.json")
+
+DEFAULTS: dict = {
+    "mode": "warn",                # warn: allow and tell the model; block: deny the call
+    "budgets": {"test": 300, "data": 600, "backtest": 1800},
+    "max_budget_seconds": 1800,    # above this, run_bounded needs --approved
+    "slow_fraction": 0.8,          # a run that used more than this share of its budget is "slow"
+    "ledger": "ledger.jsonl",      # relative to this folder, or absolute
+    "heavy_patterns": [
+        r"\bpytest\b",
+        r"\bpython[0-9.]*(?:\.exe)?\s+(?:-[A-Za-z]+\s+)*(?:-m\s+(?:unittest|pytest)\b|[^\s-][^\s]*\.py\b)",
+        r"\bpy(?:\.exe)?\s+(?:-[0-9.]+\s+)?[^\s-][^\s]*\.py\b",
+        r"\bjupyter\s+(?:nbconvert|execute)\b",
+        r"\bpapermill\b",
+        r"\bsqlcmd\b",
+        r"\bmysql\s",
+        r"\bpsql\b",
+        r"\baws\s+redshift-data\s+execute-statement\b",
+        r"\baws\s+athena\s+start-query-execution\b",
+    ],
+    "exempt_patterns": [
+        r"--version\b",
+        r"--help\b",
+        r"\s-m\s+(?:pip|venv|json\.tool)\b",
+    ],
+    "db_driver_modules": ["pyodbc", "pymssql", "pymysql", "mysql.connector", "MySQLdb",
+                          "psycopg", "psycopg2", "redshift_connector", "sqlalchemy"],
+    "safe_db_module": "safe_db",
+}
+
+SCRIPT_SUFFIXES = (".py", ".sql", ".ipynb")
+
+
+def load_config(path: Path | None = None) -> dict:
+    """config.json laid over DEFAULTS. A file that does not parse raises, it is never skipped."""
+    path = path or CONFIG
+    merged = json.loads(json.dumps(DEFAULTS))
+    if path.is_file():
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(loaded, dict):
+            raise ValueError(f"{path} must hold a JSON object, found {type(loaded).__name__}")
+        merged.update(loaded)
+    if merged["mode"] not in ("warn", "block"):
+        raise ValueError(f"{path}: mode must be 'warn' or 'block', found {merged['mode']!r}")
+    return merged
+
+
+def ledger_path(config: dict) -> Path:
+    """Where the ledger lives. RUNGUARD_LEDGER wins over the config, so tests can point elsewhere."""
+    override = os.environ.get("RUNGUARD_LEDGER")
+    if override:
+        return Path(override)
+    path = Path(config["ledger"])
+    return path if path.is_absolute() else HERE / path
+
+
+def parse_budget(text: str) -> int:
+    """'90', '90s', '10m' or '1h' as whole seconds. Anything else, or zero, raises ValueError."""
+    match = re.fullmatch(r"\s*(\d+)\s*([smh]?)\s*", text.lower())
+    if not match:
+        raise ValueError(f"budget {text!r} is not a number of seconds, or a number followed by s, m or h")
+    seconds = int(match.group(1)) * {"": 1, "s": 1, "m": 60, "h": 3600}[match.group(2)]
+    if seconds <= 0:
+        raise ValueError("budget must be more than zero seconds")
+    return seconds
+
+
+def split_command(command: str) -> list[str]:
+    """Shell words of a command. POSIX rules first; a Windows path that breaks them falls back to whitespace."""
+    try:
+        return shlex.split(command, posix=False)
+    except ValueError:
+        return command.split()
+
+
+def script_in(words: list[str], cwd: Path | None = None) -> Path | None:
+    """The first word that names a .py, .sql or .ipynb file on disk, or None."""
+    base = cwd or Path.cwd()
+    for word in words:
+        cleaned = word.strip("\"'")
+        if not cleaned.lower().endswith(SCRIPT_SUFFIXES):
+            continue
+        candidate = Path(cleaned)
+        if not candidate.is_absolute():
+            candidate = base / candidate
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
+
+
+def file_hash(path: Path) -> str:
+    """sha256 of the file's bytes, so an edited script is told apart from the one that overran."""
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def read_ledger(path: Path) -> list[dict]:
+    """Every entry in the ledger, oldest first. A line that is not JSON raises with its line number."""
+    if not path.is_file():
+        return []
+    entries = []
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError as error:
+            raise ValueError(f"{path}:{number} is not JSON: {error}") from error
+    return entries
+
+
+def append_ledger(path: Path, entry: dict) -> None:
+    """Add one entry, stamped with the UTC time, as one JSON line."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stamped = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), **entry}
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(stamped, ensure_ascii=False) + "\n")
+
+
+def last_entry_for(entries: list[dict], script: Path) -> dict | None:
+    """The newest run or clear entry for this script, or None if it has never run under the guard."""
+    key = str(script)
+    for entry in reversed(entries):
+        if entry.get("script") == key:
+            return entry
+    return None
+````
+
+`<CLAUDE_DIR>/runguard/run_bounded.py`:
+
+````python
+"""Run a command inside a time budget, kill its whole process tree when the budget runs out, and log the run.
+
+    python runguard/run_bounded.py --budget 10m --label pull-orders -- python scripts/pull_orders.py
+    python runguard/run_bounded.py --budget 5m -- "pytest -x tests/test_rules.py"
+
+One word after -- runs through the shell (pipes, &&); several run as they are.
+Exit code: the command's own, or 124 when the budget ran out (as GNU timeout does).
+Every run adds one line to the ledger: the command, the script and its sha256,
+the budget, how long it took and how it ended. preflight_gate.py reads it to
+refuse a re-run of a script that overran and has not changed since.
+"""
+
+import argparse
+import os
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+from runguard_common import append_ledger, file_hash, ledger_path, load_config, parse_budget, script_in
+
+BUDGET_EXCEEDED = 124
+GRACE_SECONDS = 5
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """The command line: the budget, a label, approval for a long budget, and the command after --."""
+    parser = argparse.ArgumentParser(description="Run a command inside a time budget.")
+    parser.add_argument("--budget", required=True, help="90, 90s, 10m or 1h")
+    parser.add_argument("--label", default="", help="a name for the ledger, e.g. backtest-q3")
+    parser.add_argument("--approved", action="store_true",
+                        help="the user approved a budget above max_budget_seconds")
+    parser.add_argument("command", nargs=argparse.REMAINDER, help="-- then the command")
+    return parser
+
+
+def start(command: list[str]) -> subprocess.Popen:
+    """Start the command in its own process group, so the tree can be killed as one."""
+    shell = len(command) == 1
+    target = command[0] if shell else command
+    if os.name == "nt":
+        return subprocess.Popen(target, shell=shell, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+    return subprocess.Popen(target, shell=shell, start_new_session=True)
+
+
+def kill_tree(process: subprocess.Popen) -> None:
+    """Kill the process and every child it started. Raises if the tree is still alive afterwards."""
+    if os.name == "nt":
+        result = subprocess.run(["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                                capture_output=True, text=True)
+        if result.returncode != 0 and process.poll() is None:
+            raise RuntimeError(f"taskkill could not stop pid {process.pid}: {result.stderr.strip()}")
+    else:
+        group = os.getpgid(process.pid)
+        os.killpg(group, signal.SIGTERM)
+        try:
+            process.wait(timeout=GRACE_SECONDS)
+        except subprocess.TimeoutExpired:
+            os.killpg(group, signal.SIGKILL)
+    process.wait(timeout=GRACE_SECONDS)
+
+
+def run(command: list[str], budget_seconds: int) -> tuple[int, float, str]:
+    """Run the command. Returns (exit code, seconds taken, outcome: ok, failed, budget_exceeded or interrupted)."""
+    started = time.monotonic()
+    process = start(command)
+    try:
+        exit_code = process.wait(timeout=budget_seconds)
+    except subprocess.TimeoutExpired:
+        kill_tree(process)
+        return BUDGET_EXCEEDED, time.monotonic() - started, "budget_exceeded"
+    except KeyboardInterrupt:
+        kill_tree(process)
+        return 130, time.monotonic() - started, "interrupted"
+    return exit_code, time.monotonic() - started, "ok" if exit_code == 0 else "failed"
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Check the budget, run the command, log it, and say how much of the budget it used."""
+    arguments = build_parser().parse_args(argv)
+    command = arguments.command[1:] if arguments.command[:1] == ["--"] else arguments.command
+    if not command:
+        raise SystemExit("run_bounded: no command after --")
+    config = load_config()
+    budget_seconds = parse_budget(arguments.budget)
+    if budget_seconds > config["max_budget_seconds"] and not arguments.approved:
+        raise SystemExit(f"run_bounded: a {budget_seconds}s budget is over the {config['max_budget_seconds']}s "
+                         "limit. Ask the user, then pass --approved.")
+
+    script = script_in(command if len(command) > 1 else command[0].split())
+    entry = {"label": arguments.label, "command": " ".join(command), "cwd": str(Path.cwd()),
+             "script": str(script) if script else None,
+             "script_hash": file_hash(script) if script else None,
+             "budget_seconds": budget_seconds}
+
+    exit_code, seconds, outcome = run(command, budget_seconds)
+    append_ledger(ledger_path(config), {**entry, "seconds": round(seconds, 1),
+                                        "exit_code": exit_code, "outcome": outcome})
+
+    share = seconds / budget_seconds
+    name = arguments.label or entry["command"]
+    if outcome == "budget_exceeded":
+        print(f"runguard: BUDGET EXCEEDED: {name} was stopped after {budget_seconds}s. "
+              "Run the script-preflight checklist and change the script before running it again.",
+              file=sys.stderr)
+    elif share >= config["slow_fraction"]:
+        print(f"runguard: SLOW: {name} took {seconds:.1f}s, {share:.0%} of its {budget_seconds}s budget. "
+              "Optimize it before the next run.", file=sys.stderr)
+    else:
+        print(f"runguard: {name} took {seconds:.1f}s, {share:.0%} of its {budget_seconds}s budget.",
+              file=sys.stderr)
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+````
+
+`<CLAUDE_DIR>/runguard/ledger.py`:
+
+````python
+"""Read the run ledger: which scripts overran or ran slow, and clear one for a re-run.
+
+    python runguard/ledger.py report            the runs to revisit, slowest share of budget first
+    python runguard/ledger.py report --all      every run
+    python runguard/ledger.py clear path/to/script.py --reason "user approved a re-run as is"
+
+clear is for the user. It lets an unchanged script that overran run once more,
+and the reason is kept in the ledger beside it.
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+from runguard_common import append_ledger, file_hash, ledger_path, load_config, read_ledger
+
+
+def runs_to_revisit(entries: list[dict], slow_fraction: float) -> list[dict]:
+    """Runs that overran or used at least slow_fraction of their budget, worst first."""
+    flagged = [entry for entry in entries
+               if entry.get("outcome") == "budget_exceeded"
+               or (entry.get("budget_seconds") and entry.get("seconds") is not None
+                   and entry["seconds"] / entry["budget_seconds"] >= slow_fraction)]
+    return sorted(flagged, key=lambda entry: entry["seconds"] / entry["budget_seconds"], reverse=True)
+
+
+def format_row(entry: dict) -> str:
+    """One run as one line: when, outcome, seconds of budget, label or command."""
+    share = entry["seconds"] / entry["budget_seconds"]
+    name = entry.get("label") or entry.get("command", "")
+    return (f"{entry['at']}  {entry['outcome']:<16} {entry['seconds']:>8.1f}s of "
+            f"{entry['budget_seconds']:>5}s ({share:>4.0%})  {name}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """report or clear, as the module docstring says."""
+    parser = argparse.ArgumentParser(description="Read or clear the run ledger.")
+    commands = parser.add_subparsers(dest="action", required=True)
+    report = commands.add_parser("report")
+    report.add_argument("--all", action="store_true")
+    clear = commands.add_parser("clear")
+    clear.add_argument("script")
+    clear.add_argument("--reason", required=True)
+    arguments = parser.parse_args(argv)
+
+    config = load_config()
+    path = ledger_path(config)
+    entries = read_ledger(path)
+
+    if arguments.action == "clear":
+        script = Path(arguments.script).resolve()
+        if not script.is_file():
+            raise SystemExit(f"ledger: {script} is not a file")
+        append_ledger(path, {"script": str(script), "script_hash": file_hash(script),
+                             "outcome": "cleared", "reason": arguments.reason})
+        print(f"ledger: {script.name} may run once more as it is.")
+        return 0
+
+    runs = [entry for entry in entries if entry.get("outcome") != "cleared"]
+    shown = runs if arguments.all else runs_to_revisit(runs, config["slow_fraction"])
+    if not shown:
+        print("ledger: nothing to revisit." if not arguments.all else "ledger: no runs yet.")
+        return 0
+    for entry in shown:
+        print(format_row(entry))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+````
+
+`<CLAUDE_DIR>/runguard/preflight_gate.py`:
+
+````python
+"""PreToolUse hook for Bash and PowerShell: data and test commands go through run_bounded, and safe_db.
+
+Claude Code sends the tool call as JSON on stdin. Three checks, on commands that
+match a heavy pattern in config.json (pytest, python some_script.py, sqlcmd, ...):
+
+    unwrapped    the command is not run through run_bounded.py
+    overran      its script overran its budget last time and has not changed since
+    raw driver   its script imports a database driver but not safe_db
+
+In "warn" mode the call goes ahead and the model is told what was wrong. In
+"block" mode the call is denied with the same text. Anything else passes silently.
+A config or ledger that cannot be read fails the hook loudly rather than passing.
+"""
+
+import json
+import re
+import sys
+from pathlib import Path
+
+from runguard_common import file_hash, last_entry_for, ledger_path, load_config, read_ledger, script_in, split_command
+
+GUARDED_TOOLS = ("Bash", "PowerShell")
+RUNGUARD_DIR = Path(__file__).resolve().parent
+
+
+def is_heavy(command: str, config: dict) -> bool:
+    """True when the command runs a script, tests or a query, and is not a quick exempt call."""
+    if any(re.search(pattern, command) for pattern in config["exempt_patterns"]):
+        return False
+    return any(re.search(pattern, command) for pattern in config["heavy_patterns"])
+
+
+def is_wrapped(command: str) -> bool:
+    """True when the command runs through run_bounded.py."""
+    return "run_bounded.py" in command
+
+
+def command_words(command: str) -> list[str]:
+    """The words of the command that is actually run: after run_bounded's --, or all of them."""
+    words = split_command(command)
+    if is_wrapped(command) and "--" in words:
+        inner = words[words.index("--") + 1:]
+        return split_command(inner[0].strip("\"'")) if len(inner) == 1 else inner
+    return words
+
+
+def imports_raw_driver(script: Path, config: dict) -> list[str]:
+    """Database drivers a .py script imports when it does not also import safe_db. Empty when it is fine."""
+    if script.suffix.lower() != ".py":
+        return []
+    source = script.read_text(encoding="utf-8", errors="replace")
+    imported = set(re.findall(r"^\s*(?:from|import)\s+([A-Za-z_][\w.]*)", source, flags=re.MULTILINE))
+    if any(name.split(".")[0] == config["safe_db_module"] for name in imported):
+        return []
+    drivers = config["db_driver_modules"]
+    return sorted({driver for driver in drivers
+                   for name in imported if name == driver or name.startswith(driver + ".")})
+
+
+def problems_with(command: str, config: dict, cwd: Path) -> list[str]:
+    """What is wrong with this command, one sentence each. Empty when it may run."""
+    if not is_heavy(command, config):
+        return []
+    problems = []
+    if not is_wrapped(command):
+        budgets = ", ".join(f"{kind} {seconds}s" for kind, seconds in config["budgets"].items())
+        problems.append("This command runs a script, tests or a query without a time budget. Run the "
+                        "script-preflight checklist, then wrap it: python "
+                        f"\"{RUNGUARD_DIR / 'run_bounded.py'}\" --budget <time> --label <name> -- <command>. "
+                        f"Default budgets: {budgets}.")
+    script = script_in(command_words(command), cwd)
+    if script is None:
+        return problems
+    last = last_entry_for(read_ledger(ledger_path(config)), script)
+    if last and last.get("outcome") == "budget_exceeded" and last.get("script_hash") == file_hash(script):
+        problems.append(f"{script.name} overran its {last['budget_seconds']}s budget on {last['at']} and has "
+                        "not changed since. Optimize it first (script-preflight skill), or ask the user to "
+                        f"run: python \"{RUNGUARD_DIR / 'ledger.py'}\" clear <script> --reason \"...\".")
+    drivers = imports_raw_driver(script, config)
+    if drivers:
+        problems.append(f"{script.name} imports {', '.join(drivers)} but not safe_db. Open database "
+                        "connections through safe_db, which sets lock and statement timeouts and refuses "
+                        "anything but a read.")
+    return problems
+
+
+def decide(payload: dict, config: dict) -> dict | None:
+    """The hook's JSON reply for one tool call, or None to let it pass with nothing said."""
+    if payload.get("tool_name") not in GUARDED_TOOLS:
+        return None
+    command = (payload.get("tool_input") or {}).get("command") or ""
+    problems = problems_with(command, config, Path(payload.get("cwd") or Path.cwd()))
+    if not problems:
+        return None
+    text = "runguard: " + " ".join(problems)
+    if config["mode"] == "block":
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                       "permissionDecisionReason": text}}
+    return {"systemMessage": text,
+            "hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": text}}
+
+
+def main() -> int:
+    """Read the tool call from stdin, print the reply if there is one."""
+    payload = json.loads(sys.stdin.buffer.read().decode("utf-8") or "{}")
+    reply = decide(payload, load_config())
+    if reply is not None:
+        sys.stdout.write(json.dumps(reply, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+````
+
+`<CLAUDE_DIR>/runguard/safe_db.py`:
+
+````python
+"""Read-only database connections that cannot hold locks for long or queue other work behind them.
+
+    import safe_db
+    connection = safe_db.connect_sqlserver(host, "SalesDB", user, password, host_marker="readonly")
+    rows = safe_db.read_query(connection, "SELECT id, total FROM orders WHERE placed_on >= ?", ["2026-09-01"])
+
+A long read does its harm by what waits behind it, and each engine differs:
+
+    SQL Server   a long read on a readable secondary holds a schema lock that stalls
+                 redo of DDL, and grows the version store and the replica lag
+    MySQL        a SELECT takes no row locks, but holds a metadata lock: an ALTER waits
+                 on it, and every later query on the table queues behind the ALTER
+    Postgres /   a SELECT holds an AccessShareLock, which blocks materialized view
+    Redshift     refreshes, TRUNCATE, VACUUM and DDL until it finishes
+
+So every connection here is autocommit (no transaction left open), has a statement
+timeout and a lock timeout, is read-only where the engine allows it, and runs only
+statements that read. A host or login that does not look read-only is refused
+before the first query. The driver is loaded by name when a connect_* function is
+called, so this module imports without any driver installed.
+"""
+
+import importlib
+import re
+import time
+from typing import Any, Iterable, Sequence
+
+ENGINES = ("sqlserver", "mysql", "postgres", "redshift")
+READ_KEYWORDS = ("select", "with", "show", "explain", "describe", "desc")
+WRITE_WORDS = re.compile(
+    r"\b(insert|update|delete|merge|upsert|drop|alter|create|truncate|grant|revoke|exec|execute|"
+    r"call|rename|vacuum|analyze|refresh|copy|unload|lock|set)\b", re.IGNORECASE)
+COMMENTS = re.compile(r"--[^\n]*|/\*.*?\*/", re.DOTALL)
+STRINGS = re.compile(r"'(?:[^']|'')*'")
+
+
+class UnsafeQueryError(ValueError):
+    """A statement that would write, lock or change a session was refused before it ran."""
+
+
+class UnsafeConnectionError(RuntimeError):
+    """The host or login does not look read-only, so no query was run."""
+
+
+class QueryDeadlineError(TimeoutError):
+    """A statement ran past its deadline and was cancelled."""
+
+
+def guard_statements(engine: str, statement_timeout_seconds: int, lock_timeout_seconds: int) -> list[str]:
+    """The SET statements run on a new connection, for one engine. Raises on an engine not in ENGINES."""
+    statement_ms = statement_timeout_seconds * 1000
+    lock_ms = lock_timeout_seconds * 1000
+    if engine == "sqlserver":
+        return [f"SET LOCK_TIMEOUT {lock_ms}", "SET DEADLOCK_PRIORITY LOW"]
+    if engine == "mysql":
+        return ["SET SESSION TRANSACTION READ ONLY",
+                f"SET SESSION MAX_EXECUTION_TIME = {statement_ms}",
+                f"SET SESSION lock_wait_timeout = {lock_timeout_seconds}",
+                f"SET SESSION innodb_lock_wait_timeout = {lock_timeout_seconds}"]
+    if engine == "postgres":
+        return ["SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY",
+                f"SET statement_timeout = {statement_ms}",
+                f"SET lock_timeout = {lock_ms}",
+                f"SET idle_in_transaction_session_timeout = {statement_ms}"]
+    if engine == "redshift":
+        return [f"SET statement_timeout TO {statement_ms}"]
+    raise ValueError(f"engine must be one of {', '.join(ENGINES)}, found {engine!r}")
+
+
+def require_read(sql: str) -> str:
+    """The statement unchanged if it only reads. Raises UnsafeQueryError on a write, a lock or a second statement."""
+    bare = STRINGS.sub("''", COMMENTS.sub(" ", sql)).strip().rstrip(";").strip()
+    if not bare:
+        raise UnsafeQueryError("empty statement")
+    if ";" in bare:
+        raise UnsafeQueryError("more than one statement; run them one at a time")
+    first = bare.split(None, 1)[0].lower()
+    if first not in READ_KEYWORDS:
+        raise UnsafeQueryError(f"statement starts with {first.upper()}; only reads are allowed")
+    found = WRITE_WORDS.search(bare)
+    if found:
+        raise UnsafeQueryError(f"statement contains {found.group(0).upper()}; only reads are allowed")
+    if re.search(r"\binto\b", bare, re.IGNORECASE):
+        raise UnsafeQueryError("SELECT ... INTO writes a table; only reads are allowed")
+    if re.search(r"\bfor\s+(update|share|no\s+key\s+update|key\s+share)\b", bare, re.IGNORECASE):
+        raise UnsafeQueryError("FOR UPDATE / FOR SHARE takes row locks; only plain reads are allowed")
+    return sql
+
+
+def require_marker(value: str, marker: str | None, what: str) -> None:
+    """Raise UnsafeConnectionError unless value contains marker (case-insensitive). marker None skips the check."""
+    if marker is None:
+        return
+    if marker.lower() not in (value or "").lower():
+        raise UnsafeConnectionError(f"the {what} does not contain {marker!r}; refusing to connect. "
+                                    "Point at the read-only replica or login.")
+
+
+def apply_guards(connection: Any, engine: str, statement_timeout_seconds: int,
+                 lock_timeout_seconds: int) -> None:
+    """Run guard_statements on a DB-API connection, one cursor, closed afterwards."""
+    cursor = connection.cursor()
+    try:
+        for statement in guard_statements(engine, statement_timeout_seconds, lock_timeout_seconds):
+            cursor.execute(statement)
+    finally:
+        cursor.close()
+
+
+def load_driver(name: str) -> Any:
+    """Import a driver module by name. Raises ImportError naming the package to install."""
+    try:
+        return importlib.import_module(name)
+    except ImportError as error:
+        raise ImportError(f"safe_db needs the {name} package for this engine: pip install {name}") from error
+
+
+def connect_sqlserver(host: str, database: str, user: str, password: str, *,
+                      host_marker: str | None = "readonly", statement_timeout_seconds: int = 600,
+                      lock_timeout_seconds: int = 5, driver: str = "ODBC Driver 17 for SQL Server",
+                      port: int = 1433) -> Any:
+    """A pyodbc connection to a SQL Server read replica: ApplicationIntent=ReadOnly, autocommit,
+    a per-statement timeout, LOCK_TIMEOUT and low deadlock priority. The host must contain host_marker."""
+    host = host.strip()
+    require_marker(host, host_marker, "SQL Server host")
+    pyodbc = load_driver("pyodbc")
+    connection = pyodbc.connect(
+        f"DRIVER={{{driver}}};SERVER={host},{port};DATABASE={database};UID={user};PWD={password};"
+        "ApplicationIntent=ReadOnly;Encrypt=yes;TrustServerCertificate=yes", autocommit=True)
+    connection.timeout = statement_timeout_seconds
+    apply_guards(connection, "sqlserver", statement_timeout_seconds, lock_timeout_seconds)
+    print(f"safe_db: sqlserver connected, host check {'passed' if host_marker else 'skipped'}, "
+          f"statement timeout {statement_timeout_seconds}s, lock timeout {lock_timeout_seconds}s")
+    return connection
+
+
+def connect_mysql(host: str, database: str, user: str, password: str, *,
+                  host_marker: str | None = None, user_marker: str | None = "read-only",
+                  statement_timeout_seconds: int = 600, lock_timeout_seconds: int = 5,
+                  port: int = 3306) -> Any:
+    """A pymysql connection: autocommit, a read-only session, MAX_EXECUTION_TIME and short lock waits.
+    CURRENT_USER() must contain user_marker, and the host host_marker when one is given."""
+    require_marker(host, host_marker, "MySQL host")
+    pymysql = load_driver("pymysql")
+    connection = pymysql.connect(host=host.strip(), port=port, user=user, password=password,
+                                 database=database, autocommit=True,
+                                 read_timeout=statement_timeout_seconds + 30)
+    cursor = connection.cursor()
+    try:
+        cursor.execute("SELECT CURRENT_USER()")
+        current_user = cursor.fetchone()[0]
+    finally:
+        cursor.close()
+    require_marker(current_user, user_marker, "MySQL login (CURRENT_USER())")
+    apply_guards(connection, "mysql", statement_timeout_seconds, lock_timeout_seconds)
+    print(f"safe_db: mysql connected, login check {'passed' if user_marker else 'skipped'}, "
+          f"statement timeout {statement_timeout_seconds}s, lock timeout {lock_timeout_seconds}s")
+    return connection
+
+
+def connect_postgres(host: str, database: str, user: str, password: str, *, engine: str = "postgres",
+                     host_marker: str | None = None, statement_timeout_seconds: int = 600,
+                     lock_timeout_seconds: int = 5, port: int = 5432) -> Any:
+    """A psycopg2 connection to Postgres or Redshift (engine='redshift', port 5439): autocommit,
+    statement_timeout, and on Postgres a read-only session and a lock_timeout."""
+    if engine not in ("postgres", "redshift"):
+        raise ValueError(f"engine must be 'postgres' or 'redshift', found {engine!r}")
+    require_marker(host, host_marker, f"{engine} host")
+    psycopg2 = load_driver("psycopg2")
+    connection = psycopg2.connect(host=host.strip(), port=port, dbname=database, user=user,
+                                  password=password, connect_timeout=30)
+    connection.autocommit = True
+    apply_guards(connection, engine, statement_timeout_seconds, lock_timeout_seconds)
+    print(f"safe_db: {engine} connected, statement timeout {statement_timeout_seconds}s")
+    return connection
+
+
+def read_query(connection: Any, sql: str, parameters: Sequence[Any] | None = None) -> list[tuple]:
+    """Run one read on a safe_db connection and return every row. Raises UnsafeQueryError before running a write."""
+    cursor = connection.cursor()
+    try:
+        cursor.execute(require_read(sql), parameters or ())
+        return list(cursor.fetchall())
+    finally:
+        cursor.close()
+
+
+def read_in_chunks(connection: Any, sql: str, key_column: str, chunk_size: int,
+                   start_after: Any = None) -> Iterable[list[tuple]]:
+    """Yield rows chunk by chunk with keyset pagination, so no single statement runs long.
+    key_column must be the first column sql selects, and unique. sql is wrapped as
+    SELECT * FROM (sql) AS page WHERE key_column > %s ORDER BY key_column, limited to chunk_size rows.
+    The LIMIT form suits MySQL, Postgres and Redshift; for SQL Server use read_query with TOP."""
+    require_read(sql)
+    if not re.fullmatch(r"[A-Za-z_][\w]*", key_column):
+        raise UnsafeQueryError(f"key column {key_column!r} is not a plain column name")
+    last = start_after
+    while True:
+        where = f"WHERE {key_column} > %s " if last is not None else ""
+        page_sql = f"SELECT * FROM ({sql}) AS page {where}ORDER BY {key_column} LIMIT {int(chunk_size)}"
+        rows = read_query(connection, page_sql, [last] if last is not None else None)
+        if not rows:
+            return
+        yield rows
+        if len(rows) < chunk_size:
+            return
+        last = rows[-1][0]
+
+
+def redshift_data_query(client: Any, sql: str, *, deadline_seconds: int, poll_seconds: float = 2.0,
+                        **location: str) -> dict:
+    """Run one read through the Redshift Data API (a boto3 'redshift-data' client) and return the
+    describe_statement result. Cancels the statement and raises QueryDeadlineError past deadline_seconds.
+    location is ClusterIdentifier or WorkgroupName, Database, and SecretArn or DbUser."""
+    started = client.execute_statement(Sql=require_read(sql), **location)
+    statement_id = started["Id"]
+    deadline = time.monotonic() + deadline_seconds
+    while True:
+        described = client.describe_statement(Id=statement_id)
+        status = described["Status"]
+        if status == "FINISHED":
+            return described
+        if status in ("FAILED", "ABORTED"):
+            raise RuntimeError(f"redshift-data statement {statement_id} {status}: {described.get('Error')}")
+        if time.monotonic() >= deadline:
+            client.cancel_statement(Id=statement_id)
+            raise QueryDeadlineError(f"redshift-data statement {statement_id} passed its "
+                                     f"{deadline_seconds}s deadline and was cancelled")
+        time.sleep(poll_seconds)
+````
+
+## Step 12: the config
+
+**Explanation.** Every key is optional. A key left out takes its default from `runguard_common.py`, which is also where the heavy and exempt command patterns and the list of database drivers live. `max_budget_seconds` is the line above which `run_bounded.py` needs `--approved`. `slow_fraction` is the share of the budget above which a finished run is reported as `SLOW`. `ledger` is relative to the runguard folder unless it is absolute.
+
+**Install.** Create `<CLAUDE_DIR>/runguard/config.json` with exactly this content:
+
+````json
+{
+  "mode": "warn",
+  "budgets": {"test": 300, "data": 600, "backtest": 1800},
+  "max_budget_seconds": 1800,
+  "slow_fraction": 0.8,
+  "ledger": "ledger.jsonl"
+}
+````
+
+## Step 13: the `/script-preflight` skill
+
+**Explanation.** The hook can check that a run is bounded. It cannot check that someone looked for the query inside a loop first. The skill is that checklist: read the script for the usual causes of slow runs, time a small slice and extrapolate, choose a budget of about twice the estimate, open connections through `safe_db`, run through `run_bounded.py`, and act on `SLOW` and `BUDGET EXCEEDED` by changing the script rather than raising the budget. The hook's messages name the skill, so a flagged or denied command routes the model to it. In the skill, `<runguard>` means `<CLAUDE_DIR>/runguard`.
+
+**Install.** Create `<SKILLS_DIR>/script-preflight/SKILL.md` with exactly this content (one level deep, as in step 6):
+
+````markdown
+---
+name: script-preflight
+description: Before running any script that gathers data, queries a database, runs a backtest or runs a test suite, make one optimization pass, estimate its cost, choose a time budget and run it through run_bounded.py with database access through safe_db. Use whenever you are about to run python some_script.py, pytest, a notebook, sqlcmd, mysql, psql or aws redshift-data; when the runguard hook says a command was unwrapped, overran or imports a raw database driver; and when a run comes back SLOW or BUDGET EXCEEDED.
+---
+
+# Script preflight
+
+A script that runs for an hour when it could run for two minutes wastes the
+user's time, and against a database it can hold locks that other work queues
+behind. This checklist runs before the script does. The runguard hook enforces
+the last two steps; the first four are on you.
+
+`<runguard>` below is the folder holding `run_bounded.py`, `ledger.py` and
+`safe_db.py`. Find it from the hook's message or the user's settings.
+
+## 1. Read the script for the usual causes
+
+Check each, and fix what you find before the first run:
+
+- one query per row inside a loop (fetch the set in one query, join in SQL)
+- filtering or aggregating in pandas what SQL could filter or aggregate
+- `SELECT *`, or columns the script never uses
+- `OFFSET` pagination over a large table (use keyset pagination: `WHERE id > last ORDER BY id`)
+- the same data pulled again on every run (cache it to parquet once, read the cache)
+- a date window wider than the question needs
+- the whole test suite when one module answers the question (`pytest -x -k <target>`)
+- work done in series that is independent (a thread pool for I/O, not for CPU)
+
+## 2. Estimate before the full run
+
+- For each query, get the row count or `EXPLAIN` first.
+- Run on a slice: one client, one week, `TOP 1000` / `LIMIT 1000`. Time it.
+- Extrapolate: slice time multiplied by (full size / slice size). Say the
+  estimate to the user in one line, with the numbers.
+
+## 3. Choose a budget
+
+The budget is about twice the estimate, rounded up, with these defaults when
+there is nothing to estimate from: tests 5 minutes, data pulls 10 minutes,
+backtests 30 minutes. The defaults live in `<runguard>/config.json`.
+
+A budget over `max_budget_seconds` (30 minutes by default) needs the user's
+approval before you pass `--approved`. Ask, with the estimate and what the
+run is for.
+
+## 4. Open database connections through safe_db
+
+Never import `pyodbc`, `pymysql`, `psycopg2` or `redshift_connector` and
+connect directly. Use `safe_db.connect_sqlserver`, `connect_mysql`,
+`connect_postgres` or `redshift_data_query`, and `read_query` /
+`read_in_chunks` for the reads. They refuse a host or login that does not
+look read-only, set lock and statement timeouts, keep autocommit on so no
+transaction stays open, and refuse anything but a read. Point at the
+read-only replica where one exists.
+
+## 5. Run it bounded
+
+```
+python <runguard>/run_bounded.py --budget 10m --label <short-name> -- <command>
+```
+
+Run long jobs in the background with the same wrapper. The budget is the
+only thing that stops a background run.
+
+## 6. Act on the result
+
+- `runguard: ... took Ns, P% of its budget`: done.
+- `SLOW`: the run used most of its budget. Before running it again, go back
+  to step 1 and say what you changed.
+- `BUDGET EXCEEDED` (exit 124): the process tree was killed. The hook will
+  refuse to run the same file again until it changes. Find where the time
+  went (the slice from step 2, a profile, or `EXPLAIN`), fix that, and run
+  again. Do not just raise the budget. If the user decides the script should
+  run as it is, they clear it themselves:
+  `python <runguard>/ledger.py clear <script> --reason "..."`.
+
+`python <runguard>/ledger.py report` lists every run that overran or ran
+slow, worst first. Check it at the start of work on a project that runs
+scripts often.
+````
+
+## Step 14: register the hook in `settings.json`
+
+Add this group to `<CLAUDE_DIR>/settings.json`, replacing `<PYTHON>` and `<CLAUDE_DIR>` with the values from "Before you start". Use forward slashes in the path, even on Windows.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<PYTHON> \"<CLAUDE_DIR>/runguard/preflight_gate.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The merging rules from step 5 apply: append to an existing `PreToolUse` array, never replace it, and check the result is valid JSON. The matcher names both shell tools, because Claude Code on Windows can run commands through either.
+
+## Step 15: let scripts import `safe_db`
+
+**Explanation.** A script in a project has to be able to `import safe_db`. The simplest way is a `.pth` file in each Python environment that runs such scripts: Python adds the folder it names to the import path when it starts, and nothing else changes. The shared module is named `runguard_common`, not `common`, so this does not shadow a project's own `common` package.
+
+**Install.** For each virtual environment (or the one system Python) that runs data scripts, activate it and run:
+
+```bash
+<PYTHON> -c "import site, sys; open(site.getsitepackages()[-1] + '/runguard.pth', 'w').write(sys.argv[1])" "<CLAUDE_DIR>/runguard"
+<PYTHON> -c "import safe_db; print(safe_db.__file__)"
+```
+
+The second line prints the path of `safe_db.py` inside `<CLAUDE_DIR>/runguard/`.
+
+Changes to skills and hooks take effect in **new** Claude Code sessions. Restart any session that is open.
+
+---
+
+# Part E — plain status text
+
+**Explanation.** Claude Code decorates two pieces of status text with novelty words. While it works, the spinner shows a rotating verb such as "Flibbertigibbeting" or "Combobulating". After each turn it prints a line such as "Cooked for 1m 20s", where the verb is picked at random from a list fixed inside Claude Code (Baked, Brewed, Churned, Cogitated, Cooked, Crunched, Sautéed, Worked). Part E keeps both pieces of information and drops the words: the spinner says "Working…", and the end-of-turn line says "Took 1m 20s".
+
+The spinner has a setting (`spinnerVerbs`). The end-of-turn verb does not: as of Claude Code 2.1.296 there is no setting for that list. So Part E turns the built-in line off (`showTurnDuration: false`) and puts a small timer in its place. A `UserPromptSubmit` hook records when the turn started, and a `Stop` hook prints the elapsed time as a `systemMessage`.
+
+Tested on Claude Code 2.1.296 with Python 3.12.7 on Windows 11. The script needs Python 3.10 or newer.
+
+## Step 16: the turn timer script
+
+Create `<CLAUDE_DIR>/hooks/turn_timer.py`:
+
+```python
+"""Plain-language turn timer for Claude Code.
+
+Replaces the built-in "Cooked for Nm Ns" line (whose verb is randomly picked
+from a hard-coded list) with a neutral "Took Nm Ns" message.
+
+Usage (from settings.json hooks, hook JSON arrives on stdin):
+    python turn_timer.py start   # UserPromptSubmit: record the turn start time
+    python turn_timer.py stop    # Stop: print {"systemMessage": "Took ..."}
+"""
+
+import json
+import sys
+import time
+from pathlib import Path
+
+STATE_DIRECTORY: Path = Path.home() / ".claude" / "hooks" / "state"
+
+
+def build_state_path(session_id: str, state_directory: Path = STATE_DIRECTORY) -> Path:
+    """Return the file that holds the turn start time for one session.
+
+    Args:
+        session_id: Claude Code session id from the hook payload.
+        state_directory: Folder that holds the per-session timer files.
+
+    Returns:
+        Path to the session's timer file.
+    """
+    safe_session_id = "".join(character for character in session_id if character.isalnum() or character in "-_")
+    if not safe_session_id:
+        raise ValueError(f"Hook payload has an unusable session_id: {session_id!r}")
+    return state_directory / f"turn_timer_{safe_session_id}.txt"
+
+
+def format_duration(elapsed_seconds: float) -> str:
+    """Format elapsed seconds as "Took 45s", "Took 1m 20s" or "Took 1h 2m 3s".
+
+    Args:
+        elapsed_seconds: Non-negative number of seconds the turn took.
+
+    Returns:
+        Human-readable duration message.
+    """
+    if elapsed_seconds < 0:
+        raise ValueError(f"Elapsed time cannot be negative: {elapsed_seconds}")
+    total_seconds = int(round(elapsed_seconds))
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours:
+        return f"Took {hours}h {minutes}m {seconds}s"
+    if minutes:
+        return f"Took {minutes}m {seconds}s"
+    return f"Took {seconds}s"
+
+
+def record_turn_start(session_id: str, now: float, state_directory: Path = STATE_DIRECTORY) -> Path:
+    """Write the turn start time for a session.
+
+    Args:
+        session_id: Claude Code session id.
+        now: Current Unix time in seconds.
+        state_directory: Folder that holds the per-session timer files.
+
+    Returns:
+        Path of the file that was written.
+    """
+    state_path = build_state_path(session_id, state_directory)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(repr(now), encoding="utf-8")
+    return state_path
+
+
+def build_stop_message(session_id: str, now: float, state_directory: Path = STATE_DIRECTORY) -> str | None:
+    """Build the "Took ..." message for the turn that just ended.
+
+    Args:
+        session_id: Claude Code session id.
+        now: Current Unix time in seconds.
+        state_directory: Folder that holds the per-session timer files.
+
+    Returns:
+        The duration message, or None when no start time was recorded for this
+        session (for example a turn that began before the hook was installed).
+    """
+    state_path = build_state_path(session_id, state_directory)
+    if not state_path.exists():
+        return None
+    started_at = float(state_path.read_text(encoding="utf-8").strip())
+    state_path.unlink()
+    return format_duration(max(0.0, now - started_at))
+
+
+def main(arguments: list[str], stdin_text: str) -> str:
+    """Run the hook and return what it should print to stdout.
+
+    Args:
+        arguments: Command-line arguments after the script name ("start" or "stop").
+        stdin_text: Raw hook JSON payload.
+
+    Returns:
+        Text to print (empty for "start" or when nothing was timed).
+    """
+    if len(arguments) != 1 or arguments[0] not in ("start", "stop"):
+        raise SystemExit(f"Usage: turn_timer.py start|stop (got {arguments})")
+    payload = json.loads(stdin_text)
+    session_id = payload["session_id"]
+    now = time.time()
+    if arguments[0] == "start":
+        record_turn_start(session_id, now)
+        return ""
+    message = build_stop_message(session_id, now)
+    if message is None:
+        return ""
+    return json.dumps({"systemMessage": message})
+
+
+if __name__ == "__main__":
+    output = main(sys.argv[1:], sys.stdin.read())
+    if output:
+        print(output)
+```
+
+It keeps one small file per session in `<CLAUDE_DIR>/hooks/state/` (`turn_timer_<session id>.txt`) holding the start time, and deletes it when the turn ends. A turn that started before the hook was installed has no file, so it prints nothing rather than a wrong number.
+
+## Step 17: settings
+
+Add these to `<CLAUDE_DIR>/settings.json`, replacing `<PYTHON>` and `<CLAUDE_DIR>` with the values from "Before you start". Use forward slashes in the path, even on Windows.
+
+```json
+{
+  "showTurnDuration": false,
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": ["Working"]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<PYTHON> \"<CLAUDE_DIR>/hooks/turn_timer.py\" start",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "<PYTHON> \"<CLAUDE_DIR>/hooks/turn_timer.py\" stop",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The merging rules from step 5 apply: append each group to the existing `UserPromptSubmit` and `Stop` arrays, never replace them, and check the result is valid JSON. Position in the arrays does not matter. Hooks for one event run in parallel, so the timer reads the clock as the turn ends, even while Part A's `wait_for_background.py` is still holding the spinner up.
+
+`"replace"` drops the built-in spinner words entirely. To rotate through a few plain words instead, list them: `"verbs": ["Working", "Thinking", "Reading"]`. To keep the built-in "Cooked for…" line and skip the timer, leave out `showTurnDuration` and both hook groups.
+
+Changes take effect in **new** Claude Code sessions. If an open session keeps the old behaviour, open `/hooks` once or restart it.
+
+---
+
 ## Verify
 
 Run these from a terminal. Each should succeed quietly or print what's shown:
@@ -1686,6 +2740,34 @@ grep -c "120,000" "<SKILLS_DIR>/taskloop-review/SKILL.md"
 
 # 9. git can push from the checkout the loop will work in.
 git remote -v && git push --dry-run
+
+# --- Part D ---
+# 10. A light command passes the hook silently (prints nothing).
+echo '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
+
+# 11. An unbudgeted test run is flagged (prints JSON starting {"systemMessage": "runguard: ...).
+echo '{"tool_name":"Bash","tool_input":{"command":"pytest -x tests"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
+
+# 12. A budget stops a run that is too long.
+<PYTHON> "<CLAUDE_DIR>/runguard/run_bounded.py" --budget 3s --label verify -- <PYTHON> -c "import time; time.sleep(30)"; echo "exit=$?"
+#    -> runguard: BUDGET EXCEEDED: verify was stopped after 3s. ...   exit=124
+
+# 13. The ledger recorded it.
+<PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" report
+#    -> one budget_exceeded line labelled verify
+
+# 14. safe_db imports from a project environment, and refuses a write.
+<PYTHON> -c "import safe_db; safe_db.require_read('DELETE FROM t')"
+#    -> safe_db.UnsafeQueryError: statement starts with DELETE; only reads are allowed
+
+# --- Part E ---
+# 15. Start then stop prints a plain duration.
+echo '{"session_id":"verify"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" start
+echo '{"session_id":"verify"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" stop
+#    -> {"systemMessage": "Took 0s"}
+
+# 16. A stop with no recorded start prints nothing.
+echo '{"session_id":"never-started"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" stop
 ```
 
 Then in a **new** Claude Code session:
@@ -1706,6 +2788,17 @@ For Part C, use a throwaway pull request you own: a non-draft branch that change
 9. Confirm the report closes by saying nothing was merged and nothing was approved, and that no `automated-review` comment was edited or deleted along the way.
 10. Run it on a draft pull request. It should stop and ask about `draft` rather than marking the pull request ready itself.
 
+For Part D:
+
+11. Type `/` and confirm `script-preflight` appears in the command list.
+12. Ask Claude to run the tests of any project with `pytest`. In warn mode the command runs, and a `runguard:` line appears saying it had no time budget. Ask again; Claude should now run it through `run_bounded.py` with a `--budget`.
+13. Ask Claude to run a script that sleeps for 60 seconds with a 5-second budget. It should be stopped with exit 124 and `BUDGET EXCEEDED`. Ask for the same run again without changing the script: the hook should flag (warn) or refuse (block) it as overrun and unchanged.
+14. Run `<PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" clear <that script> --reason "verify"` yourself, and confirm the next run of the unchanged script passes the hook.
+
+For Part E:
+
+15. Send any prompt. While Claude works, the spinner should read "Working…". When the turn ends, a line "Took Ns" (or "Took Nm Ns") should appear, and no "Cooked for…" line. The first turn after installing may show neither, because its start was not recorded; check the second turn.
+
 ## Uninstall
 
 **Part A.**
@@ -1715,6 +2808,10 @@ For Part C, use a throwaway pull request you own: a non-draft branch that change
 3. Delete `<CLAUDE_DIR>/skills/archive/`, `<CLAUDE_DIR>/skills/restore/` and `<CLAUDE_DIR>/hooks/wait_for_background.py`.
 
 **Part C.** Delete `<SKILLS_DIR>/pr-review-loop/`. Commits it pushed stay on their branches, and the review comments belong to Part B.
+
+**Part D.** Remove the `PreToolUse` group that runs `preflight_gate.py` from `settings.json`. Delete `<SKILLS_DIR>/script-preflight/`, the `runguard.pth` file from each environment's `site-packages/`, and `<CLAUDE_DIR>/runguard/`. The ledger is `<CLAUDE_DIR>/runguard/ledger.jsonl`; keep a copy first if you want the run history. Scripts that import `safe_db` will fail to import it once it is gone, which shows you which ones to change back.
+
+**Part E.** Remove `showTurnDuration`, `spinnerVerbs` and the two hook groups that run `turn_timer.py` from `settings.json`. Delete `<CLAUDE_DIR>/hooks/turn_timer.py` and any `turn_timer_*.txt` files in `<CLAUDE_DIR>/hooks/state/`. The built-in "Cooked for…" line and spinner words come back in the next session.
 
 **Part B.** Uninstall Part C first, since it calls this skill. Then delete `<SKILLS_DIR>/taskloop-review/`. There is no settings change to undo and no state to clean up — every record it wrote is a pull request comment, and those stay unless you delete them.
 
