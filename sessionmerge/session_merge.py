@@ -11,6 +11,10 @@ depend on the model's memory or judgment:
   find    lists sessions, open or closed, whose name matches some words, with
           the command that reopens a closed one
   path    names the handoff file for a source and a target session
+  save    checks a draft handoff for secrets, saves it under <claude dir>/handoffs/,
+          and prints the command the receiving session types to read it. The
+          session writes the draft where it needs no approval (its scratchpad),
+          so creating the handoff file never stops for a permission prompt
   check   scans a handoff file for secrets and database hostnames, and exits 1
           when it finds any
 
@@ -18,6 +22,7 @@ usage:
   session_merge.py digest [--session-id ID | --transcript PATH] [--output PATH]
   session_merge.py find WORDS...
   session_merge.py path --source NAME --target NAME [--date YYYY-MM-DD]
+  session_merge.py save --draft PATH (--source NAME --target NAME [--date YYYY-MM-DD] | --replace PATH)
   session_merge.py check FILE
 """
 
@@ -711,6 +716,75 @@ def run_find(arguments: argparse.Namespace, claude_directory: Path) -> int:
     return 0 if matches else 1
 
 
+def parse_handoff_date(value: str | None) -> date:
+    """Read a --date argument, defaulting to today.
+
+    Args:
+        value: The argument as typed, or None when it was left out.
+
+    Returns:
+        The date.
+
+    Raises:
+        SystemExit: The value is not a YYYY-MM-DD date.
+    """
+    try:
+        return date.fromisoformat(value) if value else date.today()
+    except ValueError:
+        raise SystemExit(f"session_merge: --date must be YYYY-MM-DD, got {value!r}")
+
+
+def build_receive_command(handoff_path: Path) -> str:
+    """Return the command the receiving session types to read a handoff.
+
+    Args:
+        handoff_path: The saved handoff file.
+
+    Returns:
+        For example "/merge-session --receive C:/Users/me/.claude/handoffs/2026-10-22_a_to_b.md".
+    """
+    return f"/merge-session --receive {handoff_path.resolve().as_posix()}"
+
+
+def print_findings(findings: list[SensitiveFinding]) -> None:
+    """Print one indented line per finding: its line number, kind and masked text.
+
+    Args:
+        findings: What find_sensitive_text found.
+    """
+    for finding in findings:
+        print(f"  line {finding.line_number}: {finding.kind}: {finding.masked_excerpt}")
+
+
+def choose_save_path(arguments: argparse.Namespace, handoff_directory: Path) -> Path:
+    """Pick where `save` writes: a new free name, or the saved handoff that --replace names.
+
+    Args:
+        arguments: Parsed command-line arguments.
+        handoff_directory: Folder that holds handoff files.
+
+    Returns:
+        The path to write.
+
+    Raises:
+        SystemExit: --replace is mixed with --source, --target or --date; a new handoff lacks
+            --source or --target; --date is not a YYYY-MM-DD date; or --replace names a file that
+            does not exist or is not in the handoff folder.
+    """
+    if arguments.replace:
+        if arguments.source or arguments.target or arguments.date:
+            raise SystemExit("session_merge: use --replace on its own, or --source and --target for a new handoff, not both")
+        replace_path = Path(arguments.replace).resolve()
+        if not replace_path.is_file():
+            raise SystemExit(f"session_merge: --replace names no saved handoff: {replace_path}")
+        if handoff_directory.resolve() not in replace_path.parents:
+            raise SystemExit(f"session_merge: --replace must name a file in {handoff_directory}, got {replace_path}")
+        return replace_path
+    if not (arguments.source and arguments.target):
+        raise SystemExit("session_merge: a new handoff needs --source and --target (or --replace PATH to update a saved one)")
+    return build_handoff_path(arguments.source, arguments.target, parse_handoff_date(arguments.date), handoff_directory)
+
+
 def run_path(arguments: argparse.Namespace, claude_directory: Path) -> int:
     """Run `path`: print a free handoff file path under <claude dir>/handoffs/.
 
@@ -724,11 +798,44 @@ def run_path(arguments: argparse.Namespace, claude_directory: Path) -> int:
     Raises:
         SystemExit: --date is not a YYYY-MM-DD date.
     """
-    try:
-        handoff_date = date.fromisoformat(arguments.date) if arguments.date else date.today()
-    except ValueError:
-        raise SystemExit(f"session_merge: --date must be YYYY-MM-DD, got {arguments.date!r}")
-    print(build_handoff_path(arguments.source, arguments.target, handoff_date, claude_directory / "handoffs"))
+    print(build_handoff_path(arguments.source, arguments.target, parse_handoff_date(arguments.date), claude_directory / "handoffs"))
+    return 0
+
+
+def run_save(arguments: argparse.Namespace, claude_directory: Path) -> int:
+    """Run `save`: check a draft handoff for secrets, copy it into <claude dir>/handoffs/, and print the receive command.
+
+    The session writes the draft where it can write without asking (its scratchpad). This
+    command, which the skill pre-approves, does the write into the handoff folder, so creating
+    the handoff never stops for a permission prompt.
+
+    Args:
+        arguments: Parsed command-line arguments.
+        claude_directory: Claude Code config directory.
+
+    Returns:
+        Exit code 0 when saved. Exit code 1 when the draft holds something that looks like a
+        secret or a database hostname; nothing is saved then.
+
+    Raises:
+        FileNotFoundError: The draft does not exist.
+        SystemExit: The arguments that say where to save are wrong (see choose_save_path).
+    """
+    draft_path = Path(arguments.draft)
+    if not draft_path.is_file():
+        raise FileNotFoundError(f"no draft handoff at {draft_path}")
+    handoff_path = choose_save_path(arguments, claude_directory / "handoffs")
+    content = draft_path.read_bytes()
+    findings = find_sensitive_text(content.decode("utf-8"))
+    if findings:
+        print(f"Not saved: {len(findings)} line(s) in {draft_path} look like secrets or database hostnames. "
+              "Rewrite each one in the draft, then run save again:")
+        print_findings(findings)
+        return 1
+    handoff_path.write_bytes(content)
+    print(f"Saved the handoff to {handoff_path.resolve().as_posix()}")
+    print("To receive it, type this in the target session:")
+    print(build_receive_command(handoff_path))
     return 0
 
 
@@ -748,13 +855,12 @@ def run_check(arguments: argparse.Namespace) -> int:
         return 0
     print(f"{len(findings)} line(s) in {handoff_path} look like secrets or database hostnames. "
           "Rewrite each one, then run check again:")
-    for finding in findings:
-        print(f"  line {finding.line_number}: {finding.kind}: {finding.masked_excerpt}")
+    print_findings(findings)
     return 1
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
-    """Build the command-line parser for the four commands.
+    """Build the command-line parser for the five commands.
 
     Returns:
         The parser.
@@ -772,6 +878,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
     path_parser.add_argument("--source", required=True, help="name of this session")
     path_parser.add_argument("--target", required=True, help="name of the session the handoff goes to")
     path_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today")
+    save_parser = commands.add_parser("save", help="check a draft handoff, save it under handoffs/ and print the receive command")
+    save_parser.add_argument("--draft", required=True, help="the handoff as written in the session's scratchpad")
+    save_parser.add_argument("--source", help="name of this session, for a new handoff")
+    save_parser.add_argument("--target", help="name of the session the handoff goes to, for a new handoff")
+    save_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today, for a new handoff")
+    save_parser.add_argument("--replace", help="a saved handoff to overwrite with the draft")
     check_parser = commands.add_parser("check", help="scan a handoff file for secrets and hostnames")
     check_parser.add_argument("file")
     return parser
@@ -796,6 +908,8 @@ def main(argv: list[str]) -> int:
         return run_find(arguments, claude_directory)
     if arguments.command == "path":
         return run_path(arguments, claude_directory)
+    if arguments.command == "save":
+        return run_save(arguments, claude_directory)
     return run_check(arguments)
 
 

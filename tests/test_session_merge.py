@@ -430,5 +430,106 @@ class CommandLineTests(ClaudeFolder):
         self.assertEqual(result.returncode, 2)
 
 
+class SaveTests(ClaudeFolder):
+    """`save`: the draft is checked, copied into handoffs/, and the receive command is printed."""
+
+    def setUp(self) -> None:
+        """Write a clean draft in a scratch folder outside handoffs/."""
+        super().setUp()
+        self.handoffs = self.claude_directory / "handoffs"
+        self.draft = self.claude_directory / "scratch" / "handoff_draft.md"
+        self.draft.parent.mkdir(parents=True)
+        self.draft.write_bytes(b"# Handoff: a to b\n\nDecision: keep first-day lines.\n")
+
+    def save_new(self) -> subprocess.CompletedProcess:
+        """Save the draft as a new handoff from "TICKET-12 invoice HOLD" to "P&L fees"."""
+        return self.run_script("save", "--draft", str(self.draft), "--source", "TICKET-12 invoice HOLD",
+                               "--target", "P&L fees", "--date", "2026-10-22")
+
+    def test_save_copies_the_draft_and_prints_the_receive_command(self) -> None:
+        """Happy path: the saved file equals the draft, and stdout ends with the receive command."""
+        result = self.save_new()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        saved = self.handoffs / "2026-10-22_ticket_12_invoice_hold_to_p_l_fees.md"
+        self.assertEqual(saved.read_bytes(), self.draft.read_bytes())
+        command = f"/merge-session --receive {saved.resolve().as_posix()}"
+        self.assertEqual(result.stdout.strip().splitlines()[-1], command)
+        self.assertIn(f"Saved the handoff to {saved.resolve().as_posix()}", result.stdout)
+
+    def test_receive_command_uses_forward_slashes(self) -> None:
+        """Edge case: the command a user pastes has no backslashes, on any platform."""
+        command = session_merge.build_receive_command(self.handoffs / "2026-10-22_a_to_b.md")
+        self.assertTrue(command.startswith("/merge-session --receive "))
+        self.assertNotIn("\\", command)
+
+    def test_save_twice_takes_the_next_free_name(self) -> None:
+        """Edge case: a second new handoff for the same pair does not overwrite the first."""
+        self.assertEqual(self.save_new().returncode, 0)
+        second = self.save_new()
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertTrue((self.handoffs / "2026-10-22_ticket_12_invoice_hold_to_p_l_fees_2.md").is_file())
+
+    def test_save_refuses_a_draft_with_a_secret_and_saves_nothing(self) -> None:
+        """Error case: a secret in the draft exits 1, masks the value, and leaves handoffs/ empty."""
+        self.draft.write_text(f"# Handoff\nUse key {FAKE_AWS_KEY}\n", encoding="utf-8")
+        result = self.save_new()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Not saved:", result.stdout)
+        self.assertIn("line 2: AWS access key id: AKIA… (20 characters)", result.stdout)
+        self.assertNotIn(FAKE_AWS_KEY, result.stdout)
+        self.assertNotIn("/merge-session --receive", result.stdout)
+        self.assertEqual(list(self.handoffs.glob("*.md")), [])
+
+    def test_save_replace_overwrites_the_saved_handoff(self) -> None:
+        """Happy path: --replace writes the edited draft over the saved file and keeps its name."""
+        self.save_new()
+        saved = self.handoffs / "2026-10-22_ticket_12_invoice_hold_to_p_l_fees.md"
+        self.draft.write_bytes(self.draft.read_bytes() + b"\n## Delivery\nDelivered.\n")
+        result = self.run_script("save", "--draft", str(self.draft), "--replace", str(saved))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b"## Delivery", saved.read_bytes())
+        self.assertEqual(len(list(self.handoffs.glob("*.md"))), 1)
+        self.assertIn(f"/merge-session --receive {saved.resolve().as_posix()}", result.stdout)
+
+    def test_save_replace_outside_handoffs_fails(self) -> None:
+        """Error case: --replace cannot overwrite a file outside the handoff folder."""
+        self.save_new()
+        result = self.run_script("save", "--draft", str(self.draft), "--replace", str(self.draft))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--replace must name a file in", result.stderr)
+
+    def test_save_replace_of_a_missing_file_fails(self) -> None:
+        """Error case: --replace needs a handoff that was saved before."""
+        result = self.run_script("save", "--draft", str(self.draft), "--replace", str(self.handoffs / "nope.md"))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--replace names no saved handoff", result.stderr)
+
+    def test_save_mixing_replace_and_source_fails(self) -> None:
+        """Error case: --replace and --source/--target describe different saves, so both together is an error."""
+        self.save_new()
+        saved = self.handoffs / "2026-10-22_ticket_12_invoice_hold_to_p_l_fees.md"
+        result = self.run_script("save", "--draft", str(self.draft), "--replace", str(saved), "--source", "a")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("use --replace on its own", result.stderr)
+
+    def test_save_new_without_a_target_fails(self) -> None:
+        """Error case: a new handoff needs both names."""
+        result = self.run_script("save", "--draft", str(self.draft), "--source", "a")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("needs --source and --target", result.stderr)
+
+    def test_save_of_a_missing_draft_fails_loudly(self) -> None:
+        """Error case: a draft path that does not exist raises FileNotFoundError."""
+        result = self.run_script("save", "--draft", str(self.claude_directory / "missing.md"), "--source", "a", "--target", "b")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("FileNotFoundError", result.stderr)
+
+    def test_save_with_a_bad_date_fails(self) -> None:
+        """Error case: --date must be YYYY-MM-DD, as for path."""
+        result = self.run_script("save", "--draft", str(self.draft), "--source", "a", "--target", "b", "--date", "22/10/2026")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--date must be YYYY-MM-DD", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

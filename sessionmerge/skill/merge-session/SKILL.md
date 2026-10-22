@@ -70,9 +70,11 @@ Anything you cannot check goes under **Unknown** in the handoff.
 
 ### 4. Write the handoff
 
-Run `path --source "<this session's name>" --target "<target name>"`. The script
-prints a free file path under `<claude dir>/handoffs/` and creates that folder.
-Write the handoff there, using the template at the end of this file.
+Write the handoff as a draft in the session's scratchpad directory (otherwise the
+system temp folder), for example `<scratch>/handoff_draft.md`, using the template at
+the end of this file. Do not write into `<claude dir>/handoffs/` yourself: that
+folder is outside the project, so a direct write stops for the user's approval.
+Step 5 saves the draft there with the script, which needs no approval.
 
 Rules for the content:
 
@@ -91,19 +93,33 @@ Rules for the content:
 
 Follow the writing and question rules of the project (CLAUDE.md) when there are any.
 
-### 5. Check for secrets
+### 5. Save it and print the receive command
 
-Run `check <handoff file>`. If it exits 1, rewrite each flagged line and run it
-again. Do not send while the check fails. If a flagged line is a false alarm,
-reword it anyway. Do not change the script or skip the check.
+Run `save --draft <draft> --source "<this session's name>" --target "<target name>"`.
+It runs the same secrets check as `check`. If it exits 1, nothing is saved:
+rewrite each flagged line in the draft and run it again. If a flagged line is a
+false alarm, reword it anyway. Do not change the script or skip the check.
+
+When it exits 0, it prints the saved file's path and the command the target
+session types to read it. Show both to the user in the same message, with the
+command in a code block of its own so it can be copied:
+
+```
+/merge-session --receive <absolute path>
+```
+
+The user can paste that command into the target session at any time, whatever
+happens in the steps below.
 
 ### 6. Show the user and wait
 
-Give the user the handoff file's full path as a link, and summarize it in three
-to five lines: what it covers, the open questions, and anything still not
-committed. Then ask them to approve it, change it, or cancel. Send nothing until
-they approve. If they ask for changes, edit the file, run `check` again, and
-show it again.
+The file already exists, so there is no approval step for creating it. Give the
+user the handoff file's full path as a link, and summarize it in three to five
+lines: what it covers, the open questions, and anything still not committed. Then
+ask whether to send the message to the target session, change the handoff, or
+cancel. Send nothing until they say to send. If they ask for changes, edit the
+draft, run `save --draft <draft> --replace <saved path>`, and show it again. The
+receive command stays the same.
 
 ### 7. Deliver it
 
@@ -130,8 +146,10 @@ Tell the user one of these:
   so; the message can expire, and the file stays either way)
 - not sent, because the target is closed
 
-Give the handoff file path again. Then append a `## Delivery` section to the
-handoff file with the time, the target, and that result.
+Give the handoff file path and the receive command again. Then add a
+`## Delivery` section to the end of the draft with the time, the target, and that
+result, and run `save --draft <draft> --replace <saved path>`, so the saved file
+gets it without an approval prompt.
 
 Say that this session can be closed now. Do not close it, archive it, or stop
 work in it yourself. That is the user's decision.

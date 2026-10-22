@@ -30,7 +30,7 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 18 | claude-hud | `<CLAUDE_DIR>/plugins/cache/claude-hud/` (plugin) and `<CLAUDE_DIR>/plugins/claude-hud/` (launcher) | Third-party plugin | Status line showing the model, project and git branch, context use and subscriber rate limits; optionally tool, agent and todo activity. |
 | 19 | Status line registration | `<CLAUDE_DIR>/settings.json` under `"statusLine"`, `"enabledPlugins"` and `"extraKnownMarketplaces"` | Settings | Written by the plugin's own installer and setup helper; not edited by hand. |
 | 20 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as question, context and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
-| 21 | `session_merge.py` | `<CLAUDE_DIR>/skills/merge-session/session_merge.py` | Python script | Does the mechanical steps for `/merge-session`: turns a session transcript into plain text (so a condensed session can be read back in full), finds sessions by name, names the handoff file, and scans the handoff for secrets and database hostnames. |
+| 21 | `session_merge.py` | `<CLAUDE_DIR>/skills/merge-session/session_merge.py` | Python script | Does the mechanical steps for `/merge-session`: turns a session transcript into plain text (so a condensed session can be read back in full), finds sessions by name, names the handoff file, scans the handoff for secrets and database hostnames, and saves it under `<CLAUDE_DIR>/handoffs/` with the command the receiving session types to read it. |
 | 22 | `/merge-session` | `<CLAUDE_DIR>/skills/merge-session/SKILL.md` | User skill (slash command) | Writes a handoff for another session, shows it to you, and sends it once you approve. In the receiving session, reads the handoff, reports what it adds and where it conflicts, and waits for that session's user. |
 
 Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–10 are one unit: item 6 hands items 7–9 to its judge and reads item 10 itself, all by relative path, so all five go in together, in one `pr-review-loop` folder. Items 11–15 are a second unit: the hook (14) runs a script from item 11, which reads item 12, and the skill (13) and the hook's messages both point at item 11. Items 16–17 are a third unit: the settings (17) run the script (16), and the `spinnerVerbs` line in item 17 works on its own without the script. Items 18–19 are a fourth unit and come from the plugin's own installer; nothing for them is reproduced in this file. Item 20 stands alone: it is text the agent reads, with no script behind it. Items 21–22 are a fifth unit: the skill (22) runs the script (21) from its own folder, so both go in one `merge-session` folder.
@@ -3427,9 +3427,9 @@ The section is read at the start of every session, so it takes effect in the nex
 1. finds the target with `ListAgents`, or, for a closed session, with the script's `find`;
 2. reads this session's own transcript back through the script's `digest`, because a long session has usually been condensed, and its early decisions are then no longer in Claude's working memory;
 3. checks git for what is actually committed, pushed and in a pull request;
-4. writes a handoff file under `<CLAUDE_DIR>/handoffs/` with fixed headings: decisions and why, verified facts with evidence, work on disk, open questions, the user's corrections, traps, what this session stops doing, and what is unknown;
-5. runs the script's `check` over the file, which fails on anything shaped like a secret, a token or a database hostname;
-6. shows you the file and waits for approval;
+4. writes the handoff as a draft in the session's scratchpad, with fixed headings: decisions and why, verified facts with evidence, work on disk, open questions, the user's corrections, traps, what this session stops doing, and what is unknown;
+5. runs the script's `save`, which refuses the draft if anything in it is shaped like a secret, a token or a database hostname, and otherwise copies it under `<CLAUDE_DIR>/handoffs/` and prints the `/merge-session --receive <file>` command for the receiving session. The script is pre-approved, so creating the file asks for no approval;
+6. shows you the file and waits for your go-ahead before it sends anything;
 7. sends a short message that points the target at the file. When the target is closed, it sends nothing and prints the `claude --resume` command and the line to type in that session.
 
 The receiving side is in the same skill (`/merge-session --receive <file>`). The message also carries a plain-text fallback for a session without the skill: read the whole file, tell its user what it adds and where it conflicts with what that session already knows, and take no action until its user replies.
@@ -3483,6 +3483,10 @@ depend on the model's memory or judgment:
   find    lists sessions, open or closed, whose name matches some words, with
           the command that reopens a closed one
   path    names the handoff file for a source and a target session
+  save    checks a draft handoff for secrets, saves it under <claude dir>/handoffs/,
+          and prints the command the receiving session types to read it. The
+          session writes the draft where it needs no approval (its scratchpad),
+          so creating the handoff file never stops for a permission prompt
   check   scans a handoff file for secrets and database hostnames, and exits 1
           when it finds any
 
@@ -3490,6 +3494,7 @@ usage:
   session_merge.py digest [--session-id ID | --transcript PATH] [--output PATH]
   session_merge.py find WORDS...
   session_merge.py path --source NAME --target NAME [--date YYYY-MM-DD]
+  session_merge.py save --draft PATH (--source NAME --target NAME [--date YYYY-MM-DD] | --replace PATH)
   session_merge.py check FILE
 """
 
@@ -4183,6 +4188,75 @@ def run_find(arguments: argparse.Namespace, claude_directory: Path) -> int:
     return 0 if matches else 1
 
 
+def parse_handoff_date(value: str | None) -> date:
+    """Read a --date argument, defaulting to today.
+
+    Args:
+        value: The argument as typed, or None when it was left out.
+
+    Returns:
+        The date.
+
+    Raises:
+        SystemExit: The value is not a YYYY-MM-DD date.
+    """
+    try:
+        return date.fromisoformat(value) if value else date.today()
+    except ValueError:
+        raise SystemExit(f"session_merge: --date must be YYYY-MM-DD, got {value!r}")
+
+
+def build_receive_command(handoff_path: Path) -> str:
+    """Return the command the receiving session types to read a handoff.
+
+    Args:
+        handoff_path: The saved handoff file.
+
+    Returns:
+        For example "/merge-session --receive C:/Users/me/.claude/handoffs/2026-10-22_a_to_b.md".
+    """
+    return f"/merge-session --receive {handoff_path.resolve().as_posix()}"
+
+
+def print_findings(findings: list[SensitiveFinding]) -> None:
+    """Print one indented line per finding: its line number, kind and masked text.
+
+    Args:
+        findings: What find_sensitive_text found.
+    """
+    for finding in findings:
+        print(f"  line {finding.line_number}: {finding.kind}: {finding.masked_excerpt}")
+
+
+def choose_save_path(arguments: argparse.Namespace, handoff_directory: Path) -> Path:
+    """Pick where `save` writes: a new free name, or the saved handoff that --replace names.
+
+    Args:
+        arguments: Parsed command-line arguments.
+        handoff_directory: Folder that holds handoff files.
+
+    Returns:
+        The path to write.
+
+    Raises:
+        SystemExit: --replace is mixed with --source, --target or --date; a new handoff lacks
+            --source or --target; --date is not a YYYY-MM-DD date; or --replace names a file that
+            does not exist or is not in the handoff folder.
+    """
+    if arguments.replace:
+        if arguments.source or arguments.target or arguments.date:
+            raise SystemExit("session_merge: use --replace on its own, or --source and --target for a new handoff, not both")
+        replace_path = Path(arguments.replace).resolve()
+        if not replace_path.is_file():
+            raise SystemExit(f"session_merge: --replace names no saved handoff: {replace_path}")
+        if handoff_directory.resolve() not in replace_path.parents:
+            raise SystemExit(f"session_merge: --replace must name a file in {handoff_directory}, got {replace_path}")
+        return replace_path
+    if not (arguments.source and arguments.target):
+        raise SystemExit("session_merge: a new handoff needs --source and --target (or --replace PATH to update a saved one)")
+    return build_handoff_path(arguments.source, arguments.target, parse_handoff_date(arguments.date), handoff_directory)
+
+
 def run_path(arguments: argparse.Namespace, claude_directory: Path) -> int:
     """Run `path`: print a free handoff file path under <claude dir>/handoffs/.
 
@@ -4196,11 +4270,44 @@ def run_path(arguments: argparse.Namespace, claude_directory: Path) -> int:
     Raises:
         SystemExit: --date is not a YYYY-MM-DD date.
     """
-    try:
-        handoff_date = date.fromisoformat(arguments.date) if arguments.date else date.today()
-    except ValueError:
-        raise SystemExit(f"session_merge: --date must be YYYY-MM-DD, got {arguments.date!r}")
-    print(build_handoff_path(arguments.source, arguments.target, handoff_date, claude_directory / "handoffs"))
+    print(build_handoff_path(arguments.source, arguments.target, parse_handoff_date(arguments.date), claude_directory / "handoffs"))
+    return 0
+
+
+def run_save(arguments: argparse.Namespace, claude_directory: Path) -> int:
+    """Run `save`: check a draft handoff for secrets, copy it into <claude dir>/handoffs/, and print the receive command.
+
+    The session writes the draft where it can write without asking (its scratchpad). This
+    command, which the skill pre-approves, does the write into the handoff folder, so creating
+    the handoff never stops for a permission prompt.
+
+    Args:
+        arguments: Parsed command-line arguments.
+        claude_directory: Claude Code config directory.
+
+    Returns:
+        Exit code 0 when saved. Exit code 1 when the draft holds something that looks like a
+        secret or a database hostname; nothing is saved then.
+
+    Raises:
+        FileNotFoundError: The draft does not exist.
+        SystemExit: The arguments that say where to save are wrong (see choose_save_path).
+    """
+    draft_path = Path(arguments.draft)
+    if not draft_path.is_file():
+        raise FileNotFoundError(f"no draft handoff at {draft_path}")
+    handoff_path = choose_save_path(arguments, claude_directory / "handoffs")
+    content = draft_path.read_bytes()
+    findings = find_sensitive_text(content.decode("utf-8"))
+    if findings:
+        print(f"Not saved: {len(findings)} line(s) in {draft_path} look like secrets or database hostnames. "
+              "Rewrite each one in the draft, then run save again:")
+        print_findings(findings)
+        return 1
+    handoff_path.write_bytes(content)
+    print(f"Saved the handoff to {handoff_path.resolve().as_posix()}")
+    print("To receive it, type this in the target session:")
+    print(build_receive_command(handoff_path))
     return 0
 
 
@@ -4220,13 +4327,12 @@ def run_check(arguments: argparse.Namespace) -> int:
         return 0
     print(f"{len(findings)} line(s) in {handoff_path} look like secrets or database hostnames. "
           "Rewrite each one, then run check again:")
-    for finding in findings:
-        print(f"  line {finding.line_number}: {finding.kind}: {finding.masked_excerpt}")
+    print_findings(findings)
     return 1
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
-    """Build the command-line parser for the four commands.
+    """Build the command-line parser for the five commands.
 
     Returns:
         The parser.
@@ -4244,6 +4350,12 @@ def build_argument_parser() -> argparse.ArgumentParser:
     path_parser.add_argument("--source", required=True, help="name of this session")
     path_parser.add_argument("--target", required=True, help="name of the session the handoff goes to")
     path_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today")
+    save_parser = commands.add_parser("save", help="check a draft handoff, save it under handoffs/ and print the receive command")
+    save_parser.add_argument("--draft", required=True, help="the handoff as written in the session's scratchpad")
+    save_parser.add_argument("--source", help="name of this session, for a new handoff")
+    save_parser.add_argument("--target", help="name of the session the handoff goes to, for a new handoff")
+    save_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today, for a new handoff")
+    save_parser.add_argument("--replace", help="a saved handoff to overwrite with the draft")
     check_parser = commands.add_parser("check", help="scan a handoff file for secrets and hostnames")
     check_parser.add_argument("file")
     return parser
@@ -4268,6 +4380,8 @@ def main(argv: list[str]) -> int:
         return run_find(arguments, claude_directory)
     if arguments.command == "path":
         return run_path(arguments, claude_directory)
+    if arguments.command == "save":
+        return run_save(arguments, claude_directory)
     return run_check(arguments)
 
 
@@ -4280,7 +4394,7 @@ if __name__ == "__main__":
 **Explanation.** Frontmatter fields:
 
 - `allowed-tools: Bash(python *session_merge.py*)` pre-approves the script and nothing else. `SendMessage` still goes through the normal permission rules.
-- There is no `disable-model-invocation`, so a plain request such as "hand this off to the parser session" reaches the skill without the command name. Step 6 of the skill, which shows you the handoff and waits for approval, is what stops it sending anything on its own.
+- There is no `disable-model-invocation`, so a plain request such as "hand this off to the parser session" reaches the skill without the command name. Step 6 of the skill, which shows you the handoff and waits for your go-ahead to send, is what stops it sending anything on its own.
 - `argument-hint` shows the two forms: a target session name, or `--receive <handoff file>`.
 
 **Install.** Create `<CLAUDE_DIR>/skills/merge-session/SKILL.md` with exactly this content:
@@ -4358,9 +4472,11 @@ Anything you cannot check goes under **Unknown** in the handoff.
 
 ### 4. Write the handoff
 
-Run `path --source "<this session's name>" --target "<target name>"`. The script
-prints a free file path under `<claude dir>/handoffs/` and creates that folder.
-Write the handoff there, using the template at the end of this file.
+Write the handoff as a draft in the session's scratchpad directory (otherwise the
+system temp folder), for example `<scratch>/handoff_draft.md`, using the template at
+the end of this file. Do not write into `<claude dir>/handoffs/` yourself: that
+folder is outside the project, so a direct write stops for the user's approval.
+Step 5 saves the draft there with the script, which needs no approval.
 
 Rules for the content:
 
@@ -4379,19 +4495,33 @@ Rules for the content:
 
 Follow the writing and question rules of the project (CLAUDE.md) when there are any.
 
-### 5. Check for secrets
+### 5. Save it and print the receive command
 
-Run `check <handoff file>`. If it exits 1, rewrite each flagged line and run it
-again. Do not send while the check fails. If a flagged line is a false alarm,
-reword it anyway. Do not change the script or skip the check.
+Run `save --draft <draft> --source "<this session's name>" --target "<target name>"`.
+It runs the same secrets check as `check`. If it exits 1, nothing is saved:
+rewrite each flagged line in the draft and run it again. If a flagged line is a
+false alarm, reword it anyway. Do not change the script or skip the check.
+
+When it exits 0, it prints the saved file's path and the command the target
+session types to read it. Show both to the user in the same message, with the
+command in a code block of its own so it can be copied:
+
+```
+/merge-session --receive <absolute path>
+```
+
+The user can paste that command into the target session at any time, whatever
+happens in the steps below.
 
 ### 6. Show the user and wait
 
-Give the user the handoff file's full path as a link, and summarize it in three
-to five lines: what it covers, the open questions, and anything still not
-committed. Then ask them to approve it, change it, or cancel. Send nothing until
-they approve. If they ask for changes, edit the file, run `check` again, and
-show it again.
+The file already exists, so there is no approval step for creating it. Give the
+user the handoff file's full path as a link, and summarize it in three to five
+lines: what it covers, the open questions, and anything still not committed. Then
+ask whether to send the message to the target session, change the handoff, or
+cancel. Send nothing until they say to send. If they ask for changes, edit the
+draft, run `save --draft <draft> --replace <saved path>`, and show it again. The
+receive command stays the same.
 
 ### 7. Deliver it
 
@@ -4418,8 +4548,10 @@ Tell the user one of these:
   so; the message can expire, and the file stays either way)
 - not sent, because the target is closed
 
-Give the handoff file path again. Then append a `## Delivery` section to the
-handoff file with the time, the target, and that result.
+Give the handoff file path and the receive command again. Then add a
+`## Delivery` section to the end of the draft with the time, the target, and that
+result, and run `save --draft <draft> --replace <saved path>`, so the saved file
+gets it without an approval prompt.
 
 Say that this session can be closed now. Do not close it, archive it, or stop
 work in it yourself. That is the user's decision.
@@ -4599,6 +4731,13 @@ echo '{"tool_name":"Bash","tool_input":{"command":"python <CLAUDE_DIR>/skills/me
 
 # 24. A command that chains another script after it is still flagged (prints JSON starting {"systemMessage": "runguard: ...).
 echo '{"tool_name":"Bash","tool_input":{"command":"python <CLAUDE_DIR>/skills/merge-session/session_merge.py find x && python heavy.py"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
+
+# 25. save copies a draft into <CLAUDE_DIR>/handoffs/ and prints the receive command. Delete the saved file afterwards.
+printf '# Handoff\n' > handoff_draft.md
+<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" save --draft handoff_draft.md --source "Source A" --target "Target B" --date 2026-01-01; rm handoff_draft.md
+#    -> Saved the handoff to <CLAUDE_DIR>/handoffs/2026-01-01_source_a_to_target_b.md
+#       To receive it, type this in the target session:
+#       /merge-session --receive <CLAUDE_DIR>/handoffs/2026-01-01_source_a_to_target_b.md
 ```
 
 Then in a **new** Claude Code session:
@@ -4640,7 +4779,7 @@ For Part G, open two sessions, A and B, and give B a name with `/rename`.
 
 19. Type `/` in A and confirm `merge-session` appears in the command list.
 20. Ask Claude in A to run `<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" digest`. The header should name session A and say how many prompts it holds.
-21. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should show the handoff file's path and a short summary, and wait. Approve it. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
+21. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should save the handoff without asking you to approve creating the file, show the `/merge-session --receive <file>` command in a code block with a short summary, and ask whether to send. Say send. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
 22. In A, run `/merge-session` with the name of a session that is closed. It should send nothing, and print the `claude --resume <id>` command and the `/merge-session --receive <file>` line to type there.
 
 ## Uninstall
