@@ -106,6 +106,9 @@ installed.
     digest/            the session write up: hooks, config, prompt
     projects/          projects from requests, meetings and sessions: records, plans, cases, evals
     commands/          /project-new, /project-plan, /project-review, copy into .claude/commands/
+    skills/            /pr-review-loop, response-format and question-format, copy into .claude/skills/
+    openspec-rules/    pre-answered OpenSpec questions, decisions.md and mockups, with the script that patches OpenSpec's skills
+    sessionmerge/      /merge-session: the handoff script and its skill
     codegraph/         a codebase in the graph: the indexer, a sample shop, eleven code questions
     querygraph/        a company's own database queries: five cases on four databases, the indexer to come
     corpus/            8 modelled docs (front matter)

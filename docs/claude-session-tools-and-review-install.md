@@ -1,10 +1,10 @@
-# Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review loop, the run guard, plain status text, the claude-hud status line, the rule for asking questions, and `/merge-session`
+# Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review loop, the run guard, plain status text, the claude-hud status line, the rule for asking questions, `/merge-session`, response and question formats, and OpenSpec rules
 
-These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file (apart from one third-party plugin, installed from its own marketplace): twenty files to create, five settings changes, two sections added to `CLAUDE.md`, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
+These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file (apart from one third-party plugin, installed from its own marketplace): twenty-six files to create, five settings changes, four sections added to `CLAUDE.md`, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
 
-The file has seven parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks, records the outcome as a comment, fixes what the review objected to, and reviews again until every check passes, plus a section of `CLAUDE.md` that makes the agent run that loop on every pull request it creates, with at most 3 fix rounds. **Part C** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part D** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part E** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part F** is a section of `CLAUDE.md` that sets how the agent asks you a question: laid out as the question, its context and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. **Part G** is `/merge-session`: it passes what one session learned (decisions, verified facts, work on disk, open questions, the user's corrections) into another session, as a handoff file plus a short message that points at it, and tells the receiving session to report and wait rather than act. The seven parts are independent of each other.
+The file has nine parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks, records the outcome as a comment, fixes what the review objected to, and reviews again until every check passes, plus a section of `CLAUDE.md` that makes the agent run that loop on every pull request it creates, with at most 3 fix rounds. **Part C** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part D** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part E** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part F** is a section of `CLAUDE.md` that sets how the agent asks you a question: laid out as a short-named block with the question, its context, an example and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. **Part G** is `/merge-session`: it passes what one session learned (decisions, verified facts, work on disk, open questions, the user's corrections) into another session, as a handoff file plus a short message that points at it, and tells the receiving session to report and wait rather than act. **Part H** gives every report one layout, and decisions, problems and questions one block shape, with a script that checks them. **Part I** makes OpenSpec pre-answer its questions into a `decisions.md`, require a deliverable and a mockup in every proposal, and show the decisions before any code is written. The nine parts are independent of each other; Part I uses Part H's checker when Part H is installed.
 
-Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and F are prose only, except that Part B's first run downloads the `asd-ste100` skill, whose linter needs Python 3. Parts C, D and G need Python 3.10 or newer; Part D was tested on Claude Code 2.1.296, and Part G on Claude Code 2.1.308 with Python 3.11.4. Part E was installed on Claude Code 2.1.288 with Node.js 25.3.0 on Windows 10 (claude-hud 0.10.0); it needs Node.js (or Bun on macOS and Linux), not Python.
+Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and F are prose only, except that Part B's first run downloads the `asd-ste100` skill, whose linter needs Python 3. Parts C, D, G, H and I need Python 3.10 or newer; Part D was tested on Claude Code 2.1.296, and Part G on Claude Code 2.1.308 with Python 3.11.4. Part E was installed on Claude Code 2.1.288 with Node.js 25.3.0 on Windows 10 (claude-hud 0.10.0); it needs Node.js (or Bun on macOS and Linux), not Python. Part I was tested with the OpenSpec CLI 1.14.0.
 
 ## What gets installed
 
@@ -30,11 +30,19 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 18 | Status text settings | `<CLAUDE_DIR>/settings.json` (`showTurnDuration`, `spinnerVerbs`, `"hooks"`) | Settings | Turns off the built-in end-of-turn line, sets the spinner word to "Working", and wires item 17 into `UserPromptSubmit` and `Stop`. |
 | 19 | claude-hud | `<CLAUDE_DIR>/plugins/cache/claude-hud/` (plugin) and `<CLAUDE_DIR>/plugins/claude-hud/` (launcher) | Third-party plugin | Status line showing the model, project and git branch, context use and subscriber rate limits; optionally tool, agent and todo activity. |
 | 20 | Status line registration | `<CLAUDE_DIR>/settings.json` under `"statusLine"`, `"enabledPlugins"` and `"extraKnownMarketplaces"` | Settings | Written by the plugin's own installer and setup helper; not edited by hand. |
-| 21 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as question, context and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
+| 21 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as a short-named block with the question, context, an example and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
 | 22 | `session_merge.py` | `<CLAUDE_DIR>/skills/merge-session/session_merge.py` | Python script | Does the mechanical steps for `/merge-session`: turns a session transcript into plain text (so a condensed session can be read back in full), finds sessions by name, names the handoff file, scans the handoff for secrets and database hostnames, and saves it under `<CLAUDE_DIR>/handoffs/` with the command the receiving session types to read it. |
 | 23 | `/merge-session` | `<CLAUDE_DIR>/skills/merge-session/SKILL.md` | User skill (slash command) | Writes a handoff for another session, shows it to you, and sends it once you approve. In the receiving session, reads the handoff, reports what it adds and where it conflicts, and waits for that session's user. |
+| 24 | `response-format` | `<SKILLS_DIR>/response-format/SKILL.md` | Skill | The layout for reports and decision lists: outcome first, links under it, then fixed sections; decisions, problems and questions as short-named blocks. |
+| 25 | `check_format.py` | `<SKILLS_DIR>/response-format/scripts/check_format.py` | Python script run by item 24 | Checks a report or decisions file against the layout, and exits 1 with one line per finding. |
+| 26 | `question-format` | `<SKILLS_DIR>/question-format/SKILL.md` | Skill | The question block: a short-named heading, the question, then Context, Example, Options, Reply with and Recorded in. |
+| 27 | Response rule | a `## Responses: one layout` section in `<CLAUDE_MD>` | Project guidance | Keeps item 24's layout in force in every session. |
+| 28 | OpenSpec rules | `<RULES_DIR>/rules.md` | Spec read by OpenSpec's workflows | Pre-answered questions, `decisions.md`, the deliverable and mockup requirement, and what propose, apply and update show. |
+| 29 | Preferences | `<RULES_DIR>/preferences.md` | Spec read by item 28 | The preferences that settle pre-answered questions, with their order of authority. |
+| 30 | `apply_openspec_rules.py` | `<RULES_DIR>/apply_openspec_rules.py` | Python script | Adds the steps that point OpenSpec's propose, apply and update files at item 28, and restores them after OpenSpec rewrites those files. |
+| 31 | OpenSpec rule | a `## OpenSpec: pre-answered questions and decisions` section in `<CLAUDE_MD>` | Project guidance | Keeps item 28 in force when OpenSpec's files have been rewritten. |
 
-Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–10 are one unit: item 6 hands items 7–9 to its judge and reads item 10 itself, all by relative path, so all five go in together, in one `pr-review-loop` folder. Item 11 is text the agent reads; it calls item 6, so install it with items 6–10. Items 12–16 are a second unit: the hook (15) runs a script from item 12, which reads item 13, and the skill (14) and the hook's messages both point at item 12. Items 17–18 are a third unit: the settings (18) run the script (17), and the `spinnerVerbs` line in item 18 works on its own without the script. Items 19–20 are a fourth unit and come from the plugin's own installer; nothing for them is reproduced in this file. Item 21 stands alone: it is text the agent reads, with no script behind it. Items 22–23 are a fifth unit: the skill (23) runs the script (22) from its own folder, so both go in one `merge-session` folder.
+Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–10 are one unit: item 6 hands items 7–9 to its judge and reads item 10 itself, all by relative path, so all five go in together, in one `pr-review-loop` folder. Item 11 is text the agent reads; it calls item 6, so install it with items 6–10. Items 12–16 are a second unit: the hook (15) runs a script from item 12, which reads item 13, and the skill (14) and the hook's messages both point at item 12. Items 17–18 are a third unit: the settings (18) run the script (17), and the `spinnerVerbs` line in item 18 works on its own without the script. Items 19–20 are a fourth unit and come from the plugin's own installer; nothing for them is reproduced in this file. Item 21 stands alone: it is text the agent reads, with no script behind it. Items 22–23 are a fifth unit: the skill (23) runs the script (22) from its own folder, so both go in one `merge-session` folder. Items 24–27 are a sixth unit: item 24 runs item 25, item 26 is the question half of the same layout, and item 27 keeps the layout in force. Items 28–31 are a seventh unit: item 30 points OpenSpec's files at item 28, which reads item 29, and item 31 keeps item 28 in force.
 
 ## Before you start
 
@@ -48,8 +56,9 @@ Items 1–3 depend on each other: `/restore` calls the script inside the `archiv
 4. **Back up `settings.json`** (for example to `settings.json.bak`) before editing it in step 5.
 5. **Decide where Part B goes**, and read step 6's note on the choice before making it. This document calls that directory `<SKILLS_DIR>`: either `<project>/.claude/skills/` for one project, or `<CLAUDE_DIR>/skills/` for every project on the machine. Part B's first run also needs git, network access to github.com and Python 3, to download the `asd-ste100` skill (step 6 says how to install it ahead of time instead).
 6. **For Part C, check the Python version** is 3.10 or newer (`<PYTHON> --version`), and list the virtual environments that run data scripts or tests. Step 16 adds one small file to each. `/script-preflight` goes in the same `<SKILLS_DIR>` as Part B.
-7. **Decide which `CLAUDE.md` Parts B and F add to.** `<CLAUDE_MD>` is the `CLAUDE.md` their rules are added to: `<project>/CLAUDE.md` for one project, or `<CLAUDE_DIR>/CLAUDE.md` for every project on the machine. Part B adds the rule that runs the review loop on every new pull request, and Part F adds the rule for asking questions. `<DECISIONS_DIR>` (Part F only) is the folder the question records are written to, relative to the project the agent is working in; `docs/decisions` unless the project already keeps decisions somewhere.
+7. **Decide which `CLAUDE.md` Parts B, F, H and I add to.** `<CLAUDE_MD>` is the `CLAUDE.md` their rules are added to: `<project>/CLAUDE.md` for one project, or `<CLAUDE_DIR>/CLAUDE.md` for every project on the machine. Part B adds the rule that runs the review loop on every new pull request, Part F the rule for asking questions, Part H the rule for the response layout, and Part I the pointer to the OpenSpec rules. `<DECISIONS_DIR>` (Part F only) is the folder the question records are written to, relative to the project the agent is working in; `docs/decisions` unless the project already keeps decisions somewhere.
 8. **For Part G, use `<CLAUDE_DIR>/skills/`**, not a project's `.claude/skills/` (Part G explains why). It needs Python 3.10 or newer. If `<PYTHON>` is not `python`, replace `python` with `python3` in the `merge-session` `SKILL.md` in two places, as item 3 describes for Part A: the `allowed-tools` line and the script command in the body.
+9. **For Part I, choose `<RULES_DIR>`**, the folder that holds the OpenSpec rules: `<CLAUDE_DIR>/openspec-rules` for every project, or `<project>/.claude/openspec-rules` for one. Part I also needs the OpenSpec CLI with its Claude Code skills and `/opsx:*` commands installed under `~/.claude` (tested with 1.14.0). Parts H and I need `<PYTHON>` to be Python 3.10 or newer.
 
 ---
 
@@ -3361,7 +3370,7 @@ To change what it shows — compact layout, the tool, agent and todo lines, git 
 
 # Part F — the rule for asking questions
 
-A question an agent asks mid-task is usually written for itself: it names the file it was reading, uses the abbreviation it has been using for an hour, and asks "should I do X?" with no alternative and no reason. You then either answer blind or spend a turn asking what it means. And the answer lives only in the conversation, so the next session asks again, or decides the other way. Worse, when an agent asks three questions and you reply about one of them, the other two tend to vanish: the conversation moves on, and they are never answered, or are quietly decided by default. Part F is one section of `CLAUDE.md` that sets six requirements on every question. The first lays every question out the same way — the question, its context, its options — so you can answer it at a glance. The fifth writes the question and its answer to a file the next session can read. The sixth uses those files to keep every unanswered question open, and asks it again once whatever you raised has been dealt with.
+A question an agent asks mid-task is usually written for itself: it names the file it was reading, uses the abbreviation it has been using for an hour, and asks "should I do X?" with no alternative and no reason. You then either answer blind or spend a turn asking what it means. And the answer lives only in the conversation, so the next session asks again, or decides the other way. Worse, when an agent asks three questions and you reply about one of them, the other two tend to vanish: the conversation moves on, and they are never answered, or are quietly decided by default. Part F is one section of `CLAUDE.md` that sets six requirements on every question. The first lays every question out the same way (a short name, the question, its context, an example, its options), so you can answer it at a glance. The fifth writes the question and its answer to a file the next session can read. The sixth uses those files to keep every unanswered question open, and asks it again once whatever you raised has been dealt with.
 
 ## Step 21: add the section to `CLAUDE.md`
 
@@ -3374,26 +3383,28 @@ Every question you ask the user — a decision, a missing fact, a choice between
 approaches — meets all six of these. A question that does not is not ready to
 ask.
 
-0. **Lay every question out the same way, in three labelled parts, in this
-   order:** **The question** (one sentence, ending in a question mark), then
-   **Context**, then **Options**. Several questions are numbered, each a heading
-   of its own (`### Question 1: <short title>`) with its own three parts, and
-   with the file it is recorded in under the heading. This holds every time a
-   question is asked, including when it is asked again.
+0. **Lay every question out the same way:** a heading `### Q<n>. <Short name>`
+   (two to five words naming what is decided), the question on the next line
+   (one sentence, ending in a question mark), then plain-label bullets in this
+   order: **Context**, **Example**, **Options**, **Reply with**, and
+   **Recorded in** with the file from rule 4. Several questions are numbered Q1,
+   Q2 and so on, each with its own block. This holds every time a question is
+   asked, including when it is asked again. The `question-format` skill (Part H)
+   describes the same block in more detail.
 
    ```markdown
-   ### Question 1: <short title>
-   *Recorded in `<DECISIONS_DIR>/<file>.md`*
+   ### Q1. <Short name>
 
-   **The question:** <one sentence?>
+   <The question, in one sentence?>
 
-   **Context:**
-   - <what you were doing and what you found>
-   - **The answer decides** <which work it unblocks, and what changes with it>
-
-   **Options:**
-   1. **<option> (recommended).** <what it involves, what it leads to, why recommended>
-   2. **<option>.** <what it involves, what it leads to>
+   - Context: <what you were doing, what you found, and what the answer decides>
+   - Example: <one concrete case, with real names or numbers from the task>
+   - Options:
+     - A. <option> (Recommended): <what it involves, what it leads to, why recommended>
+     - B. <option>: <what it involves, what it leads to>
+     - C. Other: describe it in your reply.
+   - Reply with: `Q1: A`, or the letter you choose.
+   - Recorded in: `<DECISIONS_DIR>/<file>.md`
    ```
 1. **Context first.** Before the question, say what you were doing, what you
    found, and what the answer decides: which work it unblocks and what you will
@@ -4656,6 +4667,1582 @@ Changes to skills take effect in **new** Claude Code sessions, and in open ones 
 
 ---
 
+# Part H — response and question formats
+
+Agents report in whatever shape the task suggests, so the pull request link, the outcome and the thing you need to decide sit in a different place every time. Part H gives every report one layout, and gives decisions, problems and questions one block shape: an ID and a short name as the heading (`### D1. Retry limit`), then plain labeled bullets in a fixed order. A problem always carries `Symptom`, `Example`, `Root cause` and `Fix`. A checker script verifies the parts a machine can check. Part F's rule for asking questions uses the same question block.
+
+## Step 24: the `response-format` skill
+
+**Explanation.** The skeleton, in a fixed order: the outcome first with no heading, `## Links` directly under it with pull requests first, then the body, `## Tests`, `## Decisions`, `## Not done`, `## Files`, `## Next step`, and `## Questions for you` last, where the terminal shows it. It also defines the decision block (D), the problem block (F) and how an answer becomes a decision. Install it in `<SKILLS_DIR>` beside the others, one level deep, with `scripts/` inside it.
+
+**Install.** Create `<SKILLS_DIR>/response-format/SKILL.md` with exactly this content:
+
+````markdown
+---
+name: response-format
+description: Standard layout for every report, status update, review summary, plan or decision list sent to the user. The outcome comes first, links (PRs first, then tickets, review comments, CI runs) sit directly under it, then the body, tests, decisions, what was not done, files, next step, and questions last. Decisions, problems and questions share one block shape (an ID and a short name as the heading, then plain labeled bullets in a fixed order), so the reader finds the same field in the same place every time. Use before writing any response that reports finished or partial work, lists decisions, describes problems, includes a PR or ticket link, or asks the user something, and before writing a decisions file or report file. Questions also follow the question-format skill. Not for a one-line casual answer.
+---
+
+# Response format
+
+The reader switches between many projects and scans a response for three
+things: did it work, where is the PR, and what do I need to decide. Every
+response puts those in the same place, so the reader never has to search.
+
+## 1. The skeleton
+
+Fixed order. Leave out a part that would be empty. Never reorder the parts.
+
+| # | Part | Heading | What goes there |
+| --- | --- | --- | --- |
+| 1 | Outcome | none | One or two sentences: what was done or found, and whether it worked. Never a heading, a list or a table. |
+| 2 | Links | `## Links` | PRs first, then tickets, review comments, CI runs, deploys and published pages. See section 2. |
+| 3 | Body | as the task needs | For example `## What changed`, `## Findings`, `## Results`. Problems go here as F blocks. |
+| 4 | Tests | `## Tests` | What ran and the result, failures included. |
+| 5 | Decisions | `## Decisions` | D blocks, with `Needs your yes: yes` blocks first. |
+| 6 | Not done | `## Not done` | Bullets: what was skipped, not checked or deferred, and why. |
+| 7 | Files | `## Files` | One clickable link per line, with the full path. |
+| 8 | Next step | `## Next step` | One or two lines: the command to run or the thing that happens next. |
+| 9 | Questions | `## Questions for you` | Q blocks (question-format skill). Always last, because the end of the message is what the terminal shows. |
+
+A short response with no headings keeps the same order without the headings:
+the outcome sentence, then a `Links:` line, then the rest as prose. A casual
+one-line answer with no links needs no skeleton.
+
+HTML reports and other report files use the same order, with the same section
+names.
+
+## 2. Links
+
+Links sit directly under the outcome, every time, so a PR is always the second
+thing in the response. One link per bullet, in this shape:
+
+```markdown
+## Links
+
+- PR: [shop-api#132 Keep first-day invoice lines](https://github.com/example-org/shop-api/pull/132) (open, fix/first-day-lines → main)
+- Ticket: [TICKET-12 Invoice completeness](https://example.atlassian.net/browse/TICKET-12) (In Progress)
+- Review comment: [Automatic review of 3f9c2a1](https://github.com/example-org/shop-api/pull/132#issuecomment-123)
+- CI run: [deploy.yml on 3f9c2a1](https://github.com/example-org/shop-api/actions/runs/456) (passed)
+```
+
+- The PR lines come first. A PR you mention but did not open still goes here.
+- Each label is one of `PR`, `Ticket`, `Review comment`, `CI run`, `Deploy`,
+  `Page`. Add a new label only when none of these fits.
+- The link text names the thing in words. A PR shows `<repo>#<n>` and its
+  title, and a ticket shows its key and summary.
+- The bracket after the link gives the state you checked, not the state you
+  expect: `open`, `draft`, `merged` or `closed` with `head → base` for a PR, and
+  the workflow status for a ticket.
+- Never write a bare `#132` or `TICKET-12` anywhere in the response. Use the link,
+  or the key followed by its description in brackets: `TICKET-12 (invoice
+  completeness)`.
+
+In a short response, the same links go on one line directly after the outcome:
+`Links: PR [shop-api#132 Keep first-day invoice lines](https://...) (open)`.
+
+## 3. Blocks: decisions, problems and questions
+
+All three use one shape:
+
+```markdown
+### <ID>. <Short name>
+
+- <Label>: <text>
+- <Label>: <text>
+```
+
+The ID is `D1`, `D2` for decisions, `F1`, `F2` for problems and findings, and
+`Q1`, `Q2` for questions. Numbering restarts in each response. A decisions file
+keeps its own numbers, and a response that cites them uses those numbers.
+
+The short name has two to five words. It is a noun phrase that names the
+subject, not a sentence: write `Retry limit`, `Backfill scope` or
+`Unknown CLI arguments`, not `Should we retry?`. Use the same short name every
+time the item is mentioned, as in `D2 (Unknown CLI arguments)`.
+
+Labels are plain text, not bold, one per bullet, in the order given below.
+Leave out an optional label instead of writing "N/A", and do not invent labels.
+A label's text may continue in indented sub-bullets.
+
+### Decision block (D)
+
+| Order | Label | Required | What it holds |
+| --- | --- | --- | --- |
+| 1 | Decision | yes | What was decided, as one sentence. |
+| 2 | Question | no | The question it answers, naming the exact repo, file, table or endpoint. |
+| 3 | Reason | yes | Why this answer. |
+| 4 | Source | no | What settled it: `request`, `project: <path>`, `CLAUDE.md`, a preference such as `P1 Workaround instead of full refactor`, `your answer to Q1 (Backfill scope) on <date>`, or `cheapest to reverse`. |
+| 5 | Not chosen | no | The main alternative and what it would have changed. |
+| 6 | Affects | no | Files, tables, tasks (with their descriptions) that change because of it. |
+| 7 | Needs your yes | no | `yes` with the reason, or `no`. Omit it when nothing needs approval. |
+
+```markdown
+### D1. Unknown CLI arguments
+
+- Decision: `scripts/export.py` rejects an argument it does not recognize, with a usage error and exit code 2.
+- Question: What should `scripts/export.py` do with an argument it does not recognize, such as `--dryrun`?
+- Reason: A mistyped `--dryrun` would otherwise run a real export and replace today's file.
+- Source: P4 Fail loudly
+- Not chosen: Keep ignoring unknown arguments, which keeps old command lines working but lets a typo write.
+- Affects: `scripts/export.py`, task 1.1 (replace the `sys.argv[1]` read with `argparse`)
+- Needs your yes: yes, because jobs outside the repo may pass extra arguments today.
+```
+
+### Problem block (F)
+
+All four labels, in this order. This is the workspace rule for describing a
+problem (symptom, example, root cause, solution) in a fixed shape.
+
+| Order | Label | What it holds |
+| --- | --- | --- |
+| 1 | Symptom | What is wrong, as the user would see it. |
+| 2 | Example | One concrete case: a file and line, a row, a count, a command and its output. |
+| 3 | Root cause | Why it happens. Write `Not known.` when it is not established. |
+| 4 | Fix | The change that would remove it. |
+
+```markdown
+### F1. Invoice lines dropped
+
+- Symptom: The invoice total for Acme Widgets is lower than the supplier's statement.
+- Example: Batch 1234 has 412 lines in `invoice_lines`, and the statement lists 419.
+- Root cause: The date filter in `invoice_loader.py:88` drops lines posted on the first day of the period.
+- Fix: Make the start of the date range inclusive, and add a test with a first-day line.
+```
+
+### Question block (Q)
+
+The heading is `### Q<n>. <Short name>`, the next line is the question itself,
+and the labels are `Context`, `Example`, `Options`, `Reply with` and, when the
+question is recorded in a file, `Recorded in`. The question-format skill has
+the full rules and an example.
+
+### Answers become decisions
+
+When the user answers a question, record the answer as a decision block that
+keeps the question's short name, with
+`Source: your answer to Q1 (Backfill scope) on <date>`. In the next response, it
+appears under `## Decisions`. In a file that holds decisions, such as an OpenSpec
+`decisions.md`, it is added as a new block with the next free D number.
+
+```markdown
+### D4. Backfill scope
+
+- Decision: The backfill leaves out the 37 customers who closed their accounts before 2026-09-01.
+- Reason: Their partial months pulled the August median down.
+- Source: your answer to Q1 (Backfill scope) on 2026-10-22
+```
+
+## 4. Order inside a section
+
+- Decisions: `Needs your yes: yes` first, then in the order the work depends on
+  them.
+- Problems: the most severe first.
+- Questions: the ones that block work first.
+
+## 5. Check before sending
+
+For any file that holds blocks or a report (a decisions file, a report, a plan),
+run the checker and fix every finding:
+
+```bash
+python "<this skill folder>/scripts/check_format.py" <file>
+python "<this skill folder>/scripts/check_format.py" --blocks-only <decisions file>
+```
+
+`--blocks-only` checks only the D, F and Q blocks, for files that have their own
+section layout, such as an OpenSpec `decisions.md`. The checker also reads
+standard input. For a long chat response with blocks or links, save the draft to
+the scratchpad and check it the same way.
+
+Then confirm by reading:
+
+- The first line says what happened, and a PR link (if any) is the second thing.
+- Every block heading is `### <ID>. <Short name>`, and every label is in its
+  fixed place.
+- Nothing refers to `#132`, `TICKET-12`, `D2` or `Q1` without its description or
+  short name.
+- The writing follows the writing rules in your `CLAUDE.md`, if it has any.
+````
+
+## Step 25: the format checker
+
+**Explanation.** `check_format.py` checks what a machine can check: the outcome comes first, pull request and ticket links sit in the Links block with pull requests first, the top-level sections keep their order, every D, F and Q block has an `### <ID>. <Short name>` heading with its labels in order, and no ticket key or pull request number appears without a link or a description. `--blocks-only` checks only the blocks, for files with their own layout, such as an OpenSpec `decisions.md` (Part I). It reads files or standard input, uses the standard library only, and exits 1 with one line per finding.
+
+**Install.** Create `<SKILLS_DIR>/response-format/scripts/check_format.py` with exactly this content:
+
+````python
+"""Check a markdown response, report or decisions file against the response-format standard.
+
+The standard lives in ../SKILL.md. This script checks the parts a machine can check:
+the outcome line comes first, PR and ticket links sit in the Links block directly under
+it, the top-level sections keep their fixed order, every D, F and Q block has an
+`### <ID>. <Short name>` heading with its labels in the fixed order, and no ticket or PR
+number appears without a link or a description.
+
+Usage:
+    python check_format.py FILE [FILE ...]
+    python check_format.py --blocks-only FILE      # only the D, F and Q blocks
+    some_command | python check_format.py          # read standard input
+
+Exit 0 when there are no findings, 1 when there are findings, 2 on a usage error.
+"""
+
+import argparse
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+# Known top-level sections, in their fixed order. Any other `## ` heading is a body section,
+# which sits between Links and Tests.
+SECTION_ORDER: list[str] = [
+    "Links",
+    "Tests",
+    "Decisions",
+    "Not done",
+    "Files",
+    "Next step",
+    "Questions for you",
+]
+BODY_SECTION_RANK = 0.5
+
+DECISION_LABELS: list[str] = [
+    "Decision",
+    "Question",
+    "Reason",
+    "Source",
+    "Not chosen",
+    "Affects",
+    "Needs your yes",
+]
+DECISION_REQUIRED: set[str] = {"Decision", "Reason"}
+PROBLEM_LABELS: list[str] = ["Symptom", "Example", "Root cause", "Fix"]
+QUESTION_LABELS: list[str] = ["Context", "Example", "Options", "Reply with", "Recorded in"]
+QUESTION_REQUIRED: set[str] = {"Context", "Example", "Options"}
+LINK_LABELS: set[str] = {"PR", "Ticket", "Review comment", "CI run", "Deploy", "Page"}
+
+MAX_SHORT_NAME_WORDS = 6
+MAX_SHORT_NAME_CHARACTERS = 60
+
+# A pull request URL, not a link to a comment, file or commit inside the pull request.
+PR_URL = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/pull/\d+(?![\w/#])")
+TICKET_URL = re.compile(r"https://[\w.-]+\.atlassian\.net/browse/[A-Z][A-Z0-9]+-\d+")
+BLOCK_HEADING = re.compile(r"^### ([DFQ])(\d+)\. (.+?)\s*$")
+ANY_BLOCK_HEADING = re.compile(r"^### [DFQ]\d+\b")
+SECTION_HEADING = re.compile(r"^## (?!#)(.+?)\s*$")
+TOP_LABEL = re.compile(r"^- ([A-Z][A-Za-z ]*?):(?:\s|$)")
+BOLD_LABEL = re.compile(r"^- \*\*[^*]+\*\*:?")
+OPTION_LINE = re.compile(r"^\s{2,}- ([A-Z])\. (.*)$")
+LINKS_LINE = re.compile(r"^Links:\s")
+LINK_BULLET = re.compile(r"^- ([A-Za-z ]+): \[.+\]\(https?://[^)]+\)")
+FENCE = re.compile(r"^\s*(```|~~~)")
+MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)")
+INLINE_CODE = re.compile(r"`[^`]*`")
+BARE_URL = re.compile(r"https?://\S+")
+TICKET_KEY = re.compile(r"\b([A-Z]{2,10})-(\d{2,6})\b(?!\s*\()")
+PR_NUMBER = re.compile(r"(?<![\w/#&])#(\d+)\b(?!\s*\()")
+NOT_TICKET_PREFIXES: set[str] = {"UTF", "SHA", "ISO", "RFC", "TLS", "AES", "MD", "HTTP", "IPV"}
+
+
+@dataclass(frozen=True)
+class Finding:
+    """One place where the text breaks the standard.
+
+    Attributes:
+        line: 1-based line number of the problem.
+        rule: Short rule id, stable across runs.
+        message: What is wrong and how to fix it.
+    """
+
+    line: int
+    rule: str
+    message: str
+
+
+def strip_fenced_code(lines: list[str]) -> list[str]:
+    """Blank out lines inside fenced code blocks, keeping line numbers.
+
+    Args:
+        lines: The document lines.
+
+    Returns:
+        A list of the same length where fenced lines (and the fences) are empty strings.
+    """
+    visible: list[str] = []
+    in_fence = False
+    for line in lines:
+        if FENCE.match(line):
+            in_fence = not in_fence
+            visible.append("")
+            continue
+        visible.append("" if in_fence else line)
+    return visible
+
+
+def check_outcome(lines: list[str]) -> list[Finding]:
+    """Check that the first non-empty line is a plain outcome sentence.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+
+    Returns:
+        A finding when the first line is a heading, list item, table row or quote.
+    """
+    for number, line in enumerate(lines, start=1):
+        if not line.strip():
+            continue
+        if re.match(r"^\s*(#|- |\* |\d+\. |\||>)", line):
+            return [Finding(number, "outcome-first", "Start with one or two plain sentences that state the outcome, before any heading, list or table.")]
+        return []
+    return [Finding(1, "outcome-first", "The response is empty.")]
+
+
+def find_sections(lines: list[str]) -> list[tuple[int, str]]:
+    """List the top-level `## ` sections.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+
+    Returns:
+        Pairs of (1-based line number, section name).
+    """
+    sections: list[tuple[int, str]] = []
+    for number, line in enumerate(lines, start=1):
+        match = SECTION_HEADING.match(line)
+        if match:
+            sections.append((number, match.group(1)))
+    return sections
+
+
+def section_rank(name: str) -> float:
+    """Return the position of a section in the fixed order.
+
+    Args:
+        name: The text of a `## ` heading.
+
+    Returns:
+        The index in SECTION_ORDER, or BODY_SECTION_RANK for a body section.
+    """
+    if name in SECTION_ORDER:
+        return float(SECTION_ORDER.index(name))
+    return BODY_SECTION_RANK
+
+
+def check_section_order(sections: list[tuple[int, str]]) -> list[Finding]:
+    """Check that the top-level sections keep the fixed order.
+
+    Args:
+        sections: Pairs of (line number, section name) in document order.
+
+    Returns:
+        One finding per section that comes after a section it should precede.
+    """
+    findings: list[Finding] = []
+    highest_rank = -1.0
+    highest_name = ""
+    for number, name in sections:
+        rank = section_rank(name)
+        if rank < highest_rank:
+            label = "a body section" if rank == BODY_SECTION_RANK else f"'{name}'"
+            findings.append(Finding(number, "section-order", f"{label} must come before '{highest_name}'. Order: outcome, Links, body, {', '.join(SECTION_ORDER[1:])}."))
+        elif rank > highest_rank:
+            highest_rank = rank
+            highest_name = name
+    return findings
+
+
+def links_region(lines: list[str], sections: list[tuple[int, str]]) -> tuple[int, int] | None:
+    """Find the lines that make up the Links block.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+        sections: The top-level sections.
+
+    Returns:
+        A (start, end) pair of 1-based line numbers, end exclusive, or None when there is no Links block.
+    """
+    for index, (number, name) in enumerate(sections):
+        if name == "Links":
+            end = sections[index + 1][0] if index + 1 < len(sections) else len(lines) + 1
+            return number, end
+    non_empty = [number for number, line in enumerate(lines, start=1) if line.strip()]
+    for number in non_empty[:3]:
+        if LINKS_LINE.match(lines[number - 1]):
+            return number, number + 1
+    return None
+
+
+def check_links(lines: list[str], sections: list[tuple[int, str]]) -> list[Finding]:
+    """Check that every PR and ticket URL appears in a Links block under the outcome.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+        sections: The top-level sections.
+
+    Returns:
+        Findings for a missing or misplaced Links block, URLs outside it, and badly shaped link bullets.
+    """
+    urls: dict[str, int] = {}
+    for number, line in enumerate(lines, start=1):
+        for match in list(PR_URL.finditer(line)) + list(TICKET_URL.finditer(line)):
+            urls.setdefault(match.group(0), number)
+    if not urls:
+        return []
+    region = links_region(lines, sections)
+    if region is None:
+        first_line = min(urls.values())
+        return [Finding(first_line, "links-block", "PR or ticket links must sit in a '## Links' section (or a 'Links:' line) directly under the outcome.")]
+    start, end = region
+    findings: list[Finding] = []
+    region_text = "\n".join(lines[start - 1:end - 1])
+    for url, number in urls.items():
+        if url not in region_text:
+            findings.append(Finding(number, "links-block", f"{url} is not in the Links block. Put every PR and ticket link there."))
+    if lines[start - 1].startswith("## "):
+        pr_lines: list[int] = []
+        for number in range(start + 1, end):
+            line = lines[number - 1]
+            if not line.startswith("- "):
+                continue
+            match = LINK_BULLET.match(line)
+            if not match:
+                findings.append(Finding(number, "link-bullet", "Write each link as '- <Label>: [<what it is in words>](<url>) (<state>)'."))
+                continue
+            label = match.group(1)
+            if label not in LINK_LABELS:
+                findings.append(Finding(number, "link-bullet", f"Unknown link label '{label}'. Use one of: {', '.join(sorted(LINK_LABELS))}."))
+            if label == "PR":
+                pr_lines.append(number)
+            elif PR_URL.search(line):
+                findings.append(Finding(number, "link-bullet", "A pull request link gets the 'PR' label."))
+        bullet_lines = [number for number in range(start + 1, end) if lines[number - 1].startswith("- ")]
+        if pr_lines and bullet_lines[:len(pr_lines)] != pr_lines:
+            findings.append(Finding(pr_lines[0], "link-order", "PR lines come first in the Links block."))
+    return findings
+
+
+def split_blocks(lines: list[str]) -> list[tuple[int, str, str, list[tuple[int, str]]]]:
+    """Split the document into D, F and Q blocks.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+
+    Returns:
+        Tuples of (heading line number, block kind letter, short name, body lines with their numbers).
+    """
+    blocks: list[tuple[int, str, str, list[tuple[int, str]]]] = []
+    current: tuple[int, str, str, list[tuple[int, str]]] | None = None
+    for number, line in enumerate(lines, start=1):
+        match = BLOCK_HEADING.match(line)
+        if match:
+            current = (number, match.group(1), match.group(3), [])
+            blocks.append(current)
+            continue
+        if line.startswith("#"):
+            current = None
+            continue
+        if current is not None:
+            current[3].append((number, line))
+    return blocks
+
+
+def check_heading_shape(lines: list[str]) -> list[Finding]:
+    """Find block headings that do not follow `### <ID>. <Short name>`.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+
+    Returns:
+        One finding per malformed D, F or Q heading.
+    """
+    findings: list[Finding] = []
+    for number, line in enumerate(lines, start=1):
+        if ANY_BLOCK_HEADING.match(line) and not BLOCK_HEADING.match(line):
+            findings.append(Finding(number, "block-heading", "Write the heading as '### <ID>. <Short name>', for example '### D1. Retry limit'."))
+    return findings
+
+
+def check_short_name(number: int, short_name: str) -> list[Finding]:
+    """Check that a block's short name is a short noun phrase.
+
+    Args:
+        number: The heading's line number.
+        short_name: The text after '<ID>. '.
+
+    Returns:
+        Findings for a short name that is a question or too long.
+    """
+    findings: list[Finding] = []
+    if short_name.endswith("?"):
+        findings.append(Finding(number, "short-name", "The short name is a noun phrase, not the question. Put the question on the next line."))
+    word_count = len(short_name.split())
+    if word_count > MAX_SHORT_NAME_WORDS or len(short_name) > MAX_SHORT_NAME_CHARACTERS:
+        findings.append(Finding(number, "short-name", f"Short name has {word_count} words. Use two to five words."))
+    return findings
+
+
+def check_label_order(number: int, kind_name: str, labels: list[tuple[int, str]], allowed: list[str], required: set[str]) -> list[Finding]:
+    """Check that a block's labels are known, required ones are present, and the order is fixed.
+
+    Args:
+        number: The heading's line number.
+        kind_name: 'Decision', 'Problem' or 'Question', for messages.
+        labels: Pairs of (line number, label) in document order.
+        allowed: The labels this kind allows, in their fixed order.
+        required: The labels this kind must have.
+
+    Returns:
+        Findings for unknown, duplicate, missing or out-of-order labels.
+    """
+    findings: list[Finding] = []
+    seen: list[str] = []
+    for line_number, label in labels:
+        if label not in allowed:
+            findings.append(Finding(line_number, "block-label", f"'{label}' is not a {kind_name.lower()} label. Use: {', '.join(allowed)}."))
+            continue
+        if label in seen:
+            findings.append(Finding(line_number, "block-label", f"'{label}' appears twice in this block."))
+            continue
+        if seen and allowed.index(label) < allowed.index(seen[-1]):
+            findings.append(Finding(line_number, "label-order", f"'{label}' must come before '{seen[-1]}'. Order: {', '.join(allowed)}."))
+        seen.append(label)
+    for label in allowed:
+        if label in required and label not in seen:
+            findings.append(Finding(number, "block-label", f"{kind_name} block is missing '{label}'."))
+    return findings
+
+
+def check_block(number: int, kind: str, short_name: str, body: list[tuple[int, str]]) -> list[Finding]:
+    """Check one D, F or Q block.
+
+    Args:
+        number: The heading's line number.
+        kind: 'D', 'F' or 'Q'.
+        short_name: The text after '<ID>. '.
+        body: The block's lines with their numbers.
+
+    Returns:
+        Every finding for this block.
+    """
+    findings = check_short_name(number, short_name)
+    labels: list[tuple[int, str]] = []
+    for line_number, line in body:
+        if BOLD_LABEL.match(line):
+            findings.append(Finding(line_number, "bold-label", "Labels are plain text: '- Decision: ...', not '- **Decision**: ...'."))
+            continue
+        match = TOP_LABEL.match(line)
+        if match:
+            labels.append((line_number, match.group(1)))
+    if kind == "D":
+        findings += check_label_order(number, "Decision", labels, DECISION_LABELS, DECISION_REQUIRED)
+        if labels and labels[0][1] != "Decision":
+            findings.append(Finding(labels[0][0], "label-order", "A decision block starts with '- Decision:'."))
+    elif kind == "F":
+        findings += check_label_order(number, "Problem", labels, PROBLEM_LABELS, set(PROBLEM_LABELS))
+    else:
+        findings += check_question(number, body, labels)
+    return findings
+
+
+def check_question(number: int, body: list[tuple[int, str]], labels: list[tuple[int, str]]) -> list[Finding]:
+    """Check the question line, labels and options of a Q block.
+
+    Args:
+        number: The heading's line number.
+        body: The block's lines with their numbers.
+        labels: Pairs of (line number, label) in document order.
+
+    Returns:
+        Findings for the question line, the labels and the options.
+    """
+    findings = check_label_order(number, "Question", labels, QUESTION_LABELS, QUESTION_REQUIRED)
+    first_text = next(((line_number, line) for line_number, line in body if line.strip()), None)
+    if first_text is None or first_text[1].startswith("- ") or not first_text[1].rstrip().endswith("?"):
+        line_number = first_text[0] if first_text else number
+        findings.append(Finding(line_number, "question-line", "The line after the heading is the question itself, one sentence ending in '?'."))
+    options = [(line_number, match.group(1), match.group(2)) for line_number, line in body if (match := OPTION_LINE.match(line))]
+    if any(label == "Options" for _, label in labels):
+        if len(options) < 2:
+            findings.append(Finding(number, "options", "Give at least two lettered options under '- Options:', as '  - A. <choice>: <consequence>'."))
+        else:
+            if "(Recommended)" not in options[0][2]:
+                findings.append(Finding(options[0][0], "options", "Put the recommended option first and mark it '(Recommended)'."))
+            if not options[-1][2].startswith("Other"):
+                findings.append(Finding(options[-1][0], "options", "End the options with 'Other'."))
+    return findings
+
+
+def check_bare_references(lines: list[str]) -> list[Finding]:
+    """Find ticket keys and PR numbers that have neither a link nor a description.
+
+    Args:
+        lines: Document lines with fenced code blanked out.
+
+    Returns:
+        One finding per bare reference.
+    """
+    findings: list[Finding] = []
+    for number, line in enumerate(lines, start=1):
+        if line.startswith("#"):
+            line = line.lstrip("#")
+        visible = BARE_URL.sub(" ", INLINE_CODE.sub(" ", MARKDOWN_LINK.sub(" ", line)))
+        for match in TICKET_KEY.finditer(visible):
+            if match.group(1) not in NOT_TICKET_PREFIXES:
+                findings.append(Finding(number, "bare-reference", f"{match.group(0)} needs a link or a description in brackets, for example '{match.group(0)} (what it is)'."))
+        for match in PR_NUMBER.finditer(visible):
+            findings.append(Finding(number, "bare-reference", f"{match.group(0)} needs a link or a description in brackets."))
+    return findings
+
+
+def check_text(text: str, blocks_only: bool) -> list[Finding]:
+    """Run every check on one document.
+
+    Args:
+        text: The markdown text.
+        blocks_only: When True, check only the D, F and Q blocks and bare references.
+
+    Returns:
+        All findings, sorted by line.
+    """
+    lines = strip_fenced_code(text.splitlines())
+    findings: list[Finding] = []
+    if not blocks_only:
+        sections = find_sections(lines)
+        findings += check_outcome(lines)
+        findings += check_section_order(sections)
+        findings += check_links(lines, sections)
+    findings += check_heading_shape(lines)
+    for number, kind, short_name, body in split_blocks(lines):
+        findings += check_block(number, kind, short_name, body)
+    findings += check_bare_references(lines)
+    return sorted(findings, key=lambda finding: (finding.line, finding.rule))
+
+
+def main() -> None:
+    """Parse the command line, check each input, print findings, and set the exit code."""
+    parser = argparse.ArgumentParser(description="Check markdown against the response-format standard.")
+    parser.add_argument("files", nargs="*", type=Path, help="files to check; standard input when none")
+    parser.add_argument("--blocks-only", action="store_true", help="check only the D, F and Q blocks")
+    arguments = parser.parse_args()
+    inputs: list[tuple[str, str]] = []
+    if arguments.files:
+        for path in arguments.files:
+            inputs.append((str(path), path.read_text(encoding="utf-8")))
+    else:
+        inputs.append(("<stdin>", sys.stdin.read()))
+    total = 0
+    for name, text in inputs:
+        for finding in check_text(text, arguments.blocks_only):
+            print(f"{name}:{finding.line}: {finding.rule}: {finding.message}")
+            total += 1
+    print(f"{total} finding(s)")
+    sys.exit(1 if total else 0)
+
+
+if __name__ == "__main__":
+    main()
+````
+
+## Step 26: the `question-format` skill
+
+**Explanation.** The question block in detail: `### Q<n>. <Short name>`, the question on the next line, then `Context`, `Example`, `Options` (lettered, the recommended one first, `Other` last), `Reply with`, and `Recorded in` when the project keeps a file per question, as Part F does. It also covers the AskUserQuestion tool, where the short name becomes the header chip, and question files with an `[Answer]:` tag.
+
+**Install.** Create `<SKILLS_DIR>/question-format/SKILL.md` with exactly this content:
+
+````markdown
+---
+name: question-format
+description: |
+  Format every question asked of the user as a block: a `### Q<n>. <Short name>` heading, the question itself, then Context, Example, Options and Reply with, in that order. Use this whenever you are about to ask the user anything that needs a decision or a fact from them: a clarifying question in chat, an AskUserQuestion tool call, an AI-DLC `*-questions.md` file, a plan's open questions, or an "Open questions" section in a report or explainer. Triggers on "ask me", "clarify", "open questions", "which option", "need a decision", and any point where you are blocked on the user's input. Not for rhetorical questions inside prose, and not for questions the user asked you.
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - AskUserQuestion
+---
+
+# Question Format
+
+The reader of these questions switches between many projects and will not remember the details of this one. Each question must stand on its own: someone opening it cold should understand what is being decided, why it matters, and what each answer would change, without scrolling back through the conversation.
+
+Questions use the same block shape as decisions and problems (the `response-format` skill): an ID and a short name as the heading, then plain labeled bullets in a fixed order. A reader scanning a response finds the short name, the question, the options and how to reply in the same place every time.
+
+## The parts (always in this order)
+
+1. **Heading**: `### Q<n>. <Short name>`. The short name has two to five words. It is a noun phrase that names what is being decided (`Backfill scope`, `Retry limit`, `Auth method`), not the question. Use it every time the question is mentioned: `Q2 (Backfill scope)`.
+2. **Question**: the next line. One sentence ending in a question mark. Ask one thing. If you need two decisions, write two questions.
+3. **Context**: two to five sentences. Say what you are working on, what you found that raised the question, and what happens next depending on the answer. Name the file, table, ticket, client or number involved. Do not assume the reader remembers earlier messages.
+4. **Example**: at least one concrete case that makes the question tangible. Use real data from the task when you have it (a client id, a row, a dollar amount, a file path, a code snippet). When options lead to different outcomes, show the same example under each option, as sub-bullets, so the reader can see the difference.
+5. **Options**: two to five meaningful choices, lettered A, B, C... Each option gets a one-line consequence (what you will do, and the trade-off). Put your recommendation first and mark it "(Recommended)" with a short reason. End with an "Other" option. Do not invent filler options to reach a count.
+6. **Reply with**: the short reply that answers it, such as `Q1: A`.
+7. **Recorded in** (optional): the file that records the question, when the project keeps one file per question (for example under `docs/decisions/`).
+
+## Layout in chat (plain markdown)
+
+Labels are plain text, not bold, one per bullet.
+
+```markdown
+### Q1. Backfill scope
+
+Should the revenue backfill include customers who closed their accounts before September?
+
+- Context: The revenue backfill job reads `monthly_revenue` for every customer in `customers`. 37 of the 178 rows belong to customers who closed their accounts before 2026-09-01, so their data stops mid-year. Including them changes the benchmark averages; excluding them shrinks the sample.
+- Example: Acme Widgets closed its account on 2026-08-02.
+  - Under A, Acme Widgets is absent from August onward.
+  - Under B, its August row shows 2 days of revenue ($4,120) and drags the August median down.
+- Options:
+  - A. Exclude closed accounts (Recommended): cleaner averages, sample drops from 178 to 141.
+  - B. Include them as-is: full sample, partial months distort the medians.
+  - C. Include them but drop their partial months: full sample for complete months, needs an extra filter.
+  - D. Other: describe it in your reply.
+- Reply with: `Q1: A`, or the letter you choose.
+```
+
+Several questions go under one `## Questions for you` section, at the end of the response (`response-format` skill), with the questions that block work first. Number them Q1, Q2... and keep the batch small (four or fewer) unless the user asked for a full questionnaire.
+
+## Answers become decisions
+
+When the user answers, record the answer as a decision block that keeps the question's short name:
+
+```markdown
+### D3. Backfill scope
+
+- Decision: The backfill leaves out the 37 customers who closed their accounts before 2026-09-01.
+- Reason: Their partial months pulled the August median down.
+- Source: your answer to Q1 (Backfill scope) on 2026-10-22
+```
+
+Show it under `## Decisions` in the next response, and add it to any decisions file the work keeps (for example an OpenSpec `decisions.md`).
+
+## Every reference stands on its own
+
+A question block runs from the heading to the last line of Reply with. Everything inside it must make sense to a reader who sees only that block.
+
+- **Labels carry a description.** Any id, number or label that points somewhere else (a task, step, ticket, question, unit, option, file section, PR) gets a short description in parentheses or beside it, every time it appears. Write `Task 1.1 (add the read-only DB connection helper)`, not `Task 1.1`. Write `TICKET-12 (invoice totals tie to the statement)`, not `TICKET-12`. Write `PR #102 (date parser fix)`, not `#102`. Write `Q2 (Backfill scope)`, not `Q2`.
+- **"This", "that", "it", "these", "the above" must point inside the block.** The thing they refer to must be named earlier within the same question block. If the referent lives in an earlier message, another question, a plan file, or a previous turn, name it explicitly instead of using the pronoun.
+  - Bad: `Should we ship this before the release?` (what is "this"?)
+  - Good: `Should we ship the retry limit change (3→5) for the nightly import queue before the release?` Later lines in the block may then say "this change".
+  - Bad Context: `As discussed above, this breaks the backfill.`
+  - Good Context: `Raising the limit to 5 lets the nightly import finish before messages move to the dead-letter queue; without it, this import leaves about 1,200 messages there.`
+- **No "see above", "as mentioned", "per the plan" without the content.** If the reader needs a fact, put the fact in the block.
+
+## Layout with the AskUserQuestion tool
+
+The tool only has fields for the question, a short header, and option label/description/preview. Fit the parts into it like this:
+
+- Write the block in your chat message immediately before the tool call: the `### Q1. <Short name>` heading, the question, Context and Example. Leave out Options and Reply with, because the tool shows the options.
+- `header`: the short name. The chip allows 12 characters, so shorten it if needed (`Backfill`, `Retry limit`), and keep the same word at the start as the chat heading.
+- `question`: the one-sentence question.
+- `options[].label`: the short choice name; the recommended one first with "(Recommended)".
+- `options[].description`: the consequence and trade-off.
+- `options[].preview`: use it to show the example under that option (a sample row, a snippet, a before/after) when options differ visibly.
+- Do not add an "Other" option; the tool provides one.
+
+## Layout in AI-DLC question files
+
+AI-DLC files (`aidlc-docs/**/*-questions.md`) keep the structure from `common/question-format-guide.md` (lettered options as `A)` lines separated by blank lines, "Other" last, an `[Answer]:` tag). Add the short name to the heading, and put Context and Example between the question text and the options, as plain-label bullets:
+
+```markdown
+## Question 1: Auth method
+Which authentication method should the onboarding portal use?
+
+- Context: The portal is new and sits beside the existing company login. Whichever method we pick decides whether customers need a second password and whether IT must register a new single sign-on (SSO) app.
+- Example: A customer who already signs in to the company site with SSO would, under A, create a second username and password; under B, they click "Sign in with your company account" and land on the portal.
+
+A) Username and password: no IT work, but a second credential for customers.
+
+B) Single Sign-On (Recommended): one login, needs an SSO app registration.
+
+C) Multi-factor on top of username and password: stronger, more friction at sign-up.
+
+X) Other (please describe after [Answer]: tag below)
+
+[Answer]: 
+```
+
+## Checks before you send
+
+- Does every question have a `### Q<n>. <Short name>` heading (or `## Question <n>: <Short name>` in an AI-DLC file), with the question on the next line?
+- Are the labels plain, one per bullet, in the order Context, Example, Options, Reply with, Recorded in?
+- Can someone read this question with no prior context and answer it? If not, add context.
+- Does every label (Task 1.1, Q2, TICKET-12, PR #102, Unit 3) carry a short description next to it?
+- Does every "this", "that", "it" or "the above" point to something named inside the same block?
+- Is there a concrete example with real names or numbers from the task? Placeholder examples ("e.g. some value") do not count.
+- Does each option say what will happen if chosen?
+- Is the recommendation marked and justified in a few words?
+- Could you have answered this yourself from the code, the data, or a sensible default? If so, do not ask. Decide, and record it as a decision block.
+- For chat blocks saved to a file, run `python <response-format skill folder>/scripts/check_format.py --blocks-only <file>`.
+- Writing follows the writing rules in your CLAUDE.md, if it has any.
+````
+
+## Step 27: add the response rule to `CLAUDE.md`
+
+**Explanation.** A skill loads when a request matches its description, and the report at the end of a long task often does not. This section keeps the layout in force in every session.
+
+**Install.** Open `<CLAUDE_MD>`, creating it if it does not exist, and add the section below at the end, verbatim. If the file already has a rule about how responses are laid out, don't add a second one: tell the user, and ask which should stand.
+
+````markdown
+## Responses: one layout
+
+Every response that reports work, lists decisions, describes problems, links a pull request or ticket, or asks a question follows the `response-format` skill. A one-line casual answer needs no layout.
+
+- The outcome comes first, with no heading. `## Links` comes directly under it, pull requests first, as `- PR: [<repo>#<n> <title>](<url>) (<state>, <head> → <base>)`.
+- Then the body, `## Tests`, `## Decisions`, `## Not done`, `## Files`, `## Next step`, and `## Questions for you` last.
+- Decisions are blocks headed `### D<n>. <Short name>`, with the bullets Decision, Question, Reason, Source, Not chosen, Affects and Needs your yes, in that order.
+- Problems are blocks headed `### F<n>. <Short name>`, with the bullets Symptom, Example, Root cause (`Not known.` when it is not established) and Fix.
+- Questions are blocks headed `### Q<n>. <Short name>` (the `question-format` skill). An answer becomes a decision block with the same short name.
+- Check a saved report or decisions file with the skill's `scripts/check_format.py`, and fix every finding.
+````
+
+The section is read at the start of every session, so it takes effect in the next one.
+
+---
+
+# Part I — OpenSpec: pre-answered questions and decisions
+
+For projects that plan changes with OpenSpec (the `openspec` CLI with its Claude Code skills and `/opsx:*` commands). Part I changes four things about OpenSpec's workflows:
+
+- Propose stops asking. It answers each open question itself, from the request, the project, your `CLAUDE.md` and a list of preferences, and records every answer in the change's `decisions.md` with the preference that settled it.
+- Every proposal needs a `## Deliverable and mockup` section: what you get, where to see it, and a mockup of the finished thing.
+- Apply shows the decisions before the first task, and asks only about the ones marked `Needs your yes`.
+- Update keeps `decisions.md` in step when you change a decision.
+
+OpenSpec generates its skill and command files, and `openspec update` rewrites them, so Part I does not edit them by hand. A script adds short steps that point at the rules, and the `CLAUDE.md` section from step 31 keeps the rules in force while those steps are missing. Tested with the OpenSpec CLI 1.14.0.
+
+## Step 28: the rules
+
+**Explanation.** `rules.md` holds the whole procedure: how to pre-answer, the `decisions.md` template, which decisions need your yes, the deliverable and mockup requirement, what propose shows at the end, what apply shows first, and how update keeps the decisions in step. Its last section lists what the patch script adds.
+
+**Install.** Create `<RULES_DIR>/rules.md` with exactly this content:
+
+````markdown
+# OpenSpec workspace rules: pre-answered questions, decisions and mockups
+
+These rules add to the OpenSpec workflows used in this workspace:
+
+- propose and fast-forward (the `openspec-propose` and `openspec-ff-change`
+  skills, and the `/opsx:propose` and `/opsx:ff` commands),
+- apply (`openspec-apply-change`, `/opsx:apply`),
+- update (`openspec-update-change`, `/opsx:update`).
+
+They apply to every copy of those workflows: the personal copies in
+`~/.claude/skills` and `~/.claude/commands/opsx`, and the team copies inside a
+repo. They do not relax any guardrail of the workflows. Propose still writes
+planning artifacts only, and apply still pauses on errors and on added scope.
+
+Preferences live in `preferences.md` in this folder.
+
+---
+
+## 1. Propose: pre-answer every question
+
+Do not stop to ask the user during propose. Each time the workflow would ask,
+answer the question yourself and record the answer as a decision. This covers
+material ambiguity in the request, an artifact that needs user input, an unclear
+target project, and a change name that already exists.
+
+To answer one question:
+
+1. Write the question as the user would have seen it. Name the exact repo, file,
+   table and schema, environment or endpoint.
+2. Look for the answer in the order `preferences.md` gives ("Order of
+   authority"), and stop at the first source that settles it.
+3. Note the answer, the source that settled it, and the main alternative you did
+   not choose.
+4. Write the artifacts as if the user had given that answer.
+
+Never invent a fact to settle a question. If the code or data that would settle
+it cannot be read, the decision says so and picks the option that is cheapest to
+reverse.
+
+A change name that already exists is a question about the change. Do not touch
+the existing change. Use the next free name (`<name>-2`, `<name>-3`) and record
+the choice as a decision.
+
+Two situations are not questions about the change. In those, keep the
+workflow's own behavior:
+
+- The request has no description at all. There is nothing to decide from, so
+  ask what to build.
+- There is no OpenSpec root and the user asked for OpenSpec explicitly. Do not
+  initialize anything. Stop and say so, because setting up OpenSpec in a repo is
+  the user's call.
+
+### Decisions that need the user's yes
+
+Pre-answer these with the safe option and mark them `Needs your yes: yes`:
+
+- a write to a production database, a backfill, a migration or a DDL change,
+- deleting or overwriting data, files, branches or another person's work,
+- anything that notifies people or publishes: Slack, Jira, GitHub comments,
+  email, a deploy to prod,
+- a new recurring cost: a paid service, a larger instance, a more expensive
+  model,
+- a breaking change to an API, table, event or file another team consumes,
+- a change to permissions, grants, IAM roles or secrets.
+
+---
+
+## 2. Propose: write decisions.md
+
+Write `decisions.md` in the change folder (the `changeRoot` that
+`openspec status --change "<name>" --json` returns), next to `proposal.md`.
+Write it after the last artifact, so it matches the final plan.
+
+`decisions.md` is not a schema artifact. `openspec status` does not list it,
+`openspec validate` ignores it, and `openspec archive` moves it with the change.
+
+Use this template:
+
+```markdown
+# Decisions: <change-name>
+
+Status: pending review
+Written by the propose workflow on <YYYY-MM-DD>. Each decision answers a question the workflow would otherwise have asked.
+
+## Preferences used
+
+- P1 Workaround instead of full refactor: settled D1 (<short name>) and D3 (<short name>).
+- P6 Tests for happy, edge and error paths: settled D4 (<short name>).
+
+## Decisions
+
+### D1. <Short name>
+
+- Decision: <what the plan does, in one sentence>
+- Question: <the question the workflow would have asked, naming the exact repo, file, table or endpoint>
+- Reason: <why this answer>
+- Source: <request | project: <path> | CLAUDE.md | P<n> <preference label> | cheapest to reverse>
+- Not chosen: <the main alternative>, which would have <its consequence>
+- Affects: <artifact and section>, task <id> (<what the task does>)
+- Needs your yes: no
+
+## Changes to decisions
+
+None yet.
+```
+
+Rules for the file:
+
+- Each decision is a decision block from the `response-format` skill: a
+  `### D<n>. <Short name>` heading, then the labels in the fixed order shown
+  above. The short name has two to five words and names the subject
+  (`Unknown CLI arguments`, `Retry limit`), not the question.
+- One decision per question. Number them D1, D2 and so on, with the decisions
+  marked `Needs your yes: yes` first, then in the order the plan depends on
+  them.
+- List a preference under "Preferences used" only if it settled at least one
+  decision, and name each decision with its short name.
+- Each decision stands alone. A reader who sees only that block knows what was
+  decided, about which thing, and why.
+- If no question came up, write "No open questions came up." under Decisions and
+  keep the file. Apply looks for it.
+- Check the file before showing it:
+  `python <response-format skill folder>/scripts/check_format.py --blocks-only <decisions.md>`,
+  when the response-format skill is installed.
+  Fix every finding.
+
+---
+
+## 3. Propose: require a deliverable and a mockup
+
+`proposal.md` gets a `## Deliverable and mockup` section directly after
+`## What Changes`. A proposal without this section is not complete. The section
+has three parts:
+
+1. What the user gets, in one or two sentences, naming the concrete thing: a
+   page, an endpoint, a table or view, a report, a script, a job, a document.
+2. Where to see it: the URL path, file path, command or table name, and the
+   environment.
+3. A mockup of the finished deliverable. Choose the form by type:
+
+| Deliverable | Mockup |
+| --- | --- |
+| UI page or component | ASCII wireframe in a `text` block, plus `mockup.html` in the change folder: a static page styled per the repo's `DESIGN.md` when it has one. Link to it from the section. |
+| API endpoint | Example request and response with realistic values, plus one error response |
+| Table, view or ETL output | Column list with types, the grain (one row per what), and 3 to 5 sample rows |
+| Report, spreadsheet or HTML report | Section outline, plus one sample table with representative rows |
+| Script, CLI or scheduled job | Example command and its console output, plus one failure output |
+| Event, message or webhook | Sample payload |
+| Infrastructure or configuration | Config snippet before and after, or a Mermaid diagram |
+| Documentation only | Heading outline with one line per section |
+| Internal change with no visible output | The interface before and after (function signature, config key), and the test output that proves the change |
+
+Mockup rules:
+
+- The values are examples. Label them "Example values". Never paste real
+  customer data, personal data, secrets or database hostnames.
+- Check Mermaid and ASCII diagrams before writing them (the project's
+  content-validation rules, when it has them).
+- The mockup is what the reviewer signs off on. `tasks.md` includes one task
+  that builds the deliverable to match the mockup, and one task that checks the
+  result against it.
+
+---
+
+## 4. Propose: what to show at the end
+
+Lay out the end-of-propose message as the `response-format` skill says, with
+these parts in this order:
+
+1. The outcome: one or two sentences naming the change and saying that
+   `openspec validate --strict` passed (or what failed).
+2. `## Links`, only when a PR or ticket is involved.
+3. `## Artifacts`: each artifact with a one-line description, plus any
+   conditional artifact you skipped and why.
+4. `## Deliverable`: the first sentence of the deliverable section, then the
+   mockup or the link to `mockup.html`.
+5. `## Decisions`: first the "Preferences used" list from `decisions.md`, then
+   every decision block, with the decisions marked `Needs your yes: yes` first.
+   In chat, each block shows `Decision`, `Reason`, `Source` and, when it is yes,
+   `Needs your yes`. The full blocks stay in `decisions.md`.
+6. `## Files`: clickable links to `proposal.md`, `design.md`, `tasks.md`, the
+   spec files, `decisions.md` and `mockup.html` when it exists.
+7. `## Next step`, with this text. Fill in the example from one of this
+   change's own decisions, using its real number and a real alternative from
+   its `Not chosen` line, so the example matches the list above it:
+
+> To change a decision, reply with its number and the new answer (for example
+> `D<n>: <the alternative from that decision's Not chosen line>`), and I will
+> update the plan. Run `/opsx:apply` when the decisions look right.
+
+---
+
+## 5. Apply: show the decisions before any code
+
+When the apply instructions return a state that proceeds to implementation, and
+before the first task:
+
+1. Read `decisions.md` from the change folder. If it is missing (an older change,
+   or a change written by a teammate), say "This change has no decisions.md" and
+   continue the workflow as written.
+2. Show the preferences used and the decision blocks under a `## Decisions`
+   heading, in the format of section 4, part 5.
+3. Running apply accepts the decisions shown, except the ones marked
+   `Needs your yes`. If any of those has no yes from the user, either in this
+   conversation or under "Changes to decisions", ask about all of them in one
+   message (question-format skill) and start no task until the user answers.
+   Each question keeps the decision's short name, so `D2 (Unknown CLI
+   arguments)` is asked as `### Q1. Unknown CLI arguments`.
+   Record each answer under "Changes to decisions". If the user says no, that
+   is a change to the decision: update the plan as section 6 says before any
+   task starts.
+4. Only when no decision is still waiting for a yes, change the status line to
+   `Status: accepted on <YYYY-MM-DD>, when apply started`. While one is waiting,
+   leave the status as `pending review`.
+
+If a decision proves wrong during implementation, it is a design issue. Pause as
+the apply workflow says, and when the user decides, record the change under
+"Changes to decisions".
+
+---
+
+## 6. Update: keep decisions.md in step
+
+When the update workflow revises a change that has a `decisions.md`:
+
+- Reconcile `decisions.md` together with the schema artifacts. A revision that
+  changes an answer updates that decision block's `Decision`, `Reason`,
+  `Source` and `Affects` lines, and keeps its number and short name. The new
+  `Source` is `your answer on <YYYY-MM-DD>`.
+- Add one bullet per changed decision under "Changes to decisions":
+  `- D<n> (<Short name>) changed on <YYYY-MM-DD> by the user: <old decision> → <new decision>`.
+  Remove the "None yet." line the first time.
+- A reply such as `D2: keep ignoring unknown arguments` is a request to change
+  D2. Draft the revision of every artifact the decision affects, as the update
+  workflow says.
+- If apply has not started, set the status back to `Status: pending review`.
+- After writing, run the checker on `decisions.md` (section 2), then show the
+  decision blocks again, in the format of section 4, part 5.
+
+---
+
+## 7. After OpenSpec regenerates its files
+
+`openspec update` and `openspec init` rewrite the personal copies in
+`~/.claude/skills/openspec-*` and `~/.claude/commands/opsx/`, which removes the
+short blocks that point here. The OpenSpec section in `CLAUDE.md` keeps these
+rules in force anyway. To restore the blocks, run this from the folder that holds this file:
+
+```bash
+python apply_openspec_rules.py
+```
+
+The script is safe to re-run: it skips blocks that are already there. If OpenSpec
+changed the text a block anchors to, the script stops with an error that names
+the file and the block, and writes nothing. Update that anchor in the script and
+run it again. Its tests live with its source, in
+`tests/test_apply_openspec_rules.py`.
+
+What the script adds:
+
+| File | Where | Block |
+| --- | --- | --- |
+| `skills/openspec-propose/SKILL.md` and `commands/opsx/propose.md` | after the "Planning boundary" paragraph | "Workspace rules" paragraph pointing to sections 1 to 4 |
+| same two files | step 1 ambiguity line, step 6c, the two "ask" guardrails | "pre-answer and record" in place of "ask" |
+| same two files | before "Show final status" | step "Write decisions.md" (section 2) |
+| same two files | Output | the three parts of section 4 |
+| `skills/openspec-apply-change/SKILL.md` and `commands/opsx/apply.md` | between step 4 and step 5 | step "4b. Show the decisions" (section 5) |
+| `skills/openspec-update-change/SKILL.md` and `commands/opsx/update.md` | after step 4 | step "4b. Reconcile decisions.md" (section 6) |
+````
+
+## Step 29: the preferences
+
+**Explanation.** The preferences that settle a question when the request, the project and your `CLAUDE.md` do not: P1 workaround instead of full refactor, P2 additive and not breaking, and so on, with an order of authority. Edit this file to change how proposals decide. Keep the IDs stable, because past `decisions.md` files cite them.
+
+**Install.** Create `<RULES_DIR>/preferences.md` with exactly this content:
+
+````markdown
+# Preferences for pre-answered OpenSpec questions
+
+The OpenSpec propose workflow answers its own questions instead of stopping to
+ask (see `rules.md` in this folder). When the request, the project and the code
+do not settle a question, it picks the answer one of these preferences points to,
+and lists that preference under "Preferences used" in the change's
+`decisions.md`.
+
+Edit this file to change how future proposals decide. Keep the IDs stable,
+because past `decisions.md` files cite them. Add a new preference at the end
+with the next free ID instead of reusing an old one.
+
+## Order of authority
+
+When two sources disagree, the higher one wins:
+
+1. What the user said in the request or in the conversation.
+2. The project: the `context` in `openspec/config.yaml`, `AGENTS.md`, convention
+   docs, decision records, and what the code already does.
+3. The user's standing rules: the `CLAUDE.md` files in scope and
+   `~/.claude/profile.md`.
+4. The preferences below.
+5. If the question is still open: the option that is cheapest to reverse.
+
+## The preferences
+
+Each entry has a short label (used in the summary), the rule, and when it does
+not apply.
+
+### P1. Workaround instead of full refactor
+
+Make the smallest change that meets the request: a targeted fix or a workaround
+inside the existing structure.
+
+Does not apply when the request asks for the refactor, or when the fix cannot
+work without it. Then the decision says why.
+
+### P2. Additive, not breaking
+
+Keep contracts backward compatible. Add a field, column, parameter or endpoint
+version instead of changing or removing an existing one.
+
+Does not apply when the request asks for the breaking change. A breaking change
+to something another team consumes always needs the user's yes.
+
+### P3. Reuse what exists
+
+Use the repo's existing patterns, helpers, libraries and configuration
+mechanism. Add no new dependency.
+
+Does not apply when nothing in the repo does this kind of work.
+
+### P4. Fail loudly
+
+Raise errors with enough context to diagnose them. Route unmatched records to a
+catch-all that counts them, or fail the run. No silent fallback, no swallowed
+error, and no warning in place of an error.
+
+Always applies.
+
+### P5. Read-only data access
+
+Investigation, checks and backtests read from the read-only replica or with a
+read-only login, and issue only `SELECT`.
+
+A write, a backfill, a migration or a DDL change is never pre-approved. The plan
+can include it, but the decision is marked `Needs your yes`.
+
+### P6. Tests for happy, edge and error paths
+
+Every behavior change gets tests for the happy path, the edge cases and the
+error cases. Mocks are allowed where the real dependency cannot be reached.
+
+Does not apply to documentation-only changes.
+
+### P7. Defer extras to follow-ups
+
+Nice-to-have and adjacent work goes into a "Follow-ups" list in the proposal,
+not into this change.
+
+Does not apply when the request names that work.
+
+### P8. Ship dark behind the existing flag
+
+A risky behavior change ships behind the repo's existing feature flag or config
+switch, off by default.
+
+Does not apply when the repo has no flag mechanism. Do not add one for this
+change.
+
+### P9. Dev, then staging, then prod
+
+Rollout tasks go to dev first, then staging, then prod. No plan touches prod
+first.
+
+Always applies.
+````
+
+## Step 30: the patch script
+
+**Explanation.** `apply_openspec_rules.py` adds the steps that point OpenSpec's propose, apply and update files at `rules.md`: six files under `~/.claude/skills/openspec-*` and `~/.claude/commands/opsx/`. It finds `rules.md` next to itself, so the steps point at wherever you installed the rules. It is safe to re-run, because it skips steps that are already there. If OpenSpec changed the text a step anchors to, it stops with an error naming the file and the step, and writes nothing.
+
+**Install.** Create `<RULES_DIR>/apply_openspec_rules.py` with exactly this content:
+
+````python
+"""Insert the workspace OpenSpec rules into the personal OpenSpec skill and command files.
+
+The OpenSpec CLI generates ~/.claude/skills/openspec-* and ~/.claude/commands/opsx/*.md,
+and `openspec update` or `openspec init` rewrites them. This script adds the short blocks
+that point those workflows at rules.md in this folder. It is idempotent: a block that is
+already present is skipped. If an anchor it needs is missing or appears more than once, it
+raises and writes nothing, because a silent partial patch would leave the workflows half
+changed.
+
+Usage:
+    python apply_openspec_rules.py            # patch the files under ~/.claude
+    python apply_openspec_rules.py --dry-run  # report what would change, write nothing
+    python apply_openspec_rules.py --home <dir>
+"""
+
+import argparse
+from dataclasses import dataclass
+from pathlib import Path
+
+# rules.md sits next to this script, so the steps it adds point at whichever folder the rules are installed in.
+RULES_PATH = (Path(__file__).resolve().parent / "rules.md").as_posix()
+
+
+@dataclass(frozen=True)
+class TextEdit:
+    """One replacement of an anchor string that must appear exactly once.
+
+    Attributes:
+        name: Short label used in reports and errors.
+        anchor: Text that must appear exactly once in the target file before patching.
+        replacement: Text that replaces the anchor. Its presence marks the edit as done.
+        previous_replacements: Older versions of the replacement. One found in the file is
+            upgraded to the current replacement instead of looking for the anchor.
+    """
+
+    name: str
+    anchor: str
+    replacement: str
+    previous_replacements: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class EditResult:
+    """Outcome of planning the edits for one file.
+
+    Attributes:
+        path: The file the edits target.
+        applied: Names of the edits that change the file.
+        skipped: Names of the edits already present in the file.
+        new_text: The full file text after the edits.
+    """
+
+    path: Path
+    applied: list[str]
+    skipped: list[str]
+    new_text: str
+
+
+class AnchorError(ValueError):
+    """Raised when an anchor is missing or is not unique in a target file."""
+
+
+WORKSPACE_RULES_PARAGRAPH = (
+    f"**Workspace rules**: Before step 1, read `{RULES_PATH}` and `preferences.md` in the same "
+    "folder, and follow sections 1 to 4. They change this workflow in three ways. Every question "
+    "is pre-answered and recorded as a decision instead of asked. The change gets a `decisions.md`. "
+    "And `proposal.md` needs a `## Deliverable and mockup` section. Where a step below says to ask "
+    "the user, pre-answer instead, except in the two situations the rules file names."
+)
+
+PLANNING_BOUNDARY = (
+    "**Planning boundary**: This workflow creates planning artifacts only. The user request that "
+    "selected or triggered this workflow authorizes planning only, even if it asks to build or fix "
+    "something. Do not edit project code. After the planning artifacts are complete, stop. Do not "
+    "start implementation in the same response, even if the initial request asks for it. Wait for "
+    "a new user request after the artifacts are presented; then start the apply workflow."
+)
+
+PROPOSE_EDITS = [
+    TextEdit(
+        name="propose: workspace rules paragraph",
+        anchor=PLANNING_BOUNDARY,
+        replacement=PLANNING_BOUNDARY + "\n\n" + WORKSPACE_RULES_PARAGRAPH,
+    ),
+    TextEdit(
+        name="propose: step 1 pre-answers ambiguity",
+        anchor=(
+            "acceptance criteria, ask the user before creating the change. For minor details, "
+            "make a reasonable assumption and record it in the planning artifacts."
+        ),
+        replacement=(
+            "acceptance criteria, do not ask: pre-answer it and record it as a decision "
+            "(workspace rules, section 1). For minor details, make a reasonable assumption and "
+            "record it in the planning artifacts."
+        ),
+    ),
+    TextEdit(
+        name="propose: step 6c pre-answers artifact input",
+        anchor=(
+            "   c. **If an artifact requires user input** (unclear context):\n"
+            "      - Ask the user to clarify\n"
+        ),
+        replacement=(
+            "   c. **If an artifact requires user input** (unclear context):\n"
+            "      - Do not ask: pre-answer it and record it as a decision (workspace rules, section 1)\n"
+        ),
+    ),
+    TextEdit(
+        name="propose: step 7 writes decisions.md",
+        anchor="7. **Show final status**\n",
+        replacement=(
+            "7. **Write decisions.md** (workspace rules, section 2)\n\n"
+            "   Write `decisions.md` in the change folder with every pre-answered question and the "
+            "preferences that settled them. Check that `proposal.md` has its "
+            "`## Deliverable and mockup` section (section 3) before you continue.\n\n"
+            "8. **Show final status**\n"
+        ),
+    ),
+    TextEdit(
+        name="propose: output shows deliverable, preferences and decisions",
+        anchor="- What's ready: \"All artifacts needed for implementation are ready.\"\n",
+        replacement=(
+            "- What's ready: \"All artifacts needed for implementation are ready.\"\n"
+            "- Lay out the whole message as workspace rules section 4 says (outcome, Artifacts, "
+            "Deliverable, Decisions as decision blocks with short names, Files, Next step). It "
+            "covers the items above and replaces the prompt below.\n"
+        ),
+        previous_replacements=(
+            "- What's ready: \"All artifacts needed for implementation are ready.\"\n"
+            "- Then the three parts of workspace rules section 4, each under its own heading: "
+            "Deliverable (with the mockup), Preferences used, and Decisions, followed by a link to "
+            "`decisions.md`. End with the closing lines of section 4 instead of the prompt below.\n",
+        ),
+    ),
+    TextEdit(
+        name="propose: guideline requires the deliverable section",
+        anchor="- Use `template` as the structure for your output file - fill in its sections\n",
+        replacement=(
+            "- Use `template` as the structure for your output file - fill in its sections\n"
+            "- `proposal.md` also gets a `## Deliverable and mockup` section directly after "
+            "`## What Changes` (workspace rules, section 3)\n"
+        ),
+    ),
+    TextEdit(
+        name="propose: guardrail pre-answers ambiguity",
+        anchor=(
+            "- Ask about ambiguities that would materially change scope, externally observable "
+            "behavior, compatibility, or acceptance criteria; for minor details, make reasonable "
+            "assumptions and record them"
+        ),
+        replacement=(
+            "- Pre-answer ambiguities that would materially change scope, externally observable "
+            "behavior, compatibility, or acceptance criteria, and record each one in `decisions.md` "
+            "(workspace rules, section 1); for minor details, make reasonable assumptions and "
+            "record them"
+        ),
+    ),
+    TextEdit(
+        name="propose: guardrail for an existing change name",
+        anchor="- If a change with that name already exists, ask if user wants to continue it or create a new one",
+        replacement=(
+            "- If a change with that name already exists, do not touch it: use the next free name "
+            "(`<name>-2`) and record that as a decision"
+        ),
+    ),
+]
+
+APPLY_EDITS = [
+    TextEdit(
+        name="apply: step 4b shows the decisions",
+        anchor="5. **Show current progress**\n",
+        replacement=(
+            "4b. **Show the decisions** (workspace rules)\n\n"
+            f"   If the state proceeds to implementation, read `{RULES_PATH}` and follow section 5 "
+            "before the first task: show the preferences used and the decisions from the change's "
+            "`decisions.md`, get a yes for any decision marked `Needs your yes`, then mark the "
+            "file accepted.\n\n"
+            "5. **Show current progress**\n"
+        ),
+    ),
+    TextEdit(
+        name="apply: guardrail shows the decisions first",
+        anchor="- Always read context files before starting (from the apply instructions output)\n",
+        replacement=(
+            "- Always read context files before starting (from the apply instructions output)\n"
+            "- Show the change's decisions before the first task (workspace rules, section 5)\n"
+        ),
+    ),
+]
+
+UPDATE_EDITS = [
+    TextEdit(
+        name="update: step 4b reconciles decisions.md",
+        anchor="5. **Confirm and apply, one artifact at a time**\n",
+        replacement=(
+            "4b. **Reconcile decisions.md** (workspace rules)\n\n"
+            f"   If the change folder has a `decisions.md`, read `{RULES_PATH}` and follow "
+            "section 6: reconcile it with the drafted revisions and include its edits in step 5. "
+            "A reply such as `D2: full refactor` is a request to change that decision.\n\n"
+            "5. **Confirm and apply, one artifact at a time**\n"
+        ),
+    ),
+    TextEdit(
+        name="update: output shows the decision list",
+        anchor="- Where the change stands and the recommended next command\n",
+        replacement=(
+            "- Where the change stands and the recommended next command\n"
+            "- The decision list again, if `decisions.md` changed (workspace rules, section 4 format)\n"
+        ),
+    ),
+]
+
+
+def build_targets(home: Path) -> dict[Path, list[TextEdit]]:
+    """Map each OpenSpec file under a home folder to the edits it needs.
+
+    Args:
+        home: The folder that holds `.claude` (normally the user's home folder).
+
+    Returns:
+        A mapping from file path to the ordered list of edits for that file.
+    """
+    claude_dir = home / ".claude"
+    return {
+        claude_dir / "skills" / "openspec-propose" / "SKILL.md": PROPOSE_EDITS,
+        claude_dir / "commands" / "opsx" / "propose.md": PROPOSE_EDITS,
+        claude_dir / "skills" / "openspec-apply-change" / "SKILL.md": APPLY_EDITS,
+        claude_dir / "commands" / "opsx" / "apply.md": APPLY_EDITS,
+        claude_dir / "skills" / "openspec-update-change" / "SKILL.md": UPDATE_EDITS,
+        claude_dir / "commands" / "opsx" / "update.md": UPDATE_EDITS,
+    }
+
+
+def plan_edits(path: Path, text: str, edits: list[TextEdit]) -> EditResult:
+    """Apply edits to a file's text in memory.
+
+    An edit whose replacement is already present is skipped. An edit whose older
+    replacement is present is upgraded in place. Every other edit needs its anchor exactly
+    once.
+
+    Args:
+        path: The file the text came from, used in errors and the result.
+        text: The current file text.
+        edits: The edits to apply, in order.
+
+    Returns:
+        The edit result with the new text and the names of applied and skipped edits.
+
+    Raises:
+        AnchorError: An anchor is missing, or appears more than once.
+    """
+    applied: list[str] = []
+    skipped: list[str] = []
+    new_text = text
+    for edit in edits:
+        if edit.replacement in new_text:
+            skipped.append(edit.name)
+            continue
+        previous = next((text for text in edit.previous_replacements if new_text.count(text) == 1), None)
+        if previous is not None:
+            new_text = new_text.replace(previous, edit.replacement)
+            applied.append(edit.name)
+            continue
+        anchor_count = new_text.count(edit.anchor)
+        if anchor_count != 1:
+            raise AnchorError(
+                f"{path}: edit '{edit.name}' needs its anchor exactly once, found {anchor_count}. "
+                "OpenSpec may have changed this file; update the anchor in apply_openspec_rules.py."
+            )
+        new_text = new_text.replace(edit.anchor, edit.replacement)
+        applied.append(edit.name)
+    return EditResult(path=path, applied=applied, skipped=skipped, new_text=new_text)
+
+
+def apply_rules(home: Path, dry_run: bool) -> list[EditResult]:
+    """Plan the edits for every target file, then write them all.
+
+    Nothing is written unless every file plans cleanly.
+
+    Args:
+        home: The folder that holds `.claude`.
+        dry_run: When True, plan and report but write nothing.
+
+    Returns:
+        One edit result per target file.
+
+    Raises:
+        FileNotFoundError: A target file does not exist.
+        AnchorError: An anchor is missing or not unique in a target file.
+    """
+    results: list[EditResult] = []
+    for path, edits in build_targets(home).items():
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            text = handle.read()
+        results.append(plan_edits(path, text, edits))
+    if not dry_run:
+        for result in results:
+            if result.applied:
+                with result.path.open("w", encoding="utf-8", newline="") as handle:
+                    handle.write(result.new_text)
+    return results
+
+
+def main() -> None:
+    """Parse the command line, patch the files, and print what changed."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--home", type=Path, default=Path.home(), help="folder that holds .claude")
+    parser.add_argument("--dry-run", action="store_true", help="report what would change, write nothing")
+    arguments = parser.parse_args()
+    results = apply_rules(arguments.home, arguments.dry_run)
+    verb = "would apply" if arguments.dry_run else "applied"
+    for result in results:
+        print(f"{result.path}: {verb} {len(result.applied)}, already present {len(result.skipped)}")
+        for name in result.applied:
+            print(f"  + {name}")
+
+
+if __name__ == "__main__":
+    main()
+````
+
+Then run it, first as a dry run:
+
+```bash
+<PYTHON> "<RULES_DIR>/apply_openspec_rules.py" --dry-run
+<PYTHON> "<RULES_DIR>/apply_openspec_rules.py"
+```
+
+Run it again after every `openspec update` or `openspec init`.
+
+## Step 31: add the OpenSpec rule to `CLAUDE.md`
+
+**Explanation.** This section keeps the rules in force when OpenSpec has rewritten its files and the script has not been run again yet, and when a project's own copy of OpenSpec's skills runs instead of the patched one.
+
+**Install.** Open `<CLAUDE_MD>` and add the section below at the end. Replace `<RULES_DIR>` with the folder you chose, everywhere it appears. If the file already has a rule about OpenSpec, don't add a second one: tell the user, and ask which should stand.
+
+````markdown
+## OpenSpec: pre-answered questions and decisions
+
+OpenSpec propose, fast-forward, apply and update (the `openspec-*` skills and `/opsx:*` commands, whichever copy runs) also follow `<RULES_DIR>/rules.md`. Propose pre-answers its questions instead of asking, writes them to the change's `decisions.md` with the preferences it used (`<RULES_DIR>/preferences.md`), and requires a `## Deliverable and mockup` section in `proposal.md`. Apply shows the decisions before the first task. After `openspec update` or `openspec init` rewrites OpenSpec's skill files, run `python <RULES_DIR>/apply_openspec_rules.py` to restore the steps that point at the rules.
+````
+
+---
+
 ## Verify
 
 Run these from a terminal. Each should succeed quietly or print what's shown:
@@ -4773,6 +6360,26 @@ printf '# Handoff\n' > handoff_draft.md
 #    -> Saved the handoff to <CLAUDE_DIR>/handoffs/2026-01-01_source_a_to_target_b.md
 #       To receive it, type this in the target session:
 #       /merge-session --receive <CLAUDE_DIR>/handoffs/2026-01-01_source_a_to_target_b.md
+
+# --- Part H ---
+# 27. The three files are in place.
+ls "<SKILLS_DIR>/response-format/SKILL.md" "<SKILLS_DIR>/response-format/scripts/check_format.py" "<SKILLS_DIR>/question-format/SKILL.md"
+
+# 28. The checker passes a report in the layout, and flags one that starts with a heading (exit code 1).
+printf 'Done.\n\n## Decisions\n\n### D1. Retry limit\n\n- Decision: Retry 3 times.\n- Reason: The API recovers.\n' | <PYTHON> "<SKILLS_DIR>/response-format/scripts/check_format.py"
+#    -> 0 finding(s)
+printf '## Summary\n\nDone.\n' | <PYTHON> "<SKILLS_DIR>/response-format/scripts/check_format.py"; echo "exit=$?"
+#    -> <stdin>:1: outcome-first: Start with one or two plain sentences ...   1 finding(s)   exit=1
+
+# --- Part I ---
+# 29. The patch script finds nothing left to add in the six OpenSpec files.
+<PYTHON> "<RULES_DIR>/apply_openspec_rules.py" --dry-run
+#    -> six lines, each ending "would apply 0, already present ..."
+
+# 30. Both CLAUDE.md sections are there, once each.
+grep -c "^## Responses: one layout" "<CLAUDE_MD>"
+grep -c "^## OpenSpec: pre-answered questions and decisions" "<CLAUDE_MD>"
+#    -> 1, then 1
 ```
 
 Then in a **new** Claude Code session:
@@ -4808,7 +6415,7 @@ For Part E:
 
 For Part F:
 
-18. Ask Claude something with two reasonable answers that it cannot settle alone, for example "set up a database for this project". Before it does anything, it should ask you a question laid out as **The question**, **Context** and **Options**, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 20 finds the section and that you are in a new session.
+18. Ask Claude something with two reasonable answers that it cannot settle alone, for example "set up a database for this project". Before it does anything, it should ask you a question laid out as a `### Q1. <Short name>` block with the question, then Context, Example, Options, Reply with and Recorded in, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 20 finds the section and that you are in a new session.
 19. Ask for something that needs two decisions, for example "set up a database and a deploy pipeline for this project", and let it ask both. Reply only with a question about the first ("what would the second option cost?"). It should answer that, add what it said to the first question's file, and then ask both questions again, each with its file, with both files still `Status: open`.
 
 For Part G, open two sessions, A and B, and give B a name with `/rename`.
@@ -4817,6 +6424,15 @@ For Part G, open two sessions, A and B, and give B a name with `/rename`.
 21. Ask Claude in A to run `<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" digest`. The header should name session A and say how many prompts it holds.
 22. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should save the handoff without asking you to approve creating the file, show the `/merge-session --receive <file>` command in a code block with a short summary, and ask whether to send. Say send. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
 23. In A, run `/merge-session` with the name of a session that is closed. It should send nothing, and print the `claude --resume <id>` command and the `/merge-session --receive <file>` line to type there.
+
+For Part H:
+
+24. Ask Claude to summarize a small change it just made, including one choice it made along the way. The reply should open with the outcome, keep the sections in the fixed order, and show the choice as a `### D1. <Short name>` block with its bullets in order. Save the reply to a file and run the checker on it: 0 findings.
+
+For Part I:
+
+25. In a project that uses OpenSpec, run `/opsx:propose` with a one-line request that leaves something open, for example "let operators export only the orders after a given date". It should ask nothing, write `decisions.md` next to `proposal.md`, give `proposal.md` a `## Deliverable and mockup` section, and end with the preferences used and the decisions, each as `### D<n>. <Short name>`.
+26. Run `/opsx:apply` on that change. Before the first task it should show the same decisions, and ask only about decisions marked `Needs your yes: yes`.
 
 ## Uninstall
 
@@ -4841,3 +6457,7 @@ For Part G, open two sessions, A and B, and give B a name with `/rename`.
 **Part F.** Delete the `## Asking questions` section from `<CLAUDE_MD>`. Leave `<DECISIONS_DIR>`: the records in it are the project's decisions, not part of the install.
 
 **Part G.** Delete `<CLAUDE_DIR>/skills/merge-session/`. Handoff files stay in `<CLAUDE_DIR>/handoffs/`; they are plain files, so delete the folder if you do not want them. The `session_merge\.py` entry in the run guard's `exempt_patterns` (step 13) does nothing once the script is gone, so it can stay.
+
+**Part H.** Delete `<SKILLS_DIR>/response-format/` and `<SKILLS_DIR>/question-format/`, and the `## Responses: one layout` section from `<CLAUDE_MD>`.
+
+**Part I.** Delete the `## OpenSpec: pre-answered questions and decisions` section from `<CLAUDE_MD>`, regenerate OpenSpec's skill files the way you installed them (`openspec update`, or `openspec init` where you first set them up), and delete `<RULES_DIR>`. Changes planned with Part I keep their `decisions.md` files; they are plain files, so delete them if you do not want them.
