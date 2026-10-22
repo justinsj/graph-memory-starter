@@ -1058,7 +1058,15 @@ this is its skeleton. The parts, in this order:
    - `- PR: [<repo>#<n> <title>](<url>) (<state>, <head> → <base>)`
    - `- Review comment: [Automatic review of <short SHA>](<url>)` for the latest
      review.
-3. `## Attempts`, with one `### Attempt N` per fix round. Each attempt holds
+3. `## Still failing`, whenever the outcome is not clear: every blocker and
+   failed check from the latest review, copied from its comment as they are.
+   Each one keeps its `❌` line (or its "stops the review" line, for a blocker)
+   and the four bullets `Symptom:`, `Example:`, `Root cause:` and `Fix:`, in
+   that order. Put the ones that ended the loop first. Never shorten them into a
+   sentence: this section is where a reader finds what still fails, where, why,
+   and what would fix it, without opening the review comment. Leave the section
+   out when every check passed.
+4. `## Attempts`, with one `### Attempt N` per fix round. Each attempt holds
    these four parts, in this order:
    1. The failed checks and blockers, copied from the review comment as they
       are: the `❌` line and its `Symptom:`, `Example:`, `Root cause:` and
@@ -1066,14 +1074,14 @@ this is its skeleton. The parts, in this order:
    2. `- Changed:` the files you changed, one link per file.
    3. `- Tests:` the tests you ran and what happened, including failures.
    4. `- Commit:` the SHA of the commit that carried the change.
-4. `## Review notes`: the latest review's engineering and architecture notes,
+5. `## Review notes`: the latest review's engineering and architecture notes,
    unchanged.
-5. `## Not done`: bullets for what bounds "clear". A finding sorted `stop`, a
+6. `## Not done`: bullets for what bounds "clear". A finding sorted `stop`, a
    file you could not fetch, a suite you ran only part of, an `ask` still
    outstanding, a sentence the judge kept past the linter. A report listing only
    successes reads as more complete than it is.
-6. `## Files`: one link per changed file, with its full path.
-7. `## Questions for you`: each `ask` finding as a question block
+7. `## Files`: one link per changed file, with its full path.
+8. `## Questions for you`: each `ask` finding as a question block
    (question-format skill), with the check id in the short name, for example
    `### Q1. Draft status (draft blocker)`.
 
@@ -4779,7 +4787,7 @@ For Part B, use a throwaway pull request you own: a non-draft branch that change
 6. The loop should then sort `no-tests` and `tests-not-claimed` as fixes, write a test, run the suite, push a new commit, and start a new judge. Confirm the new review comment names the new SHA, and that the description now records what was actually run.
 7. Confirm the report puts the outcome first and ends that outcome with "Nothing was merged and nothing was approved.", puts the pull request link under `## Links` directly after it, and that no `automated-review` comment was edited or deleted along the way.
 8. Run `/pr-review-loop <link>` again with no new commits after a clear review. It should reuse the review for the current head and stop without posting a second comment. If it posts again, the marker is not being read: check that step 9's file is installed and that the earlier comment still exists.
-9. Run it on a draft pull request. It should stop and ask about `draft` rather than marking the pull request ready itself, and the review should list both `draft` and `no-tests` rather than stopping at the first.
+9. Run it on a draft pull request. It should stop and ask about `draft` rather than marking the pull request ready itself, and the review should list both `draft` and `no-tests` rather than stopping at the first. The report should open, under its links, a `## Still failing` section that lists both, each with its `Symptom`, `Example`, `Root cause` and `Fix` bullets.
 10. Confirm the skill is reachable without the command name. Ask "keep fixing pull request `<n>` until the review passes" in plain words and check that `pr-review-loop` is what runs.
 11. On a throwaway branch, ask Claude to make a one-line change and open a pull request for it. Right after it creates the pull request, it should run `/pr-review-loop` on it without being asked, and its report should give the loop's outcome next to the pull request link.
 
