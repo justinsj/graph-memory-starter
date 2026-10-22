@@ -93,6 +93,26 @@ Take the hook entries back out of `.claude/settings.json`, the recall hook and
 the three digest ones. Your notes, your logs and the index all stay, and the
 index rebuilds any time.
 
+### Time budgets for scripts, paste three
+
+Optional, and separate from memory. A PreToolUse hook sends every data or test
+command through a time budget, refuses to re-run an unchanged script that
+overran, and wants database connections opened through `runguard/safe_db.py`,
+which sets lock and statement timeouts and runs reads only.
+
+```
+Add the run guard from my memory starter, one step at a time, and stop if a step fails.
+1. Merge the hook from memory-starter/runguard/hooks.json into .claude/settings.json here. Keep everything already in it. Use python3 in the hook command if that is the one that runs.
+2. Copy memory-starter/runguard/skill/script-preflight into .claude/skills/ here, so the folder is .claude/skills/script-preflight/SKILL.md.
+3. Run: python -m unittest discover -s memory-starter/tests -p test_runguard.py and show me the last line.
+4. Tell me in three lines how to run a script with a budget, where the ledger is, and how to switch from warn to block.
+```
+
+It ships in warn mode: commands run, and the model is told what was wrong.
+After a week, `python memory-starter/runguard/ledger.py report --all` shows
+what it caught; set `"mode": "block"` in `runguard/config.json` to enforce.
+How each database is protected, and the limits: `runguard/README.md`.
+
 ## Prerequisites
 
 Python 3, SQLite included. Claude Code, or another assistant with prompt hooks.
@@ -104,6 +124,7 @@ installed.
 
     rag/               the semantic layer: index, search, recall hook, distil
     digest/            the session write up: hooks, config, prompt
+    runguard/          time budgets for scripts and tests, the re-run block, safe read-only DB connections, /script-preflight
     projects/          projects from requests, meetings and sessions: records, plans, cases, evals
     commands/          /project-new, /project-plan, /project-review, copy into .claude/commands/
     skills/            /pr-review-loop, response-format and question-format, copy into .claude/skills/

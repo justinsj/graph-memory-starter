@@ -25,14 +25,26 @@ EMBEDDED_SOURCES: dict[str, str] = {
     "<RULES_DIR>/rules.md": "openspec-rules/rules.md",
     "<RULES_DIR>/preferences.md": "openspec-rules/preferences.md",
     "<RULES_DIR>/apply_openspec_rules.py": "openspec-rules/apply_openspec_rules.py",
+    "<CLAUDE_DIR>/runguard/runguard_common.py": "runguard/runguard_common.py",
+    "<CLAUDE_DIR>/runguard/run_bounded.py": "runguard/run_bounded.py",
+    "<CLAUDE_DIR>/runguard/ledger.py": "runguard/ledger.py",
+    "<CLAUDE_DIR>/runguard/preflight_gate.py": "runguard/preflight_gate.py",
+    "<CLAUDE_DIR>/runguard/safe_db.py": "runguard/safe_db.py",
+    "<CLAUDE_DIR>/runguard/config.json": "runguard/config.json",
+    "<SKILLS_DIR>/script-preflight/SKILL.md": "runguard/skill/script-preflight/SKILL.md",
 }
 # Install paths under these prefixes must have a source listed above.
 SOURCED_PREFIXES: tuple[str, ...] = (
     "<SKILLS_DIR>/pr-review-loop/", "<CLAUDE_DIR>/skills/merge-session/", "<SKILLS_DIR>/response-format/",
-    "<SKILLS_DIR>/question-format/", "<RULES_DIR>/",
+    "<SKILLS_DIR>/question-format/", "<RULES_DIR>/", "<CLAUDE_DIR>/runguard/", "<SKILLS_DIR>/script-preflight/",
 )
 EXPECTED_PARTS: list[str] = list("ABCDEFGHI")
-EMBED_START = re.compile(r"`(?P<target>[^`]+)` with exactly this content[^\n]*:\n\n(?P<fence>````+)[a-z]*\n")
+# Two ways the guide introduces an embedded file: "Create `<path>` with exactly this content:" for a single
+# file, and a line holding only "`<path>`:" for each file of a set, as in the run guard's step.
+EMBED_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"`(?P<target>[^`]+)` with exactly this content[^\n]*:\n\n(?P<fence>````+)[a-z]*\n"),
+    re.compile(r"^`(?P<target>[^`]+)`:\n\n(?P<fence>````+)[a-z]*\n", re.M),
+)
 
 
 def read_text(path: Path) -> str:
@@ -57,10 +69,11 @@ def embedded_files(guide: str) -> dict[str, str]:
         A mapping from install path to the embedded file text.
     """
     files: dict[str, str] = {}
-    for match in EMBED_START.finditer(guide):
-        closing = "\n" + match.group("fence") + "\n"
-        end = guide.index(closing, match.end() - 1)
-        files[match.group("target")] = guide[match.end():end + 1]
+    for pattern in EMBED_PATTERNS:
+        for match in pattern.finditer(guide):
+            closing = "\n" + match.group("fence") + "\n"
+            end = guide.index(closing, match.end() - 1)
+            files[match.group("target")] = guide[match.end():end + 1]
     return files
 
 
