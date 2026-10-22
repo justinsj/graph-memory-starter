@@ -1,8 +1,8 @@
 # Claude Code export: `/archive`, `/restore`, the background-task spinner hook, the pull-request review loop, the run guard, plain status text, the claude-hud status line, the rule for asking questions, and `/merge-session`
 
-These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file (apart from one third-party plugin, installed from its own marketplace): twenty files to create, five settings changes, one section added to `CLAUDE.md`, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
+These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file (apart from one third-party plugin, installed from its own marketplace): twenty files to create, five settings changes, two sections added to `CLAUDE.md`, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
 
-The file has seven parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks, records the outcome as a comment, fixes what the review objected to, and reviews again until every check passes. **Part C** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part D** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part E** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part F** is a section of `CLAUDE.md` that sets how the agent asks you a question: laid out as the question, its context and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. **Part G** is `/merge-session`: it passes what one session learned (decisions, verified facts, work on disk, open questions, the user's corrections) into another session, as a handoff file plus a short message that points at it, and tells the receiving session to report and wait rather than act. The seven parts are independent of each other.
+The file has seven parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks, records the outcome as a comment, fixes what the review objected to, and reviews again until every check passes, plus a section of `CLAUDE.md` that makes the agent run that loop on every pull request it creates, with at most 3 fix rounds. **Part C** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part D** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part E** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part F** is a section of `CLAUDE.md` that sets how the agent asks you a question: laid out as the question, its context and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. **Part G** is `/merge-session`: it passes what one session learned (decisions, verified facts, work on disk, open questions, the user's corrections) into another session, as a handoff file plus a short message that points at it, and tells the receiving session to report and wait rather than act. The seven parts are independent of each other.
 
 Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and F are prose only, except that Part B's first run downloads the `asd-ste100` skill, whose linter needs Python 3. Parts C, D and G need Python 3.10 or newer; Part D was tested on Claude Code 2.1.296, and Part G on Claude Code 2.1.308 with Python 3.11.4. Part E was installed on Claude Code 2.1.288 with Node.js 25.3.0 on Windows 10 (claude-hud 0.10.0); it needs Node.js (or Bun on macOS and Linux), not Python.
 
@@ -20,20 +20,21 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 8 | The check sets | `<SKILLS_DIR>/pr-review-loop/reference/review-checks.md` | Spec read by the judge in item 6 | The exact wording of the three question sets: code, documentation-only, and no-work-item. |
 | 9 | The outcome comment | `<SKILLS_DIR>/pr-review-loop/reference/review-comment.md` | Spec read by the judge in item 6 | The comment body, the bullet format for failed conditions, and the hidden marker that stops the loop paying to review the same commit twice. |
 | 10 | The fix playbook | `<SKILLS_DIR>/pr-review-loop/reference/fix-playbook.md` | Spec read by item 6 | Sorts every blocker and check the review can produce into fix, stop or ask, with the remedies allowed and forbidden. |
-| 11 | The run guard scripts | `<CLAUDE_DIR>/runguard/` (`runguard_common.py`, `run_bounded.py`, `ledger.py`, `preflight_gate.py`, `safe_db.py`) | Python scripts | Run a command inside a time budget and kill its process tree when the budget runs out; keep a ledger of every run; check each shell command before it runs; open read-only database connections with lock and statement timeouts. |
-| 12 | `config.json` | `<CLAUDE_DIR>/runguard/config.json` | Settings read by item 11 | Warn or block mode, default budgets, and the 30-minute line above which a budget needs the user's approval. |
-| 13 | `/script-preflight` | `<SKILLS_DIR>/script-preflight/SKILL.md` | Skill (slash command) | The optimization pass before a run: the usual causes of slow scripts, timing a slice, choosing a budget, and what to do after `SLOW` or `BUDGET EXCEEDED`. |
-| 14 | Hook registration | `<CLAUDE_DIR>/settings.json` under `"hooks"` | Settings | Wires `preflight_gate.py` into `PreToolUse` for the Bash and PowerShell tools. |
-| 15 | `runguard.pth` | `site-packages/` of each Python environment that runs data scripts | Path file | Lets those scripts `import safe_db`. |
-| 16 | `turn_timer.py` | `<CLAUDE_DIR>/hooks/turn_timer.py` | Hook script | Records when each turn starts and prints "Took Nm Ns" when it ends, in place of the built-in "Cooked for Nm Ns". |
-| 17 | Status text settings | `<CLAUDE_DIR>/settings.json` (`showTurnDuration`, `spinnerVerbs`, `"hooks"`) | Settings | Turns off the built-in end-of-turn line, sets the spinner word to "Working", and wires item 16 into `UserPromptSubmit` and `Stop`. |
-| 18 | claude-hud | `<CLAUDE_DIR>/plugins/cache/claude-hud/` (plugin) and `<CLAUDE_DIR>/plugins/claude-hud/` (launcher) | Third-party plugin | Status line showing the model, project and git branch, context use and subscriber rate limits; optionally tool, agent and todo activity. |
-| 19 | Status line registration | `<CLAUDE_DIR>/settings.json` under `"statusLine"`, `"enabledPlugins"` and `"extraKnownMarketplaces"` | Settings | Written by the plugin's own installer and setup helper; not edited by hand. |
-| 20 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as question, context and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
-| 21 | `session_merge.py` | `<CLAUDE_DIR>/skills/merge-session/session_merge.py` | Python script | Does the mechanical steps for `/merge-session`: turns a session transcript into plain text (so a condensed session can be read back in full), finds sessions by name, names the handoff file, scans the handoff for secrets and database hostnames, and saves it under `<CLAUDE_DIR>/handoffs/` with the command the receiving session types to read it. |
-| 22 | `/merge-session` | `<CLAUDE_DIR>/skills/merge-session/SKILL.md` | User skill (slash command) | Writes a handoff for another session, shows it to you, and sends it once you approve. In the receiving session, reads the handoff, reports what it adds and where it conflicts, and waits for that session's user. |
+| 11 | Review-loop rule | a `## Pull requests: run the review loop` section in `<CLAUDE_MD>` | Project guidance | After the agent creates a pull request, it runs item 6 on it right away, with at most 3 fix rounds, and reports the outcome next to the pull request link. |
+| 12 | The run guard scripts | `<CLAUDE_DIR>/runguard/` (`runguard_common.py`, `run_bounded.py`, `ledger.py`, `preflight_gate.py`, `safe_db.py`) | Python scripts | Run a command inside a time budget and kill its process tree when the budget runs out; keep a ledger of every run; check each shell command before it runs; open read-only database connections with lock and statement timeouts. |
+| 13 | `config.json` | `<CLAUDE_DIR>/runguard/config.json` | Settings read by item 12 | Warn or block mode, default budgets, and the 30-minute line above which a budget needs the user's approval. |
+| 14 | `/script-preflight` | `<SKILLS_DIR>/script-preflight/SKILL.md` | Skill (slash command) | The optimization pass before a run: the usual causes of slow scripts, timing a slice, choosing a budget, and what to do after `SLOW` or `BUDGET EXCEEDED`. |
+| 15 | Hook registration | `<CLAUDE_DIR>/settings.json` under `"hooks"` | Settings | Wires `preflight_gate.py` into `PreToolUse` for the Bash and PowerShell tools. |
+| 16 | `runguard.pth` | `site-packages/` of each Python environment that runs data scripts | Path file | Lets those scripts `import safe_db`. |
+| 17 | `turn_timer.py` | `<CLAUDE_DIR>/hooks/turn_timer.py` | Hook script | Records when each turn starts and prints "Took Nm Ns" when it ends, in place of the built-in "Cooked for Nm Ns". |
+| 18 | Status text settings | `<CLAUDE_DIR>/settings.json` (`showTurnDuration`, `spinnerVerbs`, `"hooks"`) | Settings | Turns off the built-in end-of-turn line, sets the spinner word to "Working", and wires item 17 into `UserPromptSubmit` and `Stop`. |
+| 19 | claude-hud | `<CLAUDE_DIR>/plugins/cache/claude-hud/` (plugin) and `<CLAUDE_DIR>/plugins/claude-hud/` (launcher) | Third-party plugin | Status line showing the model, project and git branch, context use and subscriber rate limits; optionally tool, agent and todo activity. |
+| 20 | Status line registration | `<CLAUDE_DIR>/settings.json` under `"statusLine"`, `"enabledPlugins"` and `"extraKnownMarketplaces"` | Settings | Written by the plugin's own installer and setup helper; not edited by hand. |
+| 21 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as question, context and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
+| 22 | `session_merge.py` | `<CLAUDE_DIR>/skills/merge-session/session_merge.py` | Python script | Does the mechanical steps for `/merge-session`: turns a session transcript into plain text (so a condensed session can be read back in full), finds sessions by name, names the handoff file, scans the handoff for secrets and database hostnames, and saves it under `<CLAUDE_DIR>/handoffs/` with the command the receiving session types to read it. |
+| 23 | `/merge-session` | `<CLAUDE_DIR>/skills/merge-session/SKILL.md` | User skill (slash command) | Writes a handoff for another session, shows it to you, and sends it once you approve. In the receiving session, reads the handoff, reports what it adds and where it conflicts, and waits for that session's user. |
 
-Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–10 are one unit: item 6 hands items 7–9 to its judge and reads item 10 itself, all by relative path, so all five go in together, in one `pr-review-loop` folder. Items 11–15 are a second unit: the hook (14) runs a script from item 11, which reads item 12, and the skill (13) and the hook's messages both point at item 11. Items 16–17 are a third unit: the settings (17) run the script (16), and the `spinnerVerbs` line in item 17 works on its own without the script. Items 18–19 are a fourth unit and come from the plugin's own installer; nothing for them is reproduced in this file. Item 20 stands alone: it is text the agent reads, with no script behind it. Items 21–22 are a fifth unit: the skill (22) runs the script (21) from its own folder, so both go in one `merge-session` folder.
+Items 1–3 depend on each other: `/restore` calls the script inside the `archive` skill folder, so both skill folders must sit side by side in the same `skills/` directory. Item 4 is independent and can be installed without the others. Items 6–10 are one unit: item 6 hands items 7–9 to its judge and reads item 10 itself, all by relative path, so all five go in together, in one `pr-review-loop` folder. Item 11 is text the agent reads; it calls item 6, so install it with items 6–10. Items 12–16 are a second unit: the hook (15) runs a script from item 12, which reads item 13, and the skill (14) and the hook's messages both point at item 12. Items 17–18 are a third unit: the settings (18) run the script (17), and the `spinnerVerbs` line in item 18 works on its own without the script. Items 19–20 are a fourth unit and come from the plugin's own installer; nothing for them is reproduced in this file. Item 21 stands alone: it is text the agent reads, with no script behind it. Items 22–23 are a fifth unit: the skill (23) runs the script (22) from its own folder, so both go in one `merge-session` folder.
 
 ## Before you start
 
@@ -46,8 +47,8 @@ Items 1–3 depend on each other: `/restore` calls the script inside the `archiv
    Don't change anything else in the files.
 4. **Back up `settings.json`** (for example to `settings.json.bak`) before editing it in step 5.
 5. **Decide where Part B goes**, and read step 6's note on the choice before making it. This document calls that directory `<SKILLS_DIR>`: either `<project>/.claude/skills/` for one project, or `<CLAUDE_DIR>/skills/` for every project on the machine. Part B's first run also needs git, network access to github.com and Python 3, to download the `asd-ste100` skill (step 6 says how to install it ahead of time instead).
-6. **For Part C, check the Python version** is 3.10 or newer (`<PYTHON> --version`), and list the virtual environments that run data scripts or tests. Step 15 adds one small file to each. `/script-preflight` goes in the same `<SKILLS_DIR>` as Part B.
-7. **Decide where Part F goes.** `<CLAUDE_MD>` is the `CLAUDE.md` the rule is added to: `<project>/CLAUDE.md` for one project, or `<CLAUDE_DIR>/CLAUDE.md` for every project on the machine. `<DECISIONS_DIR>` is the folder the question records are written to, relative to the project the agent is working in; `docs/decisions` unless the project already keeps decisions somewhere. Part F only.
+6. **For Part C, check the Python version** is 3.10 or newer (`<PYTHON> --version`), and list the virtual environments that run data scripts or tests. Step 16 adds one small file to each. `/script-preflight` goes in the same `<SKILLS_DIR>` as Part B.
+7. **Decide which `CLAUDE.md` Parts B and F add to.** `<CLAUDE_MD>` is the `CLAUDE.md` their rules are added to: `<project>/CLAUDE.md` for one project, or `<CLAUDE_DIR>/CLAUDE.md` for every project on the machine. Part B adds the rule that runs the review loop on every new pull request, and Part F adds the rule for asking questions. `<DECISIONS_DIR>` (Part F only) is the folder the question records are written to, relative to the project the agent is working in; `docs/decisions` unless the project already keeps decisions somewhere.
 8. **For Part G, use `<CLAUDE_DIR>/skills/`**, not a project's `.claude/skills/` (Part G explains why). It needs Python 3.10 or newer. If `<PYTHON>` is not `python`, replace `python` with `python3` in the `merge-session` `SKILL.md` in two places, as item 3 describes for Part A: the `allowed-tools` line and the script command in the body.
 
 ---
@@ -2198,11 +2199,33 @@ reporting it is an outcome the user can act on. Fixing something adjacent, or
 fixing the check, or pushing until the wording changes, is not.
 ````
 
+## Step 11: add the review-loop rule to `CLAUDE.md`
+
+**Explanation.** Steps 6–10 install `/pr-review-loop`, but nothing runs it until someone asks. This section of `CLAUDE.md` makes the agent run it itself: every time the agent creates a pull request, it runs the loop on that pull request before it reports the work as done. The loop keeps its own limits: at most 3 fix rounds, no merge, no approval, and a stop to ask about anything it must not decide alone, such as marking a draft ready.
+
+The rule needs the skill from steps 6–10. Without it, the agent cannot follow the rule and says so in its report.
+
+**Install.** Open `<CLAUDE_MD>`, creating it if it does not exist, and add the section below at the end, verbatim. If the file already has a rule about reviewing pull requests, don't add a second one: tell the user, and ask which should stand.
+
+````markdown
+## Pull requests: run the review loop
+
+After you create a pull request, run `/pr-review-loop <link to the pull request> --max-attempts 3` on it before you report the work as done. Do not wait to be asked.
+
+- Run it right after the pull request is created, in the same turn, on every pull request you create.
+- Keep the cap at 3 fix rounds. Never raise it to get one more round.
+- If the loop stops before every check passes (the 3 rounds are used up, a finding it must not fix, or a question for the user), report where it stopped and why. Do not work around it.
+- If you created the pull request as a draft on purpose, do not run the loop yet, because the review refuses drafts. Say so in your report, and run the loop once the pull request is marked ready.
+- In your report, put the loop's outcome next to the pull request link: every check passed at which commit, or what stopped it. The loop never merges and never approves, so a person still decides.
+````
+
+The section is read at the start of every session, so it takes effect in the next one.
+
 ---
 
 # Part C — the run guard
 
-## Step 11: the scripts
+## Step 12: the scripts
 
 **Explanation.** A script that gathers data, runs a backtest or runs a test suite can take an hour when two minutes would do. A background run has no time limit at all, and Part A's wait hook will hold the turn open for up to two hours waiting on it. Against a database, a long read also does harm by what queues behind it. Part D gives every such run three things:
 
@@ -2931,7 +2954,7 @@ def redshift_data_query(client: Any, sql: str, *, deadline_seconds: int, poll_se
         time.sleep(poll_seconds)
 ````
 
-## Step 12: the config
+## Step 13: the config
 
 **Explanation.** Every key is optional. A key left out takes its default from `runguard_common.py`, which is also where the heavy and exempt command patterns and the list of database drivers live. `max_budget_seconds` is the line above which `run_bounded.py` needs `--approved`. `slow_fraction` is the share of the budget above which a finished run is reported as `SLOW`. `ledger` is relative to the runguard folder unless it is absolute. `exempt_patterns` lists commands the hook never flags. A list here replaces the default list in `runguard_common.py` rather than adding to it, so it repeats the three defaults (`--version`, `--help`, and `python -m pip`, `venv` or `json.tool`) exactly as `build_exempt_pattern` in `runguard_common.py` writes them, and adds one for `session_merge.py`, the script `/merge-session` (Part G) runs to read local files. Every pattern exempts a command only when nothing is chained to it, so `python pull.py --help && python backtest.py` is still checked. A `&` inside double quotes is fine, because session names such as "P&L fees" contain one, and so are `2>&1` and `&>` redirections. The `session_merge.py` pattern does nothing when Part G is not installed.
 
@@ -2953,7 +2976,7 @@ def redshift_data_query(client: Any, sql: str, *, deadline_seconds: int, poll_se
 }
 ````
 
-## Step 13: the `/script-preflight` skill
+## Step 14: the `/script-preflight` skill
 
 **Explanation.** The hook can check that a run is bounded. It cannot check that someone looked for the query inside a loop first. The skill is that checklist: read the script for the usual causes of slow runs, time a small slice and extrapolate, choose a budget of about twice the estimate, open connections through `safe_db`, run through `run_bounded.py`, and act on `SLOW` and `BUDGET EXCEEDED` by changing the script rather than raising the budget. The hook's messages name the skill, so a flagged or denied command routes the model to it. In the skill, `<runguard>` means `<CLAUDE_DIR>/runguard`.
 
@@ -3041,7 +3064,7 @@ slow, worst first. Check it at the start of work on a project that runs
 scripts often.
 ````
 
-## Step 14: register the hook in `settings.json`
+## Step 15: register the hook in `settings.json`
 
 Add this group to `<CLAUDE_DIR>/settings.json`, replacing `<PYTHON>` and `<CLAUDE_DIR>` with the values from "Before you start". Use forward slashes in the path, even on Windows.
 
@@ -3066,7 +3089,7 @@ Add this group to `<CLAUDE_DIR>/settings.json`, replacing `<PYTHON>` and `<CLAUD
 
 The merging rules from step 5 apply: append to an existing `PreToolUse` array, never replace it, and check the result is valid JSON. The matcher names both shell tools, because Claude Code on Windows can run commands through either.
 
-## Step 15: let scripts import `safe_db`
+## Step 16: let scripts import `safe_db`
 
 **Explanation.** A script in a project has to be able to `import safe_db`. The simplest way is a `.pth` file in each Python environment that runs such scripts: Python adds the folder it names to the import path when it starts, and nothing else changes. The shared module is named `runguard_common`, not `common`, so this does not shadow a project's own `common` package.
 
@@ -3091,7 +3114,7 @@ The spinner has a setting (`spinnerVerbs`). The end-of-turn verb does not: as of
 
 Tested on Claude Code 2.1.296 with Python 3.12.7 on Windows 11. The script needs Python 3.10 or newer.
 
-## Step 16: the turn timer script
+## Step 17: the turn timer script
 
 Create `<CLAUDE_DIR>/hooks/turn_timer.py`:
 
@@ -3220,7 +3243,7 @@ if __name__ == "__main__":
 
 It keeps one small file per session in `<CLAUDE_DIR>/hooks/state/` (`turn_timer_<session id>.txt`) holding the start time, and deletes it when the turn ends. A turn that started before the hook was installed has no file, so it prints nothing rather than a wrong number.
 
-## Step 17: settings
+## Step 18: settings
 
 Add these to `<CLAUDE_DIR>/settings.json`, replacing `<PYTHON>` and `<CLAUDE_DIR>` with the values from "Before you start". Use forward slashes in the path, even on Windows.
 
@@ -3275,7 +3298,7 @@ claude-hud is a third-party plugin (`jarrodwatts/claude-hud` on GitHub, MIT lice
 Context █████░░░░░ 45% │ Usage ██░░░░░░░░ 25% (resets in 1h 30m)
 ```
 
-## Step 18: install the plugin
+## Step 19: install the plugin
 
 Check for a JavaScript runtime first: `node --version`. On Windows it must be Node.js (Bun is not supported there); on macOS and Linux either Node.js or Bun works. If neither is found, install Node.js LTS (`winget install OpenJS.NodeJS.LTS` on Windows) and restart the shell.
 
@@ -3296,7 +3319,7 @@ or the same from inside a Claude Code session:
 
 This registers the marketplace under `"extraKnownMarketplaces"` in `settings.json`, enables the plugin under `"enabledPlugins"`, and puts the plugin in `<CLAUDE_DIR>/plugins/cache/claude-hud/claude-hud/<version>/`.
 
-## Step 19: point the status line at it
+## Step 20: point the status line at it
 
 In a Claude Code session, run:
 
@@ -3332,7 +3355,7 @@ To change what it shows — compact layout, the tool, agent and todo lines, git 
 
 A question an agent asks mid-task is usually written for itself: it names the file it was reading, uses the abbreviation it has been using for an hour, and asks "should I do X?" with no alternative and no reason. You then either answer blind or spend a turn asking what it means. And the answer lives only in the conversation, so the next session asks again, or decides the other way. Worse, when an agent asks three questions and you reply about one of them, the other two tend to vanish: the conversation moves on, and they are never answered, or are quietly decided by default. Part F is one section of `CLAUDE.md` that sets six requirements on every question. The first lays every question out the same way — the question, its context, its options — so you can answer it at a glance. The fifth writes the question and its answer to a file the next session can read. The sixth uses those files to keep every unanswered question open, and asks it again once whatever you raised has been dealt with.
 
-## Step 20: add the section to `CLAUDE.md`
+## Step 21: add the section to `CLAUDE.md`
 
 Open `<CLAUDE_MD>`, creating it if it does not exist, and add the section below at the end, verbatim. Replace `<DECISIONS_DIR>` with the folder chosen in "Before you start" (for example `docs/decisions`), in both places it appears. If the file already has a section about asking questions, don't add a second one: tell the user, and ask which should stand.
 
@@ -3443,13 +3466,13 @@ The channel has limits, and the design works around each one:
 
 **Where to install it.** Use `<CLAUDE_DIR>/skills/merge-session/`, not a project's `.claude/skills/`. The session that sends and the session that receives both need the skill, and a project skill is invisible to sessions started outside that project.
 
-**With Part C installed.** Without an exemption, the run guard's hook sees every `session_merge.py` call as a script run without a time budget: in warn mode it adds a `runguard:` note to each call, and in block mode it refuses them, so the skill stops working. Step 12's config already exempts the script. If your `<CLAUDE_DIR>/runguard/config.json` came from an older copy of this guide and does not hold the four patterns below, set its `exempt_patterns` to this line. A list there replaces the run guard's default list rather than adding to it, which is why it repeats the three defaults. Each pattern exempts a command only when nothing is chained to it, so a command that chains anything else after the script is still checked:
+**With Part C installed.** Without an exemption, the run guard's hook sees every `session_merge.py` call as a script run without a time budget: in warn mode it adds a `runguard:` note to each call, and in block mode it refuses them, so the skill stops working. Step 13's config already exempts the script. If your `<CLAUDE_DIR>/runguard/config.json` came from an older copy of this guide and does not hold the four patterns below, set its `exempt_patterns` to this line. A list there replaces the run guard's default list rather than adding to it, which is why it repeats the three defaults. Each pattern exempts a command only when nothing is chained to it, so a command that chains anything else after the script is still checked:
 
 ```json
 "exempt_patterns": ["^(?=.*--version\\b)(?:[^&|;\\n$`\"]|(?<=>)&|&(?=>)|\"[^\"\\n$`]*\")*$", "^(?=.*--help\\b)(?:[^&|;\\n$`\"]|(?<=>)&|&(?=>)|\"[^\"\\n$`]*\")*$", "^(?=.*\\s-m\\s+(?:pip|venv|json\\.tool)\\b)(?:[^&|;\\n$`\"]|(?<=>)&|&(?=>)|\"[^\"\\n$`]*\")*$", "^(?=.*session_merge\\.py)(?:[^&|;\\n$`\"]|(?<=>)&|&(?=>)|\"[^\"\\n$`]*\")*$"]
 ```
 
-## Step 21: the merge script
+## Step 22: the merge script
 
 **Explanation.** The script does the parts of a merge that should not depend on the model's memory or judgment. It is standard library only and needs Python 3.10 or newer.
 
@@ -4389,7 +4412,7 @@ if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
 ````
 
-## Step 22: the `/merge-session` skill
+## Step 23: the `/merge-session` skill
 
 **Explanation.** Frontmatter fields:
 
@@ -4667,40 +4690,44 @@ grep -c "180,000" "<SKILLS_DIR>/pr-review-loop/reference/review-procedure.md"
 # 9. git can push from the checkout the loop will work in.
 git remote -v && git push --dry-run
 
+# 10. The review-loop rule is in CLAUDE.md, once.
+grep -c "^## Pull requests: run the review loop" "<CLAUDE_MD>"
+#    -> 1
+
 # --- Part C ---
-# 10. A light command passes the hook silently (prints nothing).
+# 11. A light command passes the hook silently (prints nothing).
 echo '{"tool_name":"Bash","tool_input":{"command":"git status"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
 
-# 11. An unbudgeted test run is flagged (prints JSON starting {"systemMessage": "runguard: ...).
+# 12. An unbudgeted test run is flagged (prints JSON starting {"systemMessage": "runguard: ...).
 echo '{"tool_name":"Bash","tool_input":{"command":"pytest -x tests"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
 
-# 12. A budget stops a run that is too long.
+# 13. A budget stops a run that is too long.
 <PYTHON> "<CLAUDE_DIR>/runguard/run_bounded.py" --budget 3s --label verify -- <PYTHON> -c "import time; time.sleep(30)"; echo "exit=$?"
 #    -> runguard: BUDGET EXCEEDED: verify was stopped after 3s. ...   exit=124
 
-# 13. The ledger recorded it.
+# 14. The ledger recorded it.
 <PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" report
 #    -> one budget_exceeded line labelled verify
 
-# 14. safe_db imports from a project environment, and refuses a write.
+# 15. safe_db imports from a project environment, and refuses a write.
 <PYTHON> -c "import safe_db; safe_db.require_read('DELETE FROM t')"
 #    -> safe_db.UnsafeQueryError: statement starts with DELETE; only reads are allowed
 
 # --- Part D ---
-# 15. Start then stop prints a plain duration.
+# 16. Start then stop prints a plain duration.
 echo '{"session_id":"verify"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" start
 echo '{"session_id":"verify"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" stop
 #    -> {"systemMessage": "Took 0s"}
 
-# 16. A stop with no recorded start prints nothing.
+# 17. A stop with no recorded start prints nothing.
 echo '{"session_id":"never-started"}' | <PYTHON> "<CLAUDE_DIR>/hooks/turn_timer.py" stop
 
 # --- Part E ---
-# 17. The plugin is installed and enabled.
+# 18. The plugin is installed and enabled.
 claude plugin list
 #    -> claude-hud@claude-hud ... enabled
 
-# 18. The status line command prints the HUD from sample input.
+# 19. The status line command prints the HUD from sample input.
 #    Use the "command" from settings.json; this is the Git Bash one.
 echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":12,"context_window_size":200000}}' \
   | bash -c 'exec "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/claude-hud/statusline.cmd"'
@@ -4708,31 +4735,31 @@ echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":12,"c
 #       Context █░░░░░░░░░ 12%
 
 # --- Part F ---
-# 19. The section is in CLAUDE.md, once.
+# 20. The section is in CLAUDE.md, once.
 grep -c "^## Asking questions" "<CLAUDE_MD>"
 #    -> 1
 
 # --- Part G ---
-# 20. find runs, and says so when nothing matches (exit code 1).
+# 21. find runs, and says so when nothing matches (exit code 1).
 <PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" find zzzz-no-such-session; echo "exit=$?"
 #    -> No session matches "zzzz-no-such-session".   exit=1
 
-# 21. path names a file with no spaces under <CLAUDE_DIR>/handoffs/.
+# 22. path names a file with no spaces under <CLAUDE_DIR>/handoffs/.
 <PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" path --source "Source A" --target "Target B" --date 2026-01-01
 #    -> <CLAUDE_DIR>/handoffs/2026-01-01_source_a_to_target_b.md
 
-# 22. check fails on a planted AWS key id and masks it.
+# 23. check fails on a planted AWS key id and masks it.
 printf 'key AKIA%s\n' IOSFODNN7EXAMPLE > handoff_check.md
 <PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" check handoff_check.md; echo "exit=$?"; rm handoff_check.md
 #    -> line 1: AWS access key id: AKIA… (20 characters)   exit=1
 
-# 23. With Part C installed, the run guard lets the script through without a note (prints nothing).
+# 24. With Part C installed, the run guard lets the script through without a note (prints nothing).
 echo '{"tool_name":"Bash","tool_input":{"command":"python <CLAUDE_DIR>/skills/merge-session/session_merge.py find x"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
 
-# 24. A command that chains another script after it is still flagged (prints JSON starting {"systemMessage": "runguard: ...).
+# 25. A command that chains another script after it is still flagged (prints JSON starting {"systemMessage": "runguard: ...).
 echo '{"tool_name":"Bash","tool_input":{"command":"python <CLAUDE_DIR>/skills/merge-session/session_merge.py find x && python heavy.py"}}' | <PYTHON> "<CLAUDE_DIR>/runguard/preflight_gate.py"
 
-# 25. save copies a draft into <CLAUDE_DIR>/handoffs/ and prints the receive command. Delete the saved file afterwards.
+# 26. save copies a draft into <CLAUDE_DIR>/handoffs/ and prints the receive command. Delete the saved file afterwards.
 printf '# Handoff\n' > handoff_draft.md
 <PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" save --draft handoff_draft.md --source "Source A" --target "Target B" --date 2026-01-01; rm handoff_draft.md
 #    -> Saved the handoff to <CLAUDE_DIR>/handoffs/2026-01-01_source_a_to_target_b.md
@@ -4754,33 +4781,34 @@ For Part B, use a throwaway pull request you own: a non-draft branch that change
 8. Run `/pr-review-loop <link>` again with no new commits after a clear review. It should reuse the review for the current head and stop without posting a second comment. If it posts again, the marker is not being read: check that step 9's file is installed and that the earlier comment still exists.
 9. Run it on a draft pull request. It should stop and ask about `draft` rather than marking the pull request ready itself, and the review should list both `draft` and `no-tests` rather than stopping at the first.
 10. Confirm the skill is reachable without the command name. Ask "keep fixing pull request `<n>` until the review passes" in plain words and check that `pr-review-loop` is what runs.
+11. On a throwaway branch, ask Claude to make a one-line change and open a pull request for it. Right after it creates the pull request, it should run `/pr-review-loop` on it without being asked, and its report should give the loop's outcome next to the pull request link.
 
 For Part C:
 
-11. Type `/` and confirm `script-preflight` appears in the command list.
-12. Ask Claude to run the tests of any project with `pytest`. In warn mode the command runs, and a `runguard:` line appears saying it had no time budget. Ask again; Claude should now run it through `run_bounded.py` with a `--budget`.
-13. Ask Claude to run a script that sleeps for 60 seconds with a 5-second budget. It should be stopped with exit 124 and `BUDGET EXCEEDED`. Ask for the same run again without changing the script: the hook should flag (warn) or refuse (block) it as overrun and unchanged.
-14. Run `<PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" clear <that script> --reason "verify"` yourself, and confirm the next run of the unchanged script passes the hook.
+12. Type `/` and confirm `script-preflight` appears in the command list.
+13. Ask Claude to run the tests of any project with `pytest`. In warn mode the command runs, and a `runguard:` line appears saying it had no time budget. Ask again; Claude should now run it through `run_bounded.py` with a `--budget`.
+14. Ask Claude to run a script that sleeps for 60 seconds with a 5-second budget. It should be stopped with exit 124 and `BUDGET EXCEEDED`. Ask for the same run again without changing the script: the hook should flag (warn) or refuse (block) it as overrun and unchanged.
+15. Run `<PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" clear <that script> --reason "verify"` yourself, and confirm the next run of the unchanged script passes the hook.
 
 For Part D:
 
-15. Send any prompt. While Claude works, the spinner should read "Working…". When the turn ends, a line "Took Ns" (or "Took Nm Ns") should appear, and no "Cooked for…" line. The first turn after installing may show neither, because its start was not recorded; check the second turn.
+16. Send any prompt. While Claude works, the spinner should read "Working…". When the turn ends, a line "Took Ns" (or "Took Nm Ns") should appear, and no "Cooked for…" line. The first turn after installing may show neither, because its start was not recorded; check the second turn.
 
 For Part E:
 
-16. Look below the input field. The HUD should show the model, the project and git branch, and a context bar that grows as the session does. If it shows nothing, run Verify step 18 above; if that prints nothing, the launcher found no installed plugin — reinstall with step 18.
+17. Look below the input field. The HUD should show the model, the project and git branch, and a context bar that grows as the session does. If it shows nothing, run Verify step 19 above; if that prints nothing, the launcher found no installed plugin — reinstall with step 19.
 
 For Part F:
 
-17. Ask Claude something with two reasonable answers that it cannot settle alone, for example "set up a database for this project". Before it does anything, it should ask you a question laid out as **The question**, **Context** and **Options**, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 19 finds the section and that you are in a new session.
-18. Ask for something that needs two decisions, for example "set up a database and a deploy pipeline for this project", and let it ask both. Reply only with a question about the first ("what would the second option cost?"). It should answer that, add what it said to the first question's file, and then ask both questions again, each with its file, with both files still `Status: open`.
+18. Ask Claude something with two reasonable answers that it cannot settle alone, for example "set up a database for this project". Before it does anything, it should ask you a question laid out as **The question**, **Context** and **Options**, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 20 finds the section and that you are in a new session.
+19. Ask for something that needs two decisions, for example "set up a database and a deploy pipeline for this project", and let it ask both. Reply only with a question about the first ("what would the second option cost?"). It should answer that, add what it said to the first question's file, and then ask both questions again, each with its file, with both files still `Status: open`.
 
 For Part G, open two sessions, A and B, and give B a name with `/rename`.
 
-19. Type `/` in A and confirm `merge-session` appears in the command list.
-20. Ask Claude in A to run `<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" digest`. The header should name session A and say how many prompts it holds.
-21. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should save the handoff without asking you to approve creating the file, show the `/merge-session --receive <file>` command in a code block with a short summary, and ask whether to send. Say send. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
-22. In A, run `/merge-session` with the name of a session that is closed. It should send nothing, and print the `claude --resume <id>` command and the `/merge-session --receive <file>` line to type there.
+20. Type `/` in A and confirm `merge-session` appears in the command list.
+21. Ask Claude in A to run `<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" digest`. The header should name session A and say how many prompts it holds.
+22. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should save the handoff without asking you to approve creating the file, show the `/merge-session --receive <file>` command in a code block with a short summary, and ask whether to send. Say send. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
+23. In A, run `/merge-session` with the name of a session that is closed. It should send nothing, and print the `claude --resume <id>` command and the `/merge-session --receive <file>` line to type there.
 
 ## Uninstall
 
@@ -4790,7 +4818,7 @@ For Part G, open two sessions, A and B, and give B a name with `/rename`.
 2. Remove the four hook groups from `settings.json`.
 3. Delete `<CLAUDE_DIR>/skills/archive/`, `<CLAUDE_DIR>/skills/restore/` and `<CLAUDE_DIR>/hooks/wait_for_background.py`.
 
-**Part B.** Delete `<SKILLS_DIR>/pr-review-loop/`. There is no settings change to undo. Commits it pushed stay on their branches, and its review comments stay on their pull requests unless you delete them. It may also have downloaded `~/.claude/skills/asd-ste100/`; delete that folder too if nothing else uses it.
+**Part B.** Delete `<SKILLS_DIR>/pr-review-loop/`. There is no settings change to undo. Commits it pushed stay on their branches, and its review comments stay on their pull requests unless you delete them. It may also have downloaded `~/.claude/skills/asd-ste100/`; delete that folder too if nothing else uses it. Delete the `## Pull requests: run the review loop` section from `<CLAUDE_MD>`.
 
 **Part C.** Remove the `PreToolUse` group that runs `preflight_gate.py` from `settings.json`. Delete `<SKILLS_DIR>/script-preflight/`, the `runguard.pth` file from each environment's `site-packages/`, and `<CLAUDE_DIR>/runguard/`. The ledger is `<CLAUDE_DIR>/runguard/ledger.jsonl`; keep a copy first if you want the run history. Scripts that import `safe_db` will fail to import it once it is gone, which shows you which ones to change back.
 
@@ -4804,4 +4832,4 @@ For Part G, open two sessions, A and B, and give B a name with `/rename`.
 
 **Part F.** Delete the `## Asking questions` section from `<CLAUDE_MD>`. Leave `<DECISIONS_DIR>`: the records in it are the project's decisions, not part of the install.
 
-**Part G.** Delete `<CLAUDE_DIR>/skills/merge-session/`. Handoff files stay in `<CLAUDE_DIR>/handoffs/`; they are plain files, so delete the folder if you do not want them. The `session_merge\.py` entry in the run guard's `exempt_patterns` (step 12) does nothing once the script is gone, so it can stay.
+**Part G.** Delete `<CLAUDE_DIR>/skills/merge-session/`. Handoff files stay in `<CLAUDE_DIR>/handoffs/`; they are plain files, so delete the folder if you do not want them. The `session_merge\.py` entry in the run guard's `exempt_patterns` (step 13) does nothing once the script is gone, so it can stay.
