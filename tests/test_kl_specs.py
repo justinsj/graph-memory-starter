@@ -22,7 +22,8 @@ def spec_files() -> dict:
 
 def test_names() -> list:
     names = []
-    for f in sorted((ROOT / "tests").glob("test_kl_*.py")):
+    test_files = [*(ROOT / "tests").glob("test_kl_*.py"), ROOT / "tests" / "test_harness2cc.py"]
+    for f in sorted(test_files):
         for node in ast.walk(ast.parse(f.read_text(encoding="utf-8"))):
             if isinstance(node, ast.FunctionDef) and node.name.startswith("test_"):
                 names.append(f"{f.stem}.{node.name}")
