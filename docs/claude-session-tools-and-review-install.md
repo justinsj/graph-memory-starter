@@ -5368,13 +5368,33 @@ The reader of these questions switches between many projects and will not rememb
 
 Questions use the same block shape as decisions and problems (the `response-format` skill): an ID and a short name as the heading, then plain labeled bullets in a fixed order. A reader scanning a response finds the short name, the question, the options and how to reply in the same place every time.
 
+## Before you ask: settle it yourself when you can
+
+Most questions should not reach the user. Before you draft one, look for the answer in the order of authority that the preferences file gives (`preferences.md`, the file your CLAUDE.md names; in a standard install it sits next to the OpenSpec rules). Stop at the first source that settles it:
+
+1. What the user said in the request or the conversation.
+2. The project: AGENTS.md, convention docs, decision records, and what the code already does.
+3. The user's standing rules: the CLAUDE.md files in scope and the user profile.
+4. The preferences (P1, P2 and onward).
+5. If it is still open: the option that is cheapest to reverse.
+
+Ask only when one of these is true:
+
+- The decision is one of the "Needs your yes" kinds in the OpenSpec `rules.md`: a production write, backfill, migration or DDL change; deleting or overwriting; notifying people or publishing, including a deploy to prod; a new recurring cost; a breaking change another team consumes; a change to permissions, grants, IAM roles or secrets.
+- No source settles it, and you cannot rank the options.
+- It needs a fact only the user knows.
+
+Record every question you settle as a decision block (`response-format` skill) with `Source:` naming what settled it, such as `P1 Workaround instead of full refactor`, and show it under `## Decisions` so the user can override it with `D<n>: <other option>`. Never invent a fact to settle a question. When the code or data that would settle it cannot be read, say so in the decision and pick the option that is cheapest to reverse.
+
+Some workflows keep their own question files, and the user's CLAUDE.md can exclude them from this step (for example AI-DLC `*-questions.md` files). Follow that exclusion.
+
 ## The parts (always in this order)
 
 1. **Heading**: `### Q<n>. <Short name>`. The short name has two to five words. It is a noun phrase that names what is being decided (`Backfill scope`, `Retry limit`, `Auth method`), not the question. Use it every time the question is mentioned: `Q2 (Backfill scope)`.
 2. **Question**: the next line. One sentence ending in a question mark. Ask one thing. If you need two decisions, write two questions.
 3. **Context**: two to five sentences. Say what you are working on, what you found that raised the question, and what happens next depending on the answer. Name the file, table, ticket, client or number involved. Do not assume the reader remembers earlier messages.
 4. **Example**: at least one concrete case that makes the question tangible. Use real data from the task when you have it (a client id, a row, a dollar amount, a file path, a code snippet). When options lead to different outcomes, show the same example under each option, as sub-bullets, so the reader can see the difference.
-5. **Options**: two to five meaningful choices, lettered A, B, C... Each option gets a one-line consequence (what you will do, and the trade-off). Put your recommendation first and mark it "(Recommended)" with a short reason. End with an "Other" option. Do not invent filler options to reach a count.
+5. **Options**: two to five meaningful choices, lettered A, B, C... Each option gets a one-line consequence (what you will do, and the trade-off). Put your recommendation first and mark it "(Recommended)" with a short reason. The recommendation is the option the order of authority above picks, and its reason names the source or preference (`P2 Additive, not breaking`), not your own taste. End with an "Other" option. Do not invent filler options to reach a count.
 6. **Reply with**: the short reply that answers it, such as `Q1: A`.
 7. **Recorded in** (optional): the file that records the question, when the project keeps one file per question (for example under `docs/decisions/`).
 
@@ -5471,7 +5491,7 @@ X) Other (please describe after [Answer]: tag below)
 - Is there a concrete example with real names or numbers from the task? Placeholder examples ("e.g. some value") do not count.
 - Does each option say what will happen if chosen?
 - Is the recommendation marked and justified in a few words?
-- Could you have answered this yourself from the code, the data, or a sensible default? If so, do not ask. Decide, and record it as a decision block.
+- Did you run "Before you ask" first? If a source or a preference settles the question, do not ask. Record it as a decision block instead.
 - For chat blocks saved to a file, run `python <response-format skill folder>/scripts/check_format.py --blocks-only <file>`.
 - Writing follows the writing rules in your CLAUDE.md, if it has any.
 ````
@@ -5560,14 +5580,16 @@ A change name that already exists is a question about the change. Do not touch
 the existing change. Use the next free name (`<name>-2`, `<name>-3`) and record
 the choice as a decision.
 
-Two situations are not questions about the change. In those, keep the
-workflow's own behavior:
+Two situations are not questions about the change. Handle them this way:
 
 - The request has no description at all. There is nothing to decide from, so
   ask what to build.
-- There is no OpenSpec root and the user asked for OpenSpec explicitly. Do not
-  initialize anything. Stop and say so, because setting up OpenSpec in a repo is
-  the user's call.
+- There is no OpenSpec root and the user asked for OpenSpec explicitly. When
+  `preferences.md` has P11 (Plan in the repo that owns the code) and one
+  repository owns the code the change edits, P11 is the user's standing request
+  to set OpenSpec up there: run `openspec init` in that repository, record it as
+  a decision, and continue. Otherwise do not initialize anything. Stop and say
+  so, because setting up OpenSpec in a repo is the user's call.
 
 ### Decisions that need the user's yes
 
@@ -5802,6 +5824,11 @@ do not settle a question, it picks the answer one of these preferences points to
 and lists that preference under "Preferences used" in the change's
 `decisions.md`.
 
+A CLAUDE.md rule can extend this to every other question (chat, the
+AskUserQuestion tool, plans and reports). Those questions follow the same order
+of authority, and each one settled this way is shown as a decision block whose
+`Source:` names the preference.
+
 Edit this file to change how future proposals decide. Keep the IDs stable,
 because past `decisions.md` files cite them. Add a new preference at the end
 with the next free ID instead of reusing an old one.
@@ -5890,6 +5917,78 @@ Rollout tasks go to dev first, then staging, then prod. No plan touches prod
 first.
 
 Always applies.
+
+### P10. One shippable change per PR
+
+A PR holds one change that can ship and be checked on its own: the behavior, its
+tests and its documentation. Split a change only where each part can go to
+production alone and be verified there, or to keep a mechanical change (renames,
+moves, formatting, dependency bumps) apart from a behavior change. Do not split
+into PRs that only work together, because each one pays the full test run and
+review without shipping anything sooner.
+
+When a PR's non-test changes pass about 400 lines, look for a cut that meets
+these rules. If there is none, keep the PR whole and say why in its description.
+Do not combine separate changes to save a test run: when the full test suite is
+the bottleneck, propose running the affected tests on each PR and the full suite
+once per batch.
+
+A request for a large refactor keeps its full scope (P1 and P7 do not cut it)
+and ships as a series of such PRs. New behavior ships behind the existing flag
+when there is one (P8) and goes to dev first (P9).
+
+### P11. Plan in the repo that owns the code
+
+An OpenSpec change lives in the repository whose code it changes. When that
+repository has no OpenSpec root, set one up there (`openspec init`) and record
+it as a decision, instead of planning the change in another repository that
+already has one.
+
+Does not apply when the change spans several repositories: then it lives in the
+shared planning repository, and the decision names it. Does not apply when the
+user did not ask for OpenSpec.
+
+P12 is not used. It was proposed ("One PR, with its docs") and declined in
+favor of P10.
+
+### P13. Test the real path on one unit first
+
+To check that a deployed change works, trigger the real automated path (the
+scheduled job, the queue consumer, the step that fires the refresh) on the
+smallest unit, such as one message or one client, and watch it finish before
+running the rest. Prefer this over a manual substitute for the path, and over
+waiting for the next scheduled run. A repair to production data is tested
+locally first.
+
+When the action needs the user's yes (`rules.md` section 1), this preference
+picks the recommended option. It does not replace the yes.
+
+### P14. One general rule over a special case
+
+Prefer a rule that covers every similar case (a naming pattern, the same output
+shape in every period) over a fix for one client, one account or one period.
+Keep an output the same shape even when an edge case repeats a value.
+
+When the general rule also changes other clients' results, the decision lists
+them.
+
+### P15. Separate worktree, changes through PRs
+
+Work that runs beside other work goes into its own git worktree, not a branch
+parked in the same checkout. Changes reach a shared branch (main, dev, staging)
+through a PR from the feature branch, never by merging locally and pushing. A
+branch starts from the branch where the code it needs already lives.
+
+Does not apply to a repository whose owner commits to its main branch directly.
+
+### P16. Install tools for the whole machine
+
+Install a developer tool so it works everywhere: user-wide or machine-wide
+rather than inside one project. A skill is installed in `~/.claude/skills` as
+well as in the project.
+
+Does not apply when a project pins its own version of the tool (for example a
+`.nvmrc` file or a project virtual environment). The project keeps its version.
 ````
 
 ## Step 30: the patch script

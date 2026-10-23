@@ -41,14 +41,16 @@ A change name that already exists is a question about the change. Do not touch
 the existing change. Use the next free name (`<name>-2`, `<name>-3`) and record
 the choice as a decision.
 
-Two situations are not questions about the change. In those, keep the
-workflow's own behavior:
+Two situations are not questions about the change. Handle them this way:
 
 - The request has no description at all. There is nothing to decide from, so
   ask what to build.
-- There is no OpenSpec root and the user asked for OpenSpec explicitly. Do not
-  initialize anything. Stop and say so, because setting up OpenSpec in a repo is
-  the user's call.
+- There is no OpenSpec root and the user asked for OpenSpec explicitly. When
+  `preferences.md` has P11 (Plan in the repo that owns the code) and one
+  repository owns the code the change edits, P11 is the user's standing request
+  to set OpenSpec up there: run `openspec init` in that repository, record it as
+  a decision, and continue. Otherwise do not initialize anything. Stop and say
+  so, because setting up OpenSpec in a repo is the user's call.
 
 ### Decisions that need the user's yes
 
