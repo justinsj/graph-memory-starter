@@ -79,10 +79,11 @@ recommended option. A decision point is:
 
 - an AskUserQuestion call with a "(Recommended)" option, and its answer (your own text counts);
 - a chat question block (`### Q1. <Short name>`, lettered options, one "(Recommended)") answered
-  by a reply such as `Q1: B`, or by a reply that starts with the letter (`B`, `Option A`) when
-  one question was asked.
+  by a reply such as `Q1: B`. When one question was asked, a reply can also start with
+  `Option A`, or give the letter alone or before `.`, `,`, `:` or `)` (`B`, `A. and also`).
 
 An interrupted or rejected question, or a reply that names no option, is not a decision point.
+A reply that starts with a word, such as `a mix of both`, names no option.
 
 ### `harness2cc patch-upstream`
 

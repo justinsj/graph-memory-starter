@@ -263,6 +263,38 @@ class DecisionPointTests(TemporaryHome):
         self.assertEqual(by_short_name["Retry limit"].turn_start_uuid, "u2")
         self.assertEqual(scan.labels[by_short_name["Retry limit"].decision_point_id].chosen, "B. Keep 3: no change.")
 
+    def test_a_reply_that_starts_with_the_word_a_names_no_option(self):
+        for reply in ("a mix of both: retry 4 times", "A better plan: retry 4 times on the first night"):
+            with self.subTest(reply=reply):
+                folder = self.projects / f"C--work-{len(reply)}"
+                (TranscriptBuilder(session_id=f"{len(reply):08d}-aaaa-bbbb-cccc-000000000003")
+                 .prompt("u1", "2026-10-15T10:00:00Z", "Plan the nightly import retries.")
+                 .reply("a1", "2026-10-15T10:01:00Z", SINGLE_CHAT_QUESTION)
+                 .prompt("u2", "2026-10-15T10:02:00Z", reply)
+                 .write(folder))
+                scan = decision_points.scan_transcripts((folder,))
+                self.assertEqual(scan.decision_points, [])
+
+    def test_a_single_answer_needs_option_or_the_letter_alone_or_before_punctuation(self):
+        open_questions = decision_points.parse_chat_questions(SINGLE_CHAT_QUESTION)
+        expected_answers = {
+            "B": {"1": "B"},
+            "b.": {"1": "B"},
+            "(A)": {"1": "A"},
+            "A. and also keep the alert": {"1": "A"},
+            "B, but log each retry": {"1": "B"},
+            "B) keep 3": {"1": "B"},
+            "Option A, and keep going.": {"1": "A"},
+            "option b": {"1": "B"},
+            "a mix of both": {},
+            "A better plan: retry 4 times": {},
+            "Also check the alert first": {},
+            "C": {},
+        }
+        for reply, expected in expected_answers.items():
+            with self.subTest(reply=reply):
+                self.assertEqual(decision_points.parse_chat_answers(reply, open_questions), expected)
+
     def test_archived_copies_of_a_session_are_counted_once(self):
         session = answered_session()
         session.write(self.projects / PROJECT_FOLDER)

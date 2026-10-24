@@ -29,7 +29,9 @@ ASK_USER_QUESTION_TOOL = "AskUserQuestion"
 CHAT_QUESTION_HEADING = re.compile(r"^###\s+Q(\d+)\.\s+(.+?)\s*$", re.MULTILINE)
 CHAT_OPTION_LINE = re.compile(r"^\s*-\s+([A-Z])\.\s+(.+?)\s*$", re.MULTILINE)
 NUMBERED_ANSWER = re.compile(r"\b[Qq](\d+)\s*[:.)\-]?\s*(?:[Oo]ption\s+)?\(?([A-Ea-e])(?![A-Za-z])")
-SINGLE_ANSWER = re.compile(r"^\s*(?:[Oo]ption\s+)?\(?([A-Ea-e])\)?(?:[\s.,:;!)]|$)")
+OPTION_ANSWER = re.compile(r"^\s*[Oo]ption\s+\(?([A-Ea-e])\)?(?![A-Za-z])")
+# A bare letter counts only alone or before punctuation, so "a mix of both" is not option A.
+BARE_LETTER_ANSWER = re.compile(r"^\s*\(?([A-Ea-e])\)?(?:\s*$|[.,:)])")
 # Context Claude Code puts in front of a typed prompt, such as the file open in the IDE.
 LEADING_TAG_BLOCK = re.compile(r"\A\s*<(ide_[a-z_]+|system-reminder)\b[^>]*>.*?</\1>\s*", re.DOTALL)
 TURN_STARTING_ORIGINS: tuple[str, ...] = ("peer", "task-notification")
@@ -233,8 +235,10 @@ def parse_chat_answers(reply_text: str, open_questions: dict[str, dict]) -> dict
     """Read which option letter the user picked for each open chat question.
 
     Replies such as "Q1: B", "Q2. A" or "Q3 option C" name the question. When exactly one
-    question is open, a reply that starts with the letter ("B", "Option A", "A. and also ...")
-    answers it.
+    question is open, a reply answers it when it starts with "Option" and the letter
+    ("Option A, and keep going"), or when the letter stands alone or comes before ".", ",",
+    ":" or ")" ("B", "A. and also ..."). A reply that starts with a word, such as
+    "a mix of both", answers nothing.
 
     Args:
         reply_text: The user's typed reply.
@@ -246,7 +250,7 @@ def parse_chat_answers(reply_text: str, open_questions: dict[str, dict]) -> dict
     answers = {number: letter.upper() for number, letter in NUMBERED_ANSWER.findall(reply_text)
                if number in open_questions}
     if not answers and len(open_questions) == 1:
-        single = SINGLE_ANSWER.match(reply_text)
+        single = OPTION_ANSWER.match(reply_text) or BARE_LETTER_ANSWER.match(reply_text)
         if single:
             answers = {next(iter(open_questions)): single.group(1).upper()}
     return {number: letter for number, letter in answers.items() if letter in open_questions[number]["options"]}
