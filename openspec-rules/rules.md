@@ -49,12 +49,14 @@ Two situations are not questions about the change. Handle them this way:
 - There is no OpenSpec root and the user asked for OpenSpec explicitly. When
   `preferences.md` has P11 (Plan in the repo that owns the code) and one
   repository owns the code the change edits, P11 is the user's standing request
-  to set OpenSpec up there: run `openspec init` in that repository. Then run
-  `python apply_openspec_rules.py` from the folder that holds this file, because
-  `openspec init` rewrites the personal OpenSpec copies and removes the blocks
-  that point here (section 7). Record both steps as a decision, and continue.
-  Otherwise do not initialize anything. Stop and say so, because setting up
-  OpenSpec in a repo is the user's call.
+  to set OpenSpec up there. Run `openspec init --tools claude` in that
+  repository: an agent's shell has no terminal, and without `--tools` the
+  command stops when the repository has no tool folder yet. The command writes
+  OpenSpec's skill and command copies into that repository's `.claude/` folder,
+  not into `~/.claude`, so `apply_openspec_rules.py` does not patch them. The
+  OpenSpec rule in `CLAUDE.md` keeps these rules in force there. Record the
+  setup as a decision, and continue. Otherwise do not initialize anything. Stop
+  and say so, because setting up OpenSpec in a repo is the user's call.
 
 ### Decisions that need the user's yes
 
