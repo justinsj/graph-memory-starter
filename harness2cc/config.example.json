@@ -1,0 +1,48 @@
+{
+  "workspace_root": "C:/Users/<you>/work",
+  "transcript_roots": [
+    "C:/Users/<you>/.claude/projects",
+    "C:/Users/<you>/.claude/session-archive"
+  ],
+  "editable_files": [
+    "CLAUDE.md",
+    ".claude/openspec-rules/preferences.md",
+    ".claude/skills/question-format/SKILL.md",
+    ".claude/skills/response-format/SKILL.md"
+  ],
+  "protected_sections": {
+    "CLAUDE.md": [
+      "Database access: read-only replica ONLY",
+      "Pull requests: run the review loop"
+    ]
+  },
+  "protected_files": [
+    ".claude/openspec-rules/rules.md",
+    ".claude/settings.json",
+    ".claude/settings.local.json"
+  ],
+  "source_map": [
+    {
+      "live": ".claude/openspec-rules/preferences.md",
+      "source": "openspec-rules/preferences.md",
+      "guide_step": "## Step 29: the preferences"
+    },
+    {
+      "live": ".claude/skills/question-format/SKILL.md",
+      "source": "skills/question-format/SKILL.md",
+      "guide_step": "## Step 26: the `question-format` skill"
+    }
+  ],
+  "client_terms_file": "client_terms.txt",
+  "models": {
+    "executor": "opus",
+    "editor": "opus",
+    "grader": "sonnet"
+  },
+  "caps": {
+    "max_references": 5,
+    "max_k": 5,
+    "library_entries_per_domain": 20,
+    "claude_md_growth_characters": 2000
+  }
+}
