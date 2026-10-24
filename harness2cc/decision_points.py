@@ -28,7 +28,13 @@ RECOMMENDED_MARKER = "(Recommended)"
 ASK_USER_QUESTION_TOOL = "AskUserQuestion"
 CHAT_QUESTION_HEADING = re.compile(r"^###\s+Q(\d+)\.\s+(.+?)\s*$", re.MULTILINE)
 CHAT_OPTION_LINE = re.compile(r"^\s*-\s+([A-Z])\.\s+(.+?)\s*$", re.MULTILINE)
-NUMBERED_ANSWER = re.compile(r"\b[Qq](\d+)\s*[:.)\-]?\s*(?:[Oo]ption\s+)?\(?([A-Ea-e])(?![A-Za-z])")
+# "Q1: Option A ..." names option A. Without "Option", the letter must end the line or come
+# before punctuation or the next "Q<n>", so "Q1: a mix of both" is not option A.
+NUMBERED_ANSWER = re.compile(
+    r"\b[Qq](\d+)\s*[:.)\-]?\s*(?:[Oo]ption\s+\(?([A-Ea-e])\)?(?![A-Za-z])"
+    r"|\(?([A-Ea-e])\)?(?=[ \t]*(?:$|[.,:;)]|[Qq]\d)))",
+    re.MULTILINE,
+)
 OPTION_ANSWER = re.compile(r"^\s*[Oo]ption\s+\(?([A-Ea-e])\)?(?![A-Za-z])")
 # A bare letter counts only alone or before punctuation, so "a mix of both" is not option A.
 BARE_LETTER_ANSWER = re.compile(r"^\s*\(?([A-Ea-e])\)?(?:\s*$|[.,:)])")
@@ -234,7 +240,9 @@ def parse_chat_questions(assistant_text: str) -> dict[str, dict]:
 def parse_chat_answers(reply_text: str, open_questions: dict[str, dict]) -> dict[str, str]:
     """Read which option letter the user picked for each open chat question.
 
-    Replies such as "Q1: B", "Q2. A" or "Q3 option C" name the question. When exactly one
+    Replies such as "Q1: B", "Q2. A" or "Q3 option C" name the question. Without "Option",
+    the letter must end its line or come before ".", ",", ":", ";", ")" or the next "Q<n>",
+    so "Q1: a mix of both" answers nothing. When exactly one
     question is open, a reply answers it when it starts with "Option" and the letter
     ("Option A, and keep going"), or when the letter stands alone or comes before ".", ",",
     ":" or ")" ("B", "A. and also ..."). A reply that starts with a word, such as
@@ -247,7 +255,8 @@ def parse_chat_answers(reply_text: str, open_questions: dict[str, dict]) -> dict
     Returns:
         Question number -> chosen letter, only for letters that are among that question's options.
     """
-    answers = {number: letter.upper() for number, letter in NUMBERED_ANSWER.findall(reply_text)
+    answers = {number: (option_letter or bare_letter).upper()
+               for number, option_letter, bare_letter in NUMBERED_ANSWER.findall(reply_text)
                if number in open_questions}
     if not answers and len(open_questions) == 1:
         single = OPTION_ANSWER.match(reply_text) or BARE_LETTER_ANSWER.match(reply_text)

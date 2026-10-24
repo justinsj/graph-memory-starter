@@ -295,6 +295,34 @@ class DecisionPointTests(TemporaryHome):
             with self.subTest(reply=reply):
                 self.assertEqual(decision_points.parse_chat_answers(reply, open_questions), expected)
 
+    def test_a_numbered_reply_that_starts_with_the_word_a_names_no_option(self):
+        (TranscriptBuilder()
+         .prompt("u1", "2026-10-01T09:00:00Z", "Plan the revenue backfill.")
+         .reply("a1", "2026-10-01T09:01:00Z", CHAT_QUESTIONS)
+         .prompt("u2", "2026-10-01T09:02:00Z", "Q1: a mix of both, keep the closed accounts that paid")
+         .write(self.projects / PROJECT_FOLDER))
+        self.assertEqual(decision_points.scan_transcripts((self.projects,)).decision_points, [])
+
+    def test_a_numbered_answer_needs_option_or_the_letter_before_punctuation_or_the_line_end(self):
+        open_questions = decision_points.parse_chat_questions(
+            CHAT_QUESTIONS + "\n" + SINGLE_CHAT_QUESTION.replace("### Q1.", "### Q2."))
+        expected_answers = {
+            "Q1: B": {"1": "B"},
+            "Q1. b.": {"1": "B"},
+            "Q1: (A)": {"1": "A"},
+            "Q1: B, Q2: A": {"1": "B", "2": "A"},
+            "Q1: B Q2: A": {"1": "B", "2": "A"},
+            "Q1. B\nQ2. A. Please also log each retry": {"1": "B", "2": "A"},
+            "Q1: Option A and keep going": {"1": "A"},
+            "Q1: a mix of both": {},
+            "Q1 - a different idea": {},
+            "Q1: B, Q2: a bit of both": {"1": "B"},
+            "Q3: A": {},
+        }
+        for reply, expected in expected_answers.items():
+            with self.subTest(reply=reply):
+                self.assertEqual(decision_points.parse_chat_answers(reply, open_questions), expected)
+
     def test_archived_copies_of_a_session_are_counted_once(self):
         session = answered_session()
         session.write(self.projects / PROJECT_FOLDER)
