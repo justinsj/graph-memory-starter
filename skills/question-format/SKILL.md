@@ -15,13 +15,33 @@ The reader of these questions switches between many projects and will not rememb
 
 Questions use the same block shape as decisions and problems (the `response-format` skill): an ID and a short name as the heading, then plain labeled bullets in a fixed order. A reader scanning a response finds the short name, the question, the options and how to reply in the same place every time.
 
+## Before you ask: settle it yourself when you can
+
+Most questions should not reach the user. Before you draft one, look for the answer in the order of authority that the preferences file gives (`preferences.md`, the file your CLAUDE.md names; in a standard install it sits next to the OpenSpec rules). Stop at the first source that settles it:
+
+1. What the user said in the request or the conversation.
+2. The project: AGENTS.md, convention docs, decision records, and what the code already does.
+3. The user's standing rules: the CLAUDE.md files in scope and the user profile.
+4. The preferences (P1, P2 and onward).
+5. If it is still open: the option that is cheapest to reverse.
+
+Ask only when one of these is true:
+
+- The decision is one of the "Needs your yes" kinds in the OpenSpec `rules.md`: a production write, backfill, migration or DDL change; deleting or overwriting; notifying people or publishing, including a deploy to prod; a new recurring cost; a breaking change another team consumes; a change to permissions, grants, IAM roles or secrets.
+- No source settles it, and you cannot rank the options.
+- It needs a fact only the user knows.
+
+Record every question you settle as a decision block (`response-format` skill) with `Source:` naming what settled it, such as `P1 Workaround instead of full refactor`, and show it under `## Decisions` so the user can override it with `D<n>: <other option>`. Never invent a fact to settle a question. When the code or data that would settle it cannot be read, say so in the decision and pick the option that is cheapest to reverse.
+
+Some workflows keep their own question files, and the user's CLAUDE.md can exclude them from this step (for example AI-DLC `*-questions.md` files). Follow that exclusion.
+
 ## The parts (always in this order)
 
 1. **Heading**: `### Q<n>. <Short name>`. The short name has two to five words. It is a noun phrase that names what is being decided (`Backfill scope`, `Retry limit`, `Auth method`), not the question. Use it every time the question is mentioned: `Q2 (Backfill scope)`.
 2. **Question**: the next line. One sentence ending in a question mark. Ask one thing. If you need two decisions, write two questions.
 3. **Context**: two to five sentences. Say what you are working on, what you found that raised the question, and what happens next depending on the answer. Name the file, table, ticket, client or number involved. Do not assume the reader remembers earlier messages.
 4. **Example**: at least one concrete case that makes the question tangible. Use real data from the task when you have it (a client id, a row, a dollar amount, a file path, a code snippet). When options lead to different outcomes, show the same example under each option, as sub-bullets, so the reader can see the difference.
-5. **Options**: two to five meaningful choices, lettered A, B, C... Each option gets a one-line consequence (what you will do, and the trade-off). Put your recommendation first and mark it "(Recommended)" with a short reason. End with an "Other" option. Do not invent filler options to reach a count.
+5. **Options**: two to five meaningful choices, lettered A, B, C... Each option gets a one-line consequence (what you will do, and the trade-off). Put your recommendation first and mark it "(Recommended)" with a short reason. The recommendation is the option the order of authority above picks, and its reason names the source or preference (`P2 Additive, not breaking`), not your own taste. End with an "Other" option. Do not invent filler options to reach a count.
 6. **Reply with**: the short reply that answers it, such as `Q1: A`.
 7. **Recorded in** (optional): the file that records the question, when the project keeps one file per question (for example under `docs/decisions/`).
 
@@ -118,6 +138,6 @@ X) Other (please describe after [Answer]: tag below)
 - Is there a concrete example with real names or numbers from the task? Placeholder examples ("e.g. some value") do not count.
 - Does each option say what will happen if chosen?
 - Is the recommendation marked and justified in a few words?
-- Could you have answered this yourself from the code, the data, or a sensible default? If so, do not ask. Decide, and record it as a decision block.
+- Did you run "Before you ask" first? If a source or a preference settles the question, do not ask. Record it as a decision block instead.
 - For chat blocks saved to a file, run `python <response-format skill folder>/scripts/check_format.py --blocks-only <file>`.
 - Writing follows the writing rules in your CLAUDE.md, if it has any.
