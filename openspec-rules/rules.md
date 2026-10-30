@@ -9,7 +9,8 @@ These rules add to the OpenSpec workflows used in this workspace:
 
 They apply to every copy of those workflows: the personal copies in
 `~/.claude/skills` and `~/.claude/commands/opsx`, and the team copies inside a
-repo. They do not relax any guardrail of the workflows. Propose still writes
+repo. They do not relax any guardrail of the workflows, with one exception:
+under P11, propose may run `openspec init` (section 1). Propose still writes
 planning artifacts only, and apply still pauses on errors and on added scope.
 
 Preferences live in `preferences.md` in this folder.
@@ -41,21 +42,29 @@ A change name that already exists is a question about the change. Do not touch
 the existing change. Use the next free name (`<name>-2`, `<name>-3`) and record
 the choice as a decision.
 
-Two situations are not questions about the change. In those, keep the
-workflow's own behavior:
+Two situations are not questions about the change. Handle them this way:
 
 - The request has no description at all. There is nothing to decide from, so
   ask what to build.
-- There is no OpenSpec root and the user asked for OpenSpec explicitly. Do not
-  initialize anything. Stop and say so, because setting up OpenSpec in a repo is
-  the user's call.
+- There is no OpenSpec root and the user asked for OpenSpec explicitly. When
+  `preferences.md` has P11 (Plan in the repo that owns the code) and one
+  repository owns the code the change edits, P11 is the user's standing request
+  to set OpenSpec up there. Run `openspec init --tools claude` in that
+  repository: an agent's shell has no terminal, and without `--tools` the
+  command stops when the repository has no tool folder yet. The command writes
+  OpenSpec's skill and command copies into that repository's `.claude/` folder,
+  not into `~/.claude`, so `apply_openspec_rules.py` does not patch them. The
+  OpenSpec rule in `CLAUDE.md` keeps these rules in force there. Record the
+  setup as a decision, and continue. Otherwise do not initialize anything. Stop
+  and say so, because setting up OpenSpec in a repo is the user's call.
 
 ### Decisions that need the user's yes
 
 Pre-answer these with the safe option and mark them `Needs your yes: yes`:
 
 - a write to a production database, a backfill, a migration or a DDL change,
-- deleting or overwriting data, files, branches or another person's work,
+- deleting or overwriting data, files, branches or another person's work
+  (the one exception is the `openspec init` that P11 allows in section 1),
 - anything that notifies people or publishes: Slack, Jira, GitHub comments,
   email, a deploy to prod,
 - a new recurring cost: a paid service, a larger instance, a more expensive
