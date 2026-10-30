@@ -73,6 +73,9 @@ individually:
   judge.
 - `--require-task` — make the judge refuse a code change that names no work
   item. Off by default. Passed to the judge.
+- `--allow-large` — do not refuse a change over the size limit (60 files or about
+  180,000 characters of diff); the judge reads all of it, in parts, with no cap.
+  Off by default. Passed to the judge. Added by the owner on 2026-10-24.
 
 An attempt is one fix, push and re-review cycle. The first review costs no
 attempt, and neither does a review that could not run.
@@ -145,7 +148,7 @@ No marker at all: run a fresh review.
 general-purpose type). Its prompt carries only these:
 
 - the repository, the pull request number and the head SHA to review,
-- `--task-trailer` and `--require-task` as given,
+- `--task-trailer`, `--require-task` and `--allow-large` as given,
 - the absolute paths of `reference/review-procedure.md`,
   `reference/review-checks.md`, `reference/review-comment.md` and `STE_DIR`,
 - this instruction: "Follow review-procedure.md for this pull request at this

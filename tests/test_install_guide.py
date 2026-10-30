@@ -148,6 +148,13 @@ class StructureTests(unittest.TestCase):
         checks = numbers(r"^(\d+)\. ", session)
         self.assertEqual(checks, list(range(1, len(checks) + 1)))
 
+    def test_read_budget_check_expects_the_source_count(self) -> None:
+        """Edge case: the Verify check that counts "180,000" expects as many lines as the review procedure has."""
+        expected = re.search(r'grep -c "180,000" [^\n]+\n#    -> (\d+)', self.verify)
+        self.assertIsNotNone(expected, "Verify no longer counts the 180,000-character read budget")
+        procedure = read_text(ROOT / EMBEDDED_SOURCES["<SKILLS_DIR>/pr-review-loop/reference/review-procedure.md"])
+        self.assertEqual(int(expected.group(1)), sum(1 for line in procedure.split("\n") if "180,000" in line))
+
     def test_uninstall_covers_every_part_in_order(self) -> None:
         """Uninstall has one entry per part, A to I."""
         self.assertEqual(re.findall(r"^\*\*Part ([A-Z])\.\*\*", self.uninstall, re.M), EXPECTED_PARTS)
