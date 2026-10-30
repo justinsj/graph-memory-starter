@@ -4,7 +4,7 @@ id: session-merge
 type: topic
 tags: [claude-code, skill, install-guide, runguard, transcripts]
 related: [index, scale-benchmarks]
-updated: 2026-10-22
+updated: 2026-10-23
 ---
 
 # /merge-session
@@ -21,6 +21,8 @@ Source: `sessionmerge/session_merge.py` and `sessionmerge/skill/merge-session/SK
 
 - **This repository is public** (github.com/justinsj/graph-memory-starter). Test data, docstring examples and wiki notes must use neutral names (TICKET-12, Acme Widgets, app-prod), never real session names, ticket keys, client names or internal secret names. Check `git grep` for them before every push.
 - **Transcript shape (Claude Code 2.1.308).** User prompts carry `origin.kind` = `human`. Messages from other sessions and subagent hand-backs are `isMeta: true` with `origin.kind` = `peer`; that is the one `isMeta` entry worth keeping. Condensed summaries are user entries with `isCompactSummary: true`, after a `system` entry with subtype `compact_boundary`. A forked session (title ends in ⑂) starts with a condensed summary.
+- **Where a question's answer sits (Claude Code 2.1.309).** An AskUserQuestion call is a `tool_use` block in an assistant entry; the answer is in the next user entry's `toolUseResult.answers`, keyed by the question text. An interrupted or rejected call has no `answers`. A plain text search for `"name":"AskUserQuestion"` also matches the tool list inside `prompt_snapshot` attachments, so parse the JSON instead. `~/.claude/session-archive/` holds copies of sessions also under `~/.claude/projects/`; deduplicate by session id.
+- **Open defect: prompts typed with a file open in the IDE drop out of the digest.** Claude Code puts `<ide_opened_file>…</ide_opened_file>` in front of such a prompt, and `add_user_entry` skips any user text that starts with `<`, so the prompt itself is lost. `harness2cc/replay.py` works around it by stripping leading `<ide_…>` and `<system-reminder>` blocks before building its digest; the fix in `session_merge.py` would do the same in `add_user_entry` (and update Part G of the install guide).
 - **Title entries are rewritten every turn.** One session had 251 `ai-title` entries. Take the last non-empty value, and prefer `agent-name`, then `custom-title`, then `ai-title`, the order `/resume` uses.
 - **The live session name lives in `~/.claude/sessions/<pid>.json`** (`name`, `sessionId`). `ListAgents` shows the same names. `CLAUDE_CODE_SESSION_ID` is set in every tool shell.
 - **runguard exempts `session_merge.py` through `exempt_patterns`** (added 2026-10-22 to `~/.claude/runguard/config.json`, `runguard/config.json` and the guide's step 13; all three must stay identical). Without the exemption, block mode would refuse every skill call. A list in config.json replaces the default list (`merged.update(loaded)` in `runguard_common.load_config`), so it repeats the three defaults.
