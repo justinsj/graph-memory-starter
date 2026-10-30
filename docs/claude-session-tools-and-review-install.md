@@ -2,7 +2,7 @@
 
 These are installation instructions for an LLM coding agent (or a person) setting up these Claude Code add-ons in a new environment. Everything needed is in this file (apart from one third-party plugin, installed from its own marketplace): twenty-six files to create, five settings changes, four sections added to `CLAUDE.md`, one `.pth` file per Python environment, and checks to run afterwards. Every file is reproduced in full and verbatim. Copy them byte for byte; don't paraphrase or "improve" them while installing.
 
-The file has nine parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks, records the outcome as a comment, fixes what the review objected to, and reviews again until every check passes, plus a section of `CLAUDE.md` that makes the agent run that loop on every pull request it creates, with at most 3 fix rounds. **Part C** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part D** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part E** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part F** is a section of `CLAUDE.md` that sets how the agent asks you a question: laid out as a short-named block with the question, its context, an example and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. **Part G** is `/merge-session`: it passes what one session learned (decisions, verified facts, work on disk, open questions, the user's corrections) into another session, as a handoff file plus a short message that points at it, and tells the receiving session to report and wait rather than act. **Part H** gives every report one layout, and decisions, problems and questions one block shape, with a script that checks them. **Part I** makes OpenSpec pre-answer its questions into a `decisions.md`, require a deliverable and a mockup in every proposal, and show the decisions before any code is written. The nine parts are independent of each other; Part I uses Part H's checker when Part H is installed.
+The file has nine parts. **Part A** is the session tools: two slash commands that hide and unhide sessions in `/resume`, and a Stop hook that keeps the spinner up while background work is still running. **Part B** is one skill that reviews a pull request against a fixed set of checks (on a code change these include a staff-level engineering check and a principal-level architecture check; a documentation-only change is not asked for tests), records the outcome as a comment, fixes what the review objected to, and reviews again until every check passes, plus a section of `CLAUDE.md` that makes the agent run that loop on every pull request it creates, with at most 3 fix rounds. **Part C** is the run guard: a time budget for every script and test run, a hook that refuses to re-run a script that overran until it changes, read-only database connections with lock and statement timeouts, and a skill that makes one optimization pass before each run. **Part D** replaces Claude Code's novelty status words ("Flibbertigibbeting…" while it works, "Cooked for 1m 20s" after a turn) with "Working…" and "Took 1m 20s". **Part E** is the claude-hud plugin, which puts model, context use and rate limits in a status line below the input. **Part F** is a section of `CLAUDE.md` that has the agent settle every question it can on its own first (from what you said, the project, your `CLAUDE.md` files and, with Part I, a list of preferences) and show each choice it made as a decision you can override, and that sets how it asks the questions that remain: laid out as a short-named block with the question, its context, an example and its options, with its context first, with every acronym spelled out, with options and one recommended, and with a file recording the question and what was decided. **Part G** is `/merge-session`: it passes what one session learned (decisions, verified facts, work on disk, open questions, the user's corrections) into another session, as a handoff file plus a short message that points at it, and tells the receiving session to report and wait rather than act. **Part H** gives every report one layout, and decisions, problems and questions one block shape, with a script that checks them. **Part I** makes OpenSpec pre-answer its questions into a `decisions.md`, require a deliverable and a mockup in every proposal, and show the decisions before any code is written. The nine parts are independent of each other; Part I uses Part H's checker when Part H is installed.
 
 Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 3.10 on Windows 10. The scripts are plain Python 3 standard library and run on macOS and Linux too. Parts B and F are prose only, except that Part B's first run downloads the `asd-ste100` skill, whose linter needs Python 3. Parts C, D, G, H and I need Python 3.10 or newer; Part D was tested on Claude Code 2.1.296, and Part G on Claude Code 2.1.308 with Python 3.11.4. Part E was installed on Claude Code 2.1.288 with Node.js 25.3.0 on Windows 10 (claude-hud 0.10.0); it needs Node.js (or Bun on macOS and Linux), not Python. Part I was tested with the OpenSpec CLI 1.14.0.
 
@@ -15,9 +15,9 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 3 | `/restore` | `<CLAUDE_DIR>/skills/restore/SKILL.md` | User skill (slash command) | Lists archived sessions and puts the ones you pick back into `/resume`. |
 | 4 | `wait_for_background.py` | `<CLAUDE_DIR>/hooks/wait_for_background.py` | Stop hook script | Keeps the spinner (with the status text "Waiting for background tasks…") showing while background shells, subagents, monitors or workflows are still running, so the session doesn't look idle when it isn't. |
 | 5 | Hook registrations | `<CLAUDE_DIR>/settings.json` under `"hooks"` | Settings | Wire item 1 into the `Stop`, `SessionEnd` and `SessionStart` events, and item 4 into `Stop`. |
-| 6 | `/pr-review-loop` | `<SKILLS_DIR>/pr-review-loop/SKILL.md` | Skill (slash command) | Reviews a pull request in a fresh subagent, fixes what the review objected to, pushes, and re-reviews, until every check passes or 3 fix rounds are spent. Downloads the `asd-ste100` skill on first run when it is missing. Never merges and never approves. |
-| 7 | The review procedure | `<SKILLS_DIR>/pr-review-loop/reference/review-procedure.md` | Spec read by the judge in item 6 | The judge's stages: blockers, question set, read budget, answers, outcome, and writing and posting the comment. |
-| 8 | The check sets | `<SKILLS_DIR>/pr-review-loop/reference/review-checks.md` | Spec read by the judge in item 6 | The exact wording of the three question sets: code, documentation-only, and no-work-item. |
+| 6 | `/pr-review-loop` | `<SKILLS_DIR>/pr-review-loop/SKILL.md` | Skill (slash command) | Reviews a pull request in a fresh subagent, fixes what the review objected to, pushes, and re-reviews, until every check passes or 3 fix rounds are spent. On a code change the review includes a staff-level engineering check and a principal-level architecture check; a documentation-only change is not asked for tests. `--allow-large` reviews a change over the size limit in full. Downloads the `asd-ste100` skill on first run when it is missing. Never merges and never approves. |
+| 7 | The review procedure | `<SKILLS_DIR>/pr-review-loop/reference/review-procedure.md` | Spec read by the judge in item 6 | The judge's stages: blockers, question set, read budget, answers, outcome, and writing and posting the comment. The two test blockers do not apply to a documentation-only change, and test snapshot files do not count toward the size limit. |
+| 8 | The check sets | `<SKILLS_DIR>/pr-review-loop/reference/review-checks.md` | Spec read by the judge in item 6 | The exact wording of the three question sets: code, documentation-only, and no-work-item. Both code sets include the staff-level `engineering` check and the principal-level `architecture` check. |
 | 9 | The outcome comment | `<SKILLS_DIR>/pr-review-loop/reference/review-comment.md` | Spec read by the judge in item 6 | The comment body, the bullet format for failed conditions, and the hidden marker that stops the loop paying to review the same commit twice. |
 | 10 | The fix playbook | `<SKILLS_DIR>/pr-review-loop/reference/fix-playbook.md` | Spec read by item 6 | Sorts every blocker and check the review can produce into fix, stop or ask, with the remedies allowed and forbidden. |
 | 11 | Review-loop rule | a `## Pull requests: run the review loop` section in `<CLAUDE_MD>` | Project guidance | After the agent creates a pull request, it runs item 6 on it right away, with at most 3 fix rounds, and reports the outcome next to the pull request link. |
@@ -30,7 +30,7 @@ Tested on Claude Code 2.1.286 with Python 3.12.7 on Windows 11, and with Python 
 | 18 | Status text settings | `<CLAUDE_DIR>/settings.json` (`showTurnDuration`, `spinnerVerbs`, `"hooks"`) | Settings | Turns off the built-in end-of-turn line, sets the spinner word to "Working", and wires item 17 into `UserPromptSubmit` and `Stop`. |
 | 19 | claude-hud | `<CLAUDE_DIR>/plugins/cache/claude-hud/` (plugin) and `<CLAUDE_DIR>/plugins/claude-hud/` (launcher) | Third-party plugin | Status line showing the model, project and git branch, context use and subscriber rate limits; optionally tool, agent and todo activity. |
 | 20 | Status line registration | `<CLAUDE_DIR>/settings.json` under `"statusLine"`, `"enabledPlugins"` and `"extraKnownMarketplaces"` | Settings | Written by the plugin's own installer and setup helper; not edited by hand. |
-| 21 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | Every question the agent asks you is laid out as a short-named block with the question, context, an example and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
+| 21 | Asking questions | a `## Asking questions` section in `<CLAUDE_MD>` | Project guidance | The agent settles every question it can on its own first and shows each choice as a decision you can override. Every question it still asks you is laid out as a short-named block with the question, context, an example and options, carries its context, spells out its acronyms, offers options with one recommended, and is recorded in a file under `<DECISIONS_DIR>` together with the answer. |
 | 22 | `session_merge.py` | `<CLAUDE_DIR>/skills/merge-session/session_merge.py` | Python script | Does the mechanical steps for `/merge-session`: turns a session transcript into plain text (so a condensed session can be read back in full), finds sessions by name, names the handoff file, scans the handoff for secrets and database hostnames, and saves it under `<CLAUDE_DIR>/handoffs/` with the command the receiving session types to read it. |
 | 23 | `/merge-session` | `<CLAUDE_DIR>/skills/merge-session/SKILL.md` | User skill (slash command) | Writes a handoff for another session, shows it to you, and sends it once you approve. In the receiving session, reads the handoff, reports what it adds and where it conflicts, and waits for that session's user. |
 | 24 | `response-format` | `<SKILLS_DIR>/response-format/SKILL.md` | Skill | The layout for reports and decision lists: outcome first, links under it, then fixed sections; decisions, problems and questions as short-named blocks. |
@@ -736,7 +736,7 @@ Changes to skills and hooks take effect in **new** Claude Code sessions. Restart
 - **Stage 4** confirms the head moved and goes back to stage 1 with a new judge.
 - **Stage 5** stops on the first of: clear, attempts exhausted, a `stop` finding (every `malicious` one included), two consecutive rounds failing the same way, three deferrals in a row, or an `ask` the user has not answered.
 
-Four properties are worth stating before you install it:
+Five properties are worth stating before you install it:
 
 **The judge and the fixer stay separate.** The judge runs in a fresh subagent that never sees the fixer's conversation, and each round gets a new one. The fixer never edits the review files, never posts, edits or deletes a comment carrying the `automated-review` marker, and never writes anything aimed at the reviewer.
 
@@ -746,6 +746,8 @@ Four properties are worth stating before you install it:
 
 **It never merges and never approves.** A loop that can push until a review passes has to sit further from the merge button than a single review does.
 
+**The review asks what a staff engineer and a principal engineer would ask, and only what fits the change.** On a code change, `engineering` looks at load, concurrency, retries, timeouts, data integrity, cost, security and operability, and `architecture` looks at boundaries, systems of record, contracts, consistency, reversibility and fit with the project's written decisions. Both fail only on a concrete scenario; anything below that bar becomes an advisory note tagged `[staff]`, `[principal]` or `[distinguished]` that never changes the outcome. A documentation-only change gets the documentation set instead, and is not asked for tests: `no-tests` and `tests-not-claimed` do not apply to it, because a prose change cannot add a meaningful test. A file that the documentation set does not count as documentation (`CLAUDE.md`, `AGENTS.md`, anything under `.github/` or `.claude/`) still needs tests.
+
 Configuration, passed as arguments:
 
 | Flag | Meaning |
@@ -754,6 +756,7 @@ Configuration, passed as arguments:
 | `--max-attempts <n>` | Fix rounds before giving up. Default `3`. The first review costs no attempt, and neither does a review that could not run. |
 | `--task-trailer <name>` | The trailer naming the work item a pull request finishes. Default `Task:`. Passed to the judge. |
 | `--require-task` | Make the judge refuse a code change that names no work item. Off by default. |
+| `--allow-large` | Do not refuse a change over the size limit (60 files or about 180,000 characters of diff). The judge reads all of it, in parts, with no cap. Off by default. |
 
 **Where to install it.** Either location works, but they are not equivalent:
 
@@ -852,6 +855,9 @@ individually:
   judge.
 - `--require-task` — make the judge refuse a code change that names no work
   item. Off by default. Passed to the judge.
+- `--allow-large` — do not refuse a change over the size limit (60 files or about
+  180,000 characters of diff); the judge reads all of it, in parts, with no cap.
+  Off by default. Passed to the judge. Added by the owner on 2026-10-24.
 
 An attempt is one fix, push and re-review cycle. The first review costs no
 attempt, and neither does a review that could not run.
@@ -924,7 +930,7 @@ No marker at all: run a fresh review.
 general-purpose type). Its prompt carries only these:
 
 - the repository, the pull request number and the head SHA to review,
-- `--task-trailer` and `--require-task` as given,
+- `--task-trailer`, `--require-task` and `--allow-large` as given,
 - the absolute paths of `reference/review-procedure.md`,
   `reference/review-checks.md`, `reference/review-comment.md` and `STE_DIR`,
 - this instruction: "Follow review-procedure.md for this pull request at this
@@ -1102,9 +1108,9 @@ A clear review means nothing objected. A person still decides.
 **Explanation.** The judge's whole brief. Stage 1 of step 6 hands this file to a fresh subagent together with one pull request and one head SHA. The judge works through eight stages:
 
 - **Stage 0** fetches the pull request singly, because list endpoints null the mergeability field. It defers when the head moved after the loop asked, and stops when a comment for this SHA already exists.
-- **Stage 1** collects every deterministic blocker before reading anything: closed, draft, conflicted, empty, too large (more than 60 files or about 180,000 characters of diff), no tests, tests never claimed to have been run, and no work item when `--require-task` is set. One condition, mergeability the host has not finished computing, is a **deferral** rather than a refusal: it writes nothing and leaves no marker, because marking a transient condition as reviewed makes it permanent.
+- **Stage 1** collects every deterministic blocker before reading anything: closed, draft, conflicted, empty, too large (more than 60 files or about 180,000 characters of diff), no tests, tests never claimed to have been run, and no work item when `--require-task` is set. The two test blockers are skipped for a documentation-only change, which the documentation set judges instead. Test snapshot files (data files under a `tests/` fixtures, snapshots or golden folder that a test compares output against) do not count toward the size limit, and the comment names each one it left out. One condition, mergeability the host has not finished computing, is a **deferral** rather than a refusal: it writes nothing and leaves no marker, because marking a transient condition as reviewed makes it permanent.
 - **Stage 2** picks one of the three question sets from step 8.
-- **Stage 3** reads the description and the diff as bounded, fenced evidence, and reads a file whole when its patch was cut off. The read budget and the `too-large` ceiling are the same number, so no diff can pass the blocker and then be reviewed from a truncated read.
+- **Stage 3** reads the description and the diff as bounded, fenced evidence, and reads a file whole when its patch was cut off. The read budget and the `too-large` ceiling are the same number, so no diff can pass the blocker and then be reviewed from a truncated read. `--allow-large` turns both off together: the judge reads every patch in parts, with no cap, and the comment says the flag was on.
 - **Stage 4** answers each check `true` or `false`. A pass gets a one-line reason naming the file, criterion or line that decided it. A failure gets the four bullets from step 9.
 - **Stage 5** computes the outcome from the blockers and the answers. There is no weighting, and no field anywhere in the shape that a reviewed document could fill in to produce its own verdict.
 - **Stage 6** writes the comment in Strict Simplified Technical English and runs the `asd-ste100` linter on it until no hard violation is left.
@@ -1146,6 +1152,8 @@ cannot merge should not be able to cause a merge at one remove either.
   finishes. Default `Task:`.
 - `--require-task`: refuse a code change that names no work item. Off by
   default; see stage 2.
+- `--allow-large`: do not refuse a large change, and read all of it (see
+  `too-large` and stage 3). Off by default. Added by the owner on 2026-10-24.
 - The absolute path of this `reference/` folder and of the asd-ste100 skill
   folder (`STE_DIR`, normally `~/.claude/skills/asd-ste100`).
 
@@ -1187,9 +1195,9 @@ person fixing four things in four round trips is the failure this list avoids.
 | `draft` | it is still a draft. A draft is not ready and reads as delivered |
 | `not-mergeable` | the host reports the branch cannot merge cleanly |
 | `no-files` | it changes nothing |
-| `too-large` | more than 60 files, or a diff past roughly 180,000 characters |
-| `no-tests` | no test file was added or changed, so nothing shows the work was proved |
-| `tests-not-claimed` | the description never says the tests were run and passed |
+| `too-large` | more than 60 files, or a diff past roughly 180,000 characters, not counting test snapshot files (stage 3) |
+| `no-tests` | the change is not documentation-only, and no test file was added or changed, so nothing shows the work was proved |
+| `tests-not-claimed` | the change is not documentation-only, and the description never says the tests were run and passed |
 | `no-task` | `--require-task` is set, the change is not documentation-only, and no trailer names a work item |
 
 **Deferral**: *not* an answer, and it must leave nothing behind.
@@ -1216,6 +1224,15 @@ not read CI), and that is precisely what it buys: an author who did not run the
 suite has to write that they did, which turns a silent omission into a false
 statement on the record.
 
+Both test blockers are skipped when the change is documentation-only, as stage 2
+defines it (decided by the owner on 2026-10-24, after two reviews of the same kind
+of pull request disagreed). A prose change cannot add a meaningful test file, so
+applying `no-tests` to it would stop every documentation pull request before the
+docs set could run. The docs set (`docsOnly`, `docsSound`) judges those changes
+instead, and `malicious` is never relaxed. A file that stage 2 does not count as
+documentation (`CLAUDE.md`, `AGENTS.md`, anything under `.github/` or `.claude/`)
+keeps both blockers.
+
 Judge `tests-not-claimed` line by line. A description routinely says the tests
 pass in one sentence and names an unrelated failure in the next, so a line has to
 both make the claim and carry no retraction of its own.
@@ -1223,6 +1240,14 @@ both make the claim and carry no retraction of its own.
 `too-large` refuses rather than truncating. A review of the first sixty files of
 an eight-hundred-file change is a review of nothing that reads exactly like a
 real one.
+
+`--allow-large` turns the refusal off and the read budget with it, together, so
+the two stay the same number. The judge then reads every patch in full, in parts
+(one file or one part of a file at a time), with no cap on the total, and reads
+the file from the commit when the host sends no patch for it. Nothing is left
+out to fit a budget. If a part cannot be read, name it in the comment, as for a
+file with no patch. The change still gets only the checks for its set, and the
+comment says that `--allow-large` was on.
 
 ## Stage 2 — pick the question set
 
@@ -1285,6 +1310,21 @@ Bound it: roughly 8,000 characters per file patch, 180,000 in total, at most ten
 files read whole, 40,000 characters each. A file with no patch at all is normal
 for binaries and very large files. Say so, rather than leaving a silent gap the
 reader takes for "nothing changed here".
+
+**Test snapshot files are left out of the size count and the read budget.** A
+test snapshot file is a data file (`.json`, `.snap`, `.csv`, `.txt`, `.yaml`,
+`.yml`) under a `tests/` or `test/` directory whose path also contains
+`fixtures`, `snapshots`, `__snapshots__` or `golden`, and that a test in the
+change or the repository compares output against. A test writes it, so the test
+is what gets reviewed. Count neither its files nor its characters toward
+`too-large` or the 180,000-character budget, and do not read it. Name every
+excluded file and its size in the comment, the same way as a file with no
+patch, so nobody takes it as reviewed. A file on such a path that holds code, or
+that no test compares against, is not a snapshot and counts as usual. The
+exclusion applies to both numbers, so the ceiling and the budget stay equal.
+(Owner's decision, 2026-10-23.)
+
+With `--allow-large`, none of these bounds applies: read everything, in parts.
 
 **This total and the `too-large` ceiling are the same number, and they have to
 stay that way.** `too-large` refuses what a review cannot honestly cover; this
@@ -1432,7 +1472,7 @@ A short message to the loop, nothing more:
 - the ids of every blocker and every failed check,
 - every sentence kept past the linter under stage 6, step 7,
 - what you did not read: a truncated patch, a file you could not fetch, a
-  decision record you could not find.
+  decision record you could not find, a test snapshot file left out under stage 3.
 
 The loop reads the verdict from the posted comment, not from this message. The
 message only tells it where to look and what the review could not see.
@@ -3370,18 +3410,49 @@ To change what it shows — compact layout, the tool, agent and todo lines, git 
 
 # Part F — the rule for asking questions
 
-A question an agent asks mid-task is usually written for itself: it names the file it was reading, uses the abbreviation it has been using for an hour, and asks "should I do X?" with no alternative and no reason. You then either answer blind or spend a turn asking what it means. And the answer lives only in the conversation, so the next session asks again, or decides the other way. Worse, when an agent asks three questions and you reply about one of them, the other two tend to vanish: the conversation moves on, and they are never answered, or are quietly decided by default. Part F is one section of `CLAUDE.md` that sets six requirements on every question. The first lays every question out the same way (a short name, the question, its context, an example, its options), so you can answer it at a glance. The fifth writes the question and its answer to a file the next session can read. The sixth uses those files to keep every unanswered question open, and asks it again once whatever you raised has been dealt with.
+A question an agent asks mid-task is usually written for itself: it names the file it was reading, uses the abbreviation it has been using for an hour, and asks "should I do X?" with no alternative and no reason. You then either answer blind or spend a turn asking what it means. And the answer lives only in the conversation, so the next session asks again, or decides the other way. Worse, when an agent asks three questions and you reply about one of them, the other two tend to vanish: the conversation moves on, and they are never answered, or are quietly decided by default. And many of the questions never needed to reach you: the answer was in what you already said, in the project, in your `CLAUDE.md`, or in a preference you would state the same way every time. Part F is one section of `CLAUDE.md`. It first has the agent settle every question it can from those sources and show each choice as a decision you can override with a one-line reply, so you read the choices after the work instead of answering them before it. It then sets six requirements on every question the agent still asks. The first lays every question out the same way (a short name, the question, its context, an example, its options), so you can answer it at a glance. The fifth writes the question and its answer to a file the next session can read. The sixth uses those files to keep every unanswered question open, and asks it again once whatever you raised has been dealt with.
 
 ## Step 21: add the section to `CLAUDE.md`
 
-Open `<CLAUDE_MD>`, creating it if it does not exist, and add the section below at the end, verbatim. Replace `<DECISIONS_DIR>` with the folder chosen in "Before you start" (for example `docs/decisions`), in both places it appears. If the file already has a section about asking questions, don't add a second one: tell the user, and ask which should stand.
+Open `<CLAUDE_MD>`, creating it if it does not exist, and add the section below at the end, verbatim. Replace `<DECISIONS_DIR>` with the folder chosen in "Before you start" (for example `docs/decisions`), in every place it appears. If the file already has a section about asking questions, don't add a second one: tell the user, and ask which should stand. If you use a workflow whose question files the user must fill in themselves (AI-DLC's `*-questions.md` files, for example), add one sentence at the end of "Settle it yourself first" that names those files and says their answers stay empty for the user, as the `question-format` skill expects.
 
 ````markdown
 ## Asking questions
 
-Every question you ask the user — a decision, a missing fact, a choice between
-approaches — meets all six of these. A question that does not is not ready to
-ask.
+**Settle it yourself first.** Most questions should not reach the user. Before
+you ask one, look for the answer in this order, and stop at the first source
+that settles it:
+
+- what the user said in the request or the conversation,
+- the project: `AGENTS.md`, convention docs, decision records (including
+  `<DECISIONS_DIR>`), and what the code already does,
+- the `CLAUDE.md` files in scope,
+- the preferences file, if one is installed (`preferences.md` next to the
+  OpenSpec rules), P1 onward,
+- and if it is still open, the option that is cheapest to reverse.
+
+Ask only when one of these is true:
+
+- The decision needs the user's yes: a write to a production database, a
+  backfill, a migration or a DDL change; deleting or overwriting data, files,
+  branches or another person's work; notifying people or publishing, including
+  a deploy to production; a new recurring cost; a breaking change another team
+  consumes; a change to permissions, grants, IAM roles or secrets.
+- No source settles it, and you cannot rank the options.
+- It needs a fact only the user knows.
+
+Show every question you settled in your response as a decision the user can
+override: a `### D<n>. <Short name>` block (under `## Decisions`, with the
+bullets the `response-format` skill gives, when that skill is installed) whose
+`Source:` names what settled it, for example
+`P1 Workaround instead of full refactor` or `the existing logger in src/log.py`.
+The user overrides one by replying `D<n>: <other option>`. Never invent a fact
+to settle a question: when the code or data that would settle it cannot be
+read, say so in the decision and pick the option that is cheapest to reverse.
+
+Every question you do ask the user — a decision, a missing fact, a choice
+between approaches — meets all six of these. A question that does not is not
+ready to ask.
 
 0. **Lay every question out the same way:** a heading `### Q<n>. <Short name>`
    (two to five words naming what is decided), the question on the next line
@@ -3410,12 +3481,17 @@ ask.
    found, and what the answer decides: which work it unblocks and what you will
    do differently depending on it. Write it so it can be understood from this
    response alone, by someone who has not read the rest of the conversation.
+   Every label in the block carries a short description
+   (`Task 1.1 (add the read-only DB connection helper)`, not `Task 1.1`), and
+   every "this", "that" or "it" points to something named in the same block.
 2. **Spell out every acronym the first time it appears in the response**, then
    use the short form: "row-level security (RLS)". Do this in every response
    that uses it, even if it was spelled out earlier in the conversation.
 3. **Give options, and recommend one.** Offer two to four concrete options. For
-   each, say what it involves and what it leads to. Mark one "(recommended)" and
-   say why. Ask an open question only when no options can be named, and say so.
+   each, say what it involves and what it leads to. Mark one "(recommended)":
+   the option the order in "Settle it yourself first" picks, with a reason that
+   names the source or preference. Ask an open question only when no options
+   can be named, and say so.
 4. **Write it down.** Before asking, write `<DECISIONS_DIR>/<YYYY-MM-DD>-<slug>.md`
    with the question, its context, the options and your recommendation, and
    `Status: open`. When the user answers, update the same file: the decision,
@@ -5346,7 +5422,7 @@ if __name__ == "__main__":
 
 ## Step 26: the `question-format` skill
 
-**Explanation.** The question block in detail: `### Q<n>. <Short name>`, the question on the next line, then `Context`, `Example`, `Options` (lettered, the recommended one first, `Other` last), `Reply with`, and `Recorded in` when the project keeps a file per question, as Part F does. It also covers the AskUserQuestion tool, where the short name becomes the header chip, and question files with an `[Answer]:` tag.
+**Explanation.** It opens with "Before you ask": the same order of authority Part F's section uses (what the user said, the project, the `CLAUDE.md` files, the Part I preferences, then the option cheapest to reverse) and the three cases in which a question still goes to the user. A question settled that way becomes a decision block with a `Source:` line instead. Then the question block in detail: `### Q<n>. <Short name>`, the question on the next line, then `Context`, `Example`, `Options` (lettered, the recommended one first, `Other` last), `Reply with`, and `Recorded in` when the project keeps a file per question, as Part F does. It also covers the AskUserQuestion tool, where the short name becomes the header chip, and question files with an `[Answer]:` tag.
 
 **Install.** Create `<SKILLS_DIR>/question-format/SKILL.md` with exactly this content:
 
@@ -5532,7 +5608,7 @@ OpenSpec generates its skill and command files, and `openspec update` rewrites t
 
 ## Step 28: the rules
 
-**Explanation.** `rules.md` holds the whole procedure: how to pre-answer, the `decisions.md` template, which decisions need your yes, the deliverable and mockup requirement, what propose shows at the end, what apply shows first, and how update keeps the decisions in step. Its last section lists what the patch script adds.
+**Explanation.** `rules.md` holds the whole procedure: how to pre-answer, the `decisions.md` template, which decisions need your yes, the deliverable and mockup requirement, what propose shows at the end, what apply shows first, and how update keeps the decisions in step. Its last section lists what the patch script adds. The rules relax one guardrail of OpenSpec's workflows: when you asked for OpenSpec, the repository that owns the code has no OpenSpec root yet, and `preferences.md` has P11 (Plan in the repo that owns the code), propose runs `openspec init --tools claude` in that repository and records it as a decision, instead of stopping.
 
 **Install.** Create `<RULES_DIR>/rules.md` with exactly this content:
 
@@ -5818,7 +5894,7 @@ What the script adds:
 
 ## Step 29: the preferences
 
-**Explanation.** The preferences that settle a question when the request, the project and your `CLAUDE.md` do not: P1 workaround instead of full refactor, P2 additive and not breaking, and so on, with an order of authority. Edit this file to change how proposals decide. Keep the IDs stable, because past `decisions.md` files cite them.
+**Explanation.** The preferences that settle a question when the request, the project and your `CLAUDE.md` do not: P1 workaround instead of full refactor, P2 additive and not breaking, and so on through P16 (P10 one shippable change per pull request, P11 plan in the repo that owns the code, P13 test the real path on one unit first, P14 one general rule over a special case, P15 a separate worktree with changes through pull requests, P16 install tools for the whole machine; P12 was declined and is not used), with an order of authority. Part F's `CLAUDE.md` section reads the same file for every question outside OpenSpec too, so a preference set here also settles chat questions. Edit this file to change how proposals decide. Keep the IDs stable, because past `decisions.md` files cite them.
 
 **Install.** Create `<RULES_DIR>/preferences.md` with exactly this content:
 
@@ -6381,7 +6457,7 @@ gh auth status
 
 # 7. The read budget and the too-large ceiling are the same number (180,000 characters).
 grep -c "180,000" "<SKILLS_DIR>/pr-review-loop/reference/review-procedure.md"
-#    -> 2
+#    -> 3
 
 # 8. The asd-ste100 linter works, if it is installed already. If the folder does not exist,
 #    the loop downloads it on its first run; this check then applies after that run.
@@ -6436,9 +6512,10 @@ echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":12,"c
 #       Context █░░░░░░░░░ 12%
 
 # --- Part F ---
-# 20. The section is in CLAUDE.md, once.
+# 20. The section is in CLAUDE.md, once, and opens with the rule to settle questions first.
 grep -c "^## Asking questions" "<CLAUDE_MD>"
-#    -> 1
+grep -c "^\*\*Settle it yourself first.\*\*" "<CLAUDE_MD>"
+#    -> 1, then 1
 
 # --- Part G ---
 # 21. find runs, and says so when nothing matches (exit code 1).
@@ -6503,42 +6580,44 @@ For Part B, use a throwaway pull request you own: a non-draft branch that change
 9. Run it on a draft pull request. It should stop and ask about `draft` rather than marking the pull request ready itself, and the review should list both `draft` and `no-tests` rather than stopping at the first. The report should open, under its links, a `## Still failing` section that lists both, each with its `Symptom`, `Example`, `Root cause` and `Fix` bullets.
 10. Confirm the skill is reachable without the command name. Ask "keep fixing pull request `<n>` until the review passes" in plain words and check that `pr-review-loop` is what runs.
 11. On a throwaway branch, ask Claude to make a one-line change and open a pull request for it. Right after it creates the pull request, it should run `/pr-review-loop` on it without being asked, and its report should give the loop's outcome next to the pull request link.
+12. Open a second throwaway pull request that changes only a Markdown file (a line in `README.md`, not `CLAUDE.md` or `AGENTS.md`) and adds no tests, and run `/pr-review-loop <link>` on it. The review should answer the documentation set (`malicious`, `docsOnly`, `docsSound`), list neither `no-tests` nor `tests-not-claimed`, and ask no `engineering` or `architecture` check. Then check that the review of the code pull request from the earlier checks did list `engineering` and `architecture` among its checks.
 
 For Part C:
 
-12. Type `/` and confirm `script-preflight` appears in the command list.
-13. Ask Claude to run the tests of any project with `pytest`. In warn mode the command runs, and a `runguard:` line appears saying it had no time budget. Ask again; Claude should now run it through `run_bounded.py` with a `--budget`.
-14. Ask Claude to run a script that sleeps for 60 seconds with a 5-second budget. It should be stopped with exit 124 and `BUDGET EXCEEDED`. Ask for the same run again without changing the script: the hook should flag (warn) or refuse (block) it as overrun and unchanged.
-15. Run `<PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" clear <that script> --reason "verify"` yourself, and confirm the next run of the unchanged script passes the hook.
+13. Type `/` and confirm `script-preflight` appears in the command list.
+14. Ask Claude to run the tests of any project with `pytest`. In warn mode the command runs, and a `runguard:` line appears saying it had no time budget. Ask again; Claude should now run it through `run_bounded.py` with a `--budget`.
+15. Ask Claude to run a script that sleeps for 60 seconds with a 5-second budget. It should be stopped with exit 124 and `BUDGET EXCEEDED`. Ask for the same run again without changing the script: the hook should flag (warn) or refuse (block) it as overrun and unchanged.
+16. Run `<PYTHON> "<CLAUDE_DIR>/runguard/ledger.py" clear <that script> --reason "verify"` yourself, and confirm the next run of the unchanged script passes the hook.
 
 For Part D:
 
-16. Send any prompt. While Claude works, the spinner should read "Working…". When the turn ends, a line "Took Ns" (or "Took Nm Ns") should appear, and no "Cooked for…" line. The first turn after installing may show neither, because its start was not recorded; check the second turn.
+17. Send any prompt. While Claude works, the spinner should read "Working…". When the turn ends, a line "Took Ns" (or "Took Nm Ns") should appear, and no "Cooked for…" line. The first turn after installing may show neither, because its start was not recorded; check the second turn.
 
 For Part E:
 
-17. Look below the input field. The HUD should show the model, the project and git branch, and a context bar that grows as the session does. If it shows nothing, run Verify step 19 above; if that prints nothing, the launcher found no installed plugin — reinstall with step 19.
+18. Look below the input field. The HUD should show the model, the project and git branch, and a context bar that grows as the session does. If it shows nothing, run Verify step 19 above; if that prints nothing, the launcher found no installed plugin — reinstall with step 19.
 
 For Part F:
 
-18. Ask Claude something with two reasonable answers that it cannot settle alone, for example "set up a database for this project". Before it does anything, it should ask you a question laid out as a `### Q1. <Short name>` block with the question, then Context, Example, Options, Reply with and Recorded in, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 20 finds the section and that you are in a new session.
-19. Ask for something that needs two decisions, for example "set up a database and a deploy pipeline for this project", and let it ask both. Reply only with a question about the first ("what would the second option cost?"). It should answer that, add what it said to the first question's file, and then ask both questions again, each with its file, with both files still `Status: open`.
+19. Ask Claude for something it cannot settle alone because it needs a fact only you know, for example "add a nightly export of the orders table to our shared bucket" in a project that names no bucket. Before it does anything, it should ask you a question laid out as a `### Q1. <Short name>` block with the question, then Context, Example, Options, Reply with and Recorded in, in that order, where the context says what it found and what the answer decides, spells out any acronym the first time it uses it (for example "row-level security (RLS)"), and lists options with one marked recommended. A file named `<DECISIONS_DIR>/<today>-<slug>.md` should exist with `Status: open`. Answer it, and check that the same file now holds your decision, your name and the date, and `Status: decided`. If the question arrived without options or without the file, check that Verify step 20 finds the section and that you are in a new session.
+20. Ask for something that needs two answers only you can give, for example "add a nightly export of the orders table to our shared bucket, and email the file to the finance team" (which bucket, and which address), and let it ask both. Reply only with a question about the first ("what would the second option cost?"). It should answer that, add what it said to the first question's file, and then ask both questions again, each with its file, with both files still `Status: open`.
+21. Ask for a small change that leaves one choice open which the project already settles, for example "log each retry in the fetch helper" in a project that already uses one logging library. It should not ask which library. Its reply should show the choice as a `### D1. <Short name>` block whose `Source:` names what settled it (the library the project already uses), and no file should appear under `<DECISIONS_DIR>` for it. Reply `D1: <another option>` and check that it changes the code to match.
 
 For Part G, open two sessions, A and B, and give B a name with `/rename`.
 
-20. Type `/` in A and confirm `merge-session` appears in the command list.
-21. Ask Claude in A to run `<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" digest`. The header should name session A and say how many prompts it holds.
-22. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should save the handoff without asking you to approve creating the file, show the `/merge-session --receive <file>` command in a code block with a short summary, and ask whether to send. Say send. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
-23. In A, run `/merge-session` with the name of a session that is closed. It should send nothing, and print the `claude --resume <id>` command and the `/merge-session --receive <file>` line to type there.
+22. Type `/` in A and confirm `merge-session` appears in the command list.
+23. Ask Claude in A to run `<PYTHON> "<CLAUDE_DIR>/skills/merge-session/session_merge.py" digest`. The header should name session A and say how many prompts it holds.
+24. In A, state a decision ("use port 8080, not 3000"), then run `/merge-session <B's name>`. It should save the handoff without asking you to approve creating the file, show the `/merge-session --receive <file>` command in a code block with a short summary, and ask whether to send. Say send. B should receive a message whose first line names A and the file, and B should report what the handoff adds and wait for you rather than act on it.
+25. In A, run `/merge-session` with the name of a session that is closed. It should send nothing, and print the `claude --resume <id>` command and the `/merge-session --receive <file>` line to type there.
 
 For Part H:
 
-24. Ask Claude to summarize a small change it just made, including one choice it made along the way. The reply should open with the outcome, keep the sections in the fixed order, and show the choice as a `### D1. <Short name>` block with its bullets in order. Save the reply to a file and run the checker on it: 0 findings.
+26. Ask Claude to summarize a small change it just made, including one choice it made along the way. The reply should open with the outcome, keep the sections in the fixed order, and show the choice as a `### D1. <Short name>` block with its bullets in order. Save the reply to a file and run the checker on it: 0 findings.
 
 For Part I:
 
-25. In a project that uses OpenSpec, run `/opsx:propose` with a one-line request that leaves something open, for example "let operators export only the orders after a given date". It should ask nothing, write `decisions.md` next to `proposal.md`, give `proposal.md` a `## Deliverable and mockup` section, and end with the preferences used and the decisions, each as `### D<n>. <Short name>`.
-26. Run `/opsx:apply` on that change. Before the first task it should show the same decisions, and ask only about decisions marked `Needs your yes: yes`.
+27. In a project that uses OpenSpec, run `/opsx:propose` with a one-line request that leaves something open, for example "let operators export only the orders after a given date". It should ask nothing, write `decisions.md` next to `proposal.md`, give `proposal.md` a `## Deliverable and mockup` section, and end with the preferences used and the decisions, each as `### D<n>. <Short name>`.
+28. Run `/opsx:apply` on that change. Before the first task it should show the same decisions, and ask only about decisions marked `Needs your yes: yes`.
 
 ## Uninstall
 

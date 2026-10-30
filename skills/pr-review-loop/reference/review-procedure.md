@@ -25,6 +25,8 @@ cannot merge should not be able to cause a merge at one remove either.
   finishes. Default `Task:`.
 - `--require-task`: refuse a code change that names no work item. Off by
   default; see stage 2.
+- `--allow-large`: do not refuse a large change, and read all of it (see
+  `too-large` and stage 3). Off by default. Added by the owner on 2026-10-24.
 - The absolute path of this `reference/` folder and of the asd-ste100 skill
   folder (`STE_DIR`, normally `~/.claude/skills/asd-ste100`).
 
@@ -66,9 +68,9 @@ person fixing four things in four round trips is the failure this list avoids.
 | `draft` | it is still a draft. A draft is not ready and reads as delivered |
 | `not-mergeable` | the host reports the branch cannot merge cleanly |
 | `no-files` | it changes nothing |
-| `too-large` | more than 60 files, or a diff past roughly 180,000 characters |
-| `no-tests` | no test file was added or changed, so nothing shows the work was proved |
-| `tests-not-claimed` | the description never says the tests were run and passed |
+| `too-large` | more than 60 files, or a diff past roughly 180,000 characters, not counting test snapshot files (stage 3) |
+| `no-tests` | the change is not documentation-only, and no test file was added or changed, so nothing shows the work was proved |
+| `tests-not-claimed` | the change is not documentation-only, and the description never says the tests were run and passed |
 | `no-task` | `--require-task` is set, the change is not documentation-only, and no trailer names a work item |
 
 **Deferral**: *not* an answer, and it must leave nothing behind.
@@ -95,6 +97,15 @@ not read CI), and that is precisely what it buys: an author who did not run the
 suite has to write that they did, which turns a silent omission into a false
 statement on the record.
 
+Both test blockers are skipped when the change is documentation-only, as stage 2
+defines it (decided by the owner on 2026-10-24, after two reviews of the same kind
+of pull request disagreed). A prose change cannot add a meaningful test file, so
+applying `no-tests` to it would stop every documentation pull request before the
+docs set could run. The docs set (`docsOnly`, `docsSound`) judges those changes
+instead, and `malicious` is never relaxed. A file that stage 2 does not count as
+documentation (`CLAUDE.md`, `AGENTS.md`, anything under `.github/` or `.claude/`)
+keeps both blockers.
+
 Judge `tests-not-claimed` line by line. A description routinely says the tests
 pass in one sentence and names an unrelated failure in the next, so a line has to
 both make the claim and carry no retraction of its own.
@@ -102,6 +113,14 @@ both make the claim and carry no retraction of its own.
 `too-large` refuses rather than truncating. A review of the first sixty files of
 an eight-hundred-file change is a review of nothing that reads exactly like a
 real one.
+
+`--allow-large` turns the refusal off and the read budget with it, together, so
+the two stay the same number. The judge then reads every patch in full, in parts
+(one file or one part of a file at a time), with no cap on the total, and reads
+the file from the commit when the host sends no patch for it. Nothing is left
+out to fit a budget. If a part cannot be read, name it in the comment, as for a
+file with no patch. The change still gets only the checks for its set, and the
+comment says that `--allow-large` was on.
 
 ## Stage 2 — pick the question set
 
@@ -164,6 +183,21 @@ Bound it: roughly 8,000 characters per file patch, 180,000 in total, at most ten
 files read whole, 40,000 characters each. A file with no patch at all is normal
 for binaries and very large files. Say so, rather than leaving a silent gap the
 reader takes for "nothing changed here".
+
+**Test snapshot files are left out of the size count and the read budget.** A
+test snapshot file is a data file (`.json`, `.snap`, `.csv`, `.txt`, `.yaml`,
+`.yml`) under a `tests/` or `test/` directory whose path also contains
+`fixtures`, `snapshots`, `__snapshots__` or `golden`, and that a test in the
+change or the repository compares output against. A test writes it, so the test
+is what gets reviewed. Count neither its files nor its characters toward
+`too-large` or the 180,000-character budget, and do not read it. Name every
+excluded file and its size in the comment, the same way as a file with no
+patch, so nobody takes it as reviewed. A file on such a path that holds code, or
+that no test compares against, is not a snapshot and counts as usual. The
+exclusion applies to both numbers, so the ceiling and the budget stay equal.
+(Owner's decision, 2026-10-23.)
+
+With `--allow-large`, none of these bounds applies: read everything, in parts.
 
 **This total and the `too-large` ceiling are the same number, and they have to
 stay that way.** `too-large` refuses what a review cannot honestly cover; this
@@ -311,7 +345,7 @@ A short message to the loop, nothing more:
 - the ids of every blocker and every failed check,
 - every sentence kept past the linter under stage 6, step 7,
 - what you did not read: a truncated patch, a file you could not fetch, a
-  decision record you could not find.
+  decision record you could not find, a test snapshot file left out under stage 3.
 
 The loop reads the verdict from the posted comment, not from this message. The
 message only tells it where to look and what the review could not see.

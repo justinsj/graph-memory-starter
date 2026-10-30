@@ -2,7 +2,8 @@
 
 The question-format skill restates two lists that live elsewhere: the order of authority
 (openspec-rules/preferences.md) and the kinds of decision that need the user's yes
-(openspec-rules/rules.md, section 1). The rules name preference P11 by its label. These tests
+(openspec-rules/rules.md, section 1). Part F of the install guide restates both lists again in
+its "Settle it yourself first" rule. The rules name preference P11 by its label. These tests
 fail when one copy changes and the other does not, or when a file names a preference that
 does not exist.
 
@@ -17,10 +18,14 @@ ROOT = Path(__file__).resolve().parents[1]
 PREFERENCES_FILE = ROOT / "openspec-rules" / "preferences.md"
 RULES_FILE = ROOT / "openspec-rules" / "rules.md"
 QUESTION_FORMAT_FILE = ROOT / "skills" / "question-format" / "SKILL.md"
+GUIDE_FILE = ROOT / "docs" / "claude-session-tools-and-review-install.md"
 
 PREFERENCE_HEADING = re.compile(r"^### P(\d+)\. (.+)$", re.MULTILINE)
 PREFERENCE_MENTION = re.compile(r"\bP(\d+)\b")
 NUMBERED_ITEM = re.compile(r"^(\d+)\. ", re.MULTILINE)
+BULLET_ITEM = re.compile(r"^- ", re.MULTILINE)
+SETTLE_FIRST_START = "**Settle it yourself first.**"
+SETTLE_FIRST_END = "Every question you do ask the user"
 UNUSED_PREFERENCE_IDS = frozenset({12})
 # One phrase per position that both copies of each list must hold at that position.
 ORDER_OF_AUTHORITY_PHRASES: tuple[str, ...] = (
@@ -80,6 +85,37 @@ def numbered_items(text: str) -> list[str]:
         item = text[start:end].split("\n\n", 1)[0]
         items.append(" ".join(NUMBERED_ITEM.sub("", item, count=1).split()).lower())
     return items
+
+
+def bullet_items(text: str) -> list[str]:
+    """Split a markdown bullet list into its items, joining wrapped lines.
+
+    Args:
+        text: Text that holds only a list whose items start with "- ".
+
+    Returns:
+        The item texts, in order, lowercased and with whitespace collapsed.
+    """
+    starts = [match.start() for match in BULLET_ITEM.finditer(text)]
+    return [" ".join(text[start + 2:(starts[index + 1] if index + 1 < len(starts) else len(text))].split()).lower()
+            for index, start in enumerate(starts)]
+
+
+def guide_settle_first_rule() -> str:
+    """Return the "Settle it yourself first" rule from Part F of the install guide.
+
+    Returns:
+        The text from the rule's bold lead to the sentence that opens the rules for asked questions.
+
+    Raises:
+        AssertionError: When the guide no longer holds the rule.
+    """
+    guide_text = read_text(GUIDE_FILE)
+    start = guide_text.find(SETTLE_FIRST_START)
+    assert start >= 0, "the install guide no longer has the Settle it yourself first rule"
+    end = guide_text.find(SETTLE_FIRST_END, start)
+    assert end >= 0, "the Settle it yourself first rule no longer ends where the asked-question rules start"
+    return guide_text[start:end]
 
 
 def defined_preferences() -> dict[int, str]:
@@ -145,6 +181,24 @@ class RestatedLists(unittest.TestCase):
         self.assertEqual(len(copy), len(NEEDS_YOUR_YES_PHRASES))
         for position, phrase in enumerate(NEEDS_YOUR_YES_PHRASES):
             self.assertIn(phrase, source[position])
+            self.assertIn(phrase, copy[position])
+
+    def test_the_guide_restates_the_order_of_authority(self) -> None:
+        """Part F of the install guide lists the same sources, in the same order, as preferences.md."""
+        rule = guide_settle_first_rule()
+        order_list = rule[rule.index(":\n\n") + 3:rule.index("\n\nAsk only when")]
+        copy = bullet_items(order_list)
+        self.assertEqual(len(copy), len(ORDER_OF_AUTHORITY_PHRASES))
+        for position, phrase in enumerate(ORDER_OF_AUTHORITY_PHRASES):
+            self.assertIn(phrase, copy[position])
+
+    def test_the_guide_restates_the_needs_your_yes_list(self) -> None:
+        """Part F of the install guide lists the same Needs-your-yes kinds, in the same order, as rules.md."""
+        restated = re.search(r"needs the user's yes: (.+?)\.\n- ", guide_settle_first_rule(), re.DOTALL)
+        self.assertIsNotNone(restated, "the guide no longer restates the Needs-your-yes kinds")
+        copy = [" ".join(item.split()).lower() for item in restated.group(1).split(";")]
+        self.assertEqual(len(copy), len(NEEDS_YOUR_YES_PHRASES))
+        for position, phrase in enumerate(NEEDS_YOUR_YES_PHRASES):
             self.assertIn(phrase, copy[position])
 
 
